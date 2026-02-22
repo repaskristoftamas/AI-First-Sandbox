@@ -43,7 +43,7 @@ public sealed class BookEndpoints : IEndpointDefinition
     private static async Task<IResult> GetAllBooks(ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllBooksQuery(), cancellationToken);
-        return Results.Ok(result.Value);
+        return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem();
     }
 
     private static async Task<IResult> GetBookById(Guid id, ISender sender, CancellationToken cancellationToken)
