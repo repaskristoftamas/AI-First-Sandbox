@@ -43,7 +43,7 @@ public sealed class BookEndpoints : IEndpointDefinition
     private static async Task<IResult> GetAllBooks(ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllBooksQuery(), cancellationToken);
-        return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem();
+        return Results.Ok(result.Value);
     }
 
     private static async Task<IResult> GetBookById(Guid id, ISender sender, CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ public sealed class BookEndpoints : IEndpointDefinition
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess
             ? Results.CreatedAtRoute("GetBookById", new { id = result.Value }, result.Value)
-            : Results.Problem();
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
     }
 
     private static async Task<IResult> UpdateBook(
