@@ -1,0 +1,19 @@
+@Bookstore.WebApi_HostAddress = http://localhost:5286
+
+GET {{Bookstore.WebApi_HostAddress}}/api/books
+Accept: application/json
+
+###
+
+POST {{Bookstore.WebApi_HostAddress}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Clean Architecture",
+  "author": "Robert C. Martin",
+  "isbn": "978-0134494166",
+  "price": 39.99,
+  "publicationYear": 2017
+}
+
+###
