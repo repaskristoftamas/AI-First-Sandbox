@@ -1,0 +1,112 @@
+name: Move issue to Ready for Review
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  move-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - name: Extract linked issue numbers from PR body
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const matches = body.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
+            const numbers = matches.map(m => parseInt(m.match(/\d+/)[0]));
+            const unique = [...new Set(numbers)];
+            core.setOutput('issues', JSON.stringify(unique));
+            console.log(`Found linked issues: ${unique}`);
+
+      - name: Move issues to Ready for Review
+        if: steps.extract.outputs.issues != '[]'
+        uses: actions/github-script@v7
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          ISSUE_NUMBERS: ${{ steps.extract.outputs.issues }}
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const issueNumbers = JSON.parse(process.env.ISSUE_NUMBERS);
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const projectNumber = 2;
+            const targetStatus = 'Ready for Review';
+
+            // Discover the project ID and Status field
+            const projectQuery = `query($owner: String!, $number: Int!) {
+              user(login: $owner) {
+                projectV2(number: $number) {
+                  id
+                  field(name: "Status") {
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      options { id name }
+                    }
+                  }
+                }
+              }
+            }`;
+
+            const projResult = await github.graphql(projectQuery, { owner, number: projectNumber });
+            const project = projResult.user.projectV2;
+            const statusField = project.field;
+            const targetOption = statusField.options.find(o => o.name === targetStatus);
+
+            if (!targetOption) {
+              core.setFailed(`Status option "${targetStatus}" not found. Available: ${statusField.options.map(o => o.name).join(', ')}`);
+              return;
+            }
+
+            console.log(`Project: ${project.id}, Field: ${statusField.id}, Target option: ${targetOption.id} (${targetOption.name})`);
+
+            for (const issueNumber of issueNumbers) {
+              // Find the project item for this issue
+              const itemQuery = `query($owner: String!, $repo: String!, $issueNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  issue(number: $issueNumber) {
+                    projectItems(first: 25) {
+                      nodes {
+                        id
+                        project { id }
+                      }
+                    }
+                  }
+                }
+              }`;
+
+              const itemResult = await github.graphql(itemQuery, { owner, repo, issueNumber });
+              const items = itemResult.repository.issue.projectItems.nodes;
+              const item = items.find(i => i.project.id === project.id);
+
+              if (!item) {
+                console.log(`Issue #${issueNumber} is not on project board, skipping`);
+                continue;
+              }
+
+              // Update the status
+              const mutation = `mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { singleSelectOptionId: $optionId }
+                }) {
+                  projectV2Item { id }
+                }
+              }`;
+
+              await github.graphql(mutation, {
+                projectId: project.id,
+                itemId: item.id,
+                fieldId: statusField.id,
+                optionId: targetOption.id
+              });
+
+              console.log(`Moved issue #${issueNumber} to "${targetStatus}"`);
+            }
