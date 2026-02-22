@@ -1,6 +1,6 @@
 namespace Bookstore.SharedKernel.Abstractions;
 
-public abstract class EntityBase
+public abstract class EntityBase<TId> where TId : notnull
 {
-    public Guid Id { get; protected set; }
+    public TId Id { get; protected set; } = default!;
 }

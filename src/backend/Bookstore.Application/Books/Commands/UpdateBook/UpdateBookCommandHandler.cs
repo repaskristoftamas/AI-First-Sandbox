@@ -1,35 +1,29 @@
 using Bookstore.Application.Abstractions;
-using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Application.Books.Commands.UpdateBook;
 
-internal sealed class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Result>
+internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : ICommandHandler<UpdateBookCommand, Result>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IApplicationDbContext _context = context;
 
-    public UpdateBookCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<Result> Handle(UpdateBookCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(UpdateBookCommand command, CancellationToken cancellationToken)
     {
         var book = await _context.Books
-            .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure(BookErrors.NotFound);
+            return Result.Failure(new NotFoundError("The book with the specified identifier was not found."));
 
         bool isbnConflict = await _context.Books
-            .AnyAsync(b => b.ISBN == request.ISBN && b.Id != request.Id, cancellationToken);
+            .AnyAsync(b => b.ISBN == command.ISBN && b.Id != command.Id, cancellationToken);
 
         if (isbnConflict)
-            return Result.Failure(BookErrors.Conflict(request.ISBN));
+            return Result.Failure(new ConflictError($"A book with ISBN '{command.ISBN}' already exists."));
 
-        book.Update(request.Title, request.Author, request.ISBN, request.Price, request.PublicationYear);
+        book.Update(command.Title, command.Author, command.ISBN, command.Price, command.PublicationYear);
 
         await _context.SaveChangesAsync(cancellationToken);
 

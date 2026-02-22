@@ -1,6 +1,7 @@
 using Xunit;
 using Bookstore.Application.Books.Commands.CreateBook;
 using Bookstore.Infrastructure.Data;
+using Bookstore.SharedKernel.Results;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,7 +50,7 @@ public class CreateBookCommandHandlerTests : IDisposable
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("Book.Conflict");
+        result.Error.Should().BeOfType<ConflictError>();
     }
 
     public void Dispose() => _context.Dispose();

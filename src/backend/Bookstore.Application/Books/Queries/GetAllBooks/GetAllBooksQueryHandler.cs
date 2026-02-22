@@ -1,27 +1,22 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Books.DTOs;
+using Bookstore.Application.Books.Mappers;
 using Bookstore.SharedKernel.Results;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Application.Books.Queries.GetAllBooks;
 
-internal sealed class GetAllBooksQueryHandler : IRequestHandler<GetAllBooksQuery, Result<IReadOnlyList<BookDto>>>
+internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : IQueryHandler<GetAllBooksQuery, Result<IReadOnlyList<BookDto>>>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IApplicationDbContext _context = context;
 
-    public GetAllBooksQueryHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery query, CancellationToken cancellationToken)
     {
         var books = await _context.Books
             .AsNoTracking()
-            .Select(b => new BookDto(b.Id, b.Title, b.Author, b.ISBN, b.Price, b.PublicationYear))
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<BookDto>>(books);
+        return Result.Success<IReadOnlyList<BookDto>>(books.Select(b => b.ToDto()).ToList());
     }
 }

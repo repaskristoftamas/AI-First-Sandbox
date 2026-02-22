@@ -13,12 +13,18 @@
 5. [Endpoint Abstractions — IEndpointDefinition and Beyond](#5-endpoint-abstractions--iendpointdefinition-and-beyond)
 6. [Request / Response / DTO Separation](#6-request--response--dto-separation)
 7. [Validation Abstractions](#7-validation-abstractions)
-8. [Pagination Abstractions](#8-pagination-abstractions)
-9. [Domain Events and Outbox Pattern](#9-domain-events-and-outbox-pattern)
-10. [Cross-Cutting Concerns via Pipeline Behaviors](#10-cross-cutting-concerns-via-pipeline-behaviors)
-11. [Folder & Project Structure Deep Dive](#11-folder--project-structure-deep-dive)
-12. [When NOT To Abstract](#12-when-not-to-abstract)
-13. [Summary Checklist](#13-summary-checklist)
+8. [Authentication & Authorization](#8-authentication--authorization)
+9. [Global Exception Handling](#9-global-exception-handling)
+10. [Structured Logging & Observability](#10-structured-logging--observability)
+11. [Configuration — Options Pattern](#11-configuration--options-pattern)
+12. [API Versioning](#12-api-versioning)
+13. [Idempotency](#13-idempotency)
+14. [Pagination Abstractions](#14-pagination-abstractions)
+15. [Domain Events and Outbox Pattern](#15-domain-events-and-outbox-pattern)
+16. [Cross-Cutting Concerns via Pipeline Behaviors](#16-cross-cutting-concerns-via-pipeline-behaviors)
+17. [Folder & Project Structure Deep Dive](#17-folder--project-structure-deep-dive)
+18. [When NOT To Abstract](#18-when-not-to-abstract)
+19. [Summary Checklist](#19-summary-checklist)
 
 ---
 
@@ -50,20 +56,39 @@ Controllers → Minimal API → CQRS → DDD + CQRS + SharedKernel → Ports & A
 
 Using exceptions for expected failure cases (`NotFound`, `Conflict`, `Validation error`) is expensive, hard to compose, and leaks implementation details to the caller.
 
-### The Result Pattern
+### Typed Error Hierarchy
+
+Use an abstract `Error` base with typed subclasses. The error *type* carries the semantic meaning — no string codes needed.
+
+```csharp
+public abstract record Error(string Description);
+
+public sealed record NotFoundError(string Description) : Error(Description);
+public sealed record ConflictError(string Description) : Error(Description);
+public sealed record ValidationError(string Description) : Error(Description);
+```
+
+### The Result Type
+
+`Result` wraps success/failure. `Error` and `Value` throw on invalid access — symmetric guards prevent misuse.
 
 ```csharp
 public class Result
 {
-    protected Result(bool isSuccess, Error error) { ... }
+    private readonly Error? _error;
+
+    protected Result(bool isSuccess, Error? error) { ... }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
-    public Error Error { get; }
 
-    public static Result Success() => new(true, Error.None);
+    public Error Error => IsFailure
+        ? _error!
+        : throw new InvalidOperationException("The error of a success result cannot be accessed.");
+
+    public static Result Success() => new(true, null);
     public static Result Failure(Error error) => new(false, error);
-    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, null);
     public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 }
 
@@ -71,29 +96,58 @@ public class Result<TValue> : Result
 {
     public TValue Value => IsSuccess
         ? _value!
-        : throw new InvalidOperationException("Cannot access Value of a failed Result.");
+        : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
 }
 ```
 
+### Usage in Handlers
+
 ```csharp
-public sealed record Error(string Code, string Description)
+if (book is null)
+    return Result.Failure(new NotFoundError("The book with the specified identifier was not found."));
+
+if (isbnExists)
+    return Result.Failure<Guid>(new ConflictError($"A book with ISBN '{request.ISBN}' already exists."));
+```
+
+### Mapping Errors to HTTP — Extension Method
+
+Centralize error-to-HTTP mapping in one extension method. Endpoints stay `Task<IResult>` (type-safe, Swagger-friendly). The error type maps to the status code via pattern matching.
+
+```csharp
+public static class ErrorExtensions
 {
-    public static readonly Error None = new(string.Empty, string.Empty);
+    public static IResult ToProblemResult(this Error error) => error switch
+    {
+        NotFoundError e   => Results.Problem(statusCode: 404, title: "NotFound", detail: e.Description),
+        ConflictError e   => Results.Problem(statusCode: 409, title: "Conflict", detail: e.Description),
+        ValidationError e => Results.Problem(statusCode: 400, title: "ValidationError", detail: e.Description),
+        _                 => Results.Problem(statusCode: 500, title: "InternalError", detail: error.Description)
+    };
 }
 ```
 
-### Mapping Result to HTTP in Minimal API
+Endpoint usage:
 
 ```csharp
-// Centralized extension method
-public static IResult ToHttpResult<T>(this Result<T> result) => result.IsSuccess
-    ? Results.Ok(result.Value)
-    : result.Error.Code.StartsWith("NotFound") ? Results.NotFound(result.Error)
-    : result.Error.Code.StartsWith("Conflict") ? Results.Conflict(result.Error)
-    : Results.Problem(result.Error.Description);
+private static async Task<IResult> GetBookById(Guid id, ISender sender, CancellationToken ct)
+{
+    var result = await sender.Send(new GetBookByIdQuery(id), ct);
+    return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblemResult();
+}
 ```
 
-Or a more sophisticated approach using a `ProblemDetails`-aware mapper with an error code → HTTP status dictionary.
+All error responses use RFC 7807 Problem Details — consistent, machine-readable, standard.
+
+### Why Not Other Approaches?
+
+| Approach | Problem |
+|---|---|
+| Flat `Error(string Code, string Description)` | String-based matching (`Code.StartsWith("NotFound")`), no type safety |
+| Per-entity error classes (`BookErrors.NotFound`) | Boilerplate that scales linearly with entities |
+| `Error.None` sentinel object | Redundant when `IsSuccess` already exists — just make `Error` nullable |
+| Endpoint filters returning `object?` | Loses type safety, breaks Swagger inference |
+| Enum error codes | Leaks domain knowledge into SharedKernel, violates open/closed |
 
 ### Variants in the Wild
 
@@ -162,9 +216,9 @@ public abstract class EntityBase
 ```csharp
 public abstract class AuditableEntity : EntityBase
 {
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
     public string CreatedBy { get; private set; } = string.Empty;
-    public DateTime? UpdatedAt { get; private set; }
+    public DateTimeOffset? UpdatedAt { get; private set; }
     public string? UpdatedBy { get; private set; }
 }
 ```
@@ -177,7 +231,7 @@ Populate audit fields via EF Core `SaveChangesAsync` override or an interceptor 
 public interface ISoftDeletable
 {
     bool IsDeleted { get; }
-    DateTime? DeletedAt { get; }
+    DateTimeOffset? DeletedAt { get; }
     void Delete();
 }
 ```
@@ -284,7 +338,7 @@ Books/
     BookSummaryResponse.cs    ← for list endpoints (fewer fields)
 ```
 
-**Pros:** Maximum clarity, each type has a single purpose, easy to version independently.  
+**Pros:** Maximum clarity, each type has a single purpose, easy to version independently.
 **Cons:** Many files, some duplication.
 
 ### Option B — Shared Request Record + Command (Used in This Project)
@@ -294,7 +348,7 @@ Books/
 app.MapPost("/api/books", async ([FromBody] CreateBookCommand command, ISender sender) => ...);
 ```
 
-**Pros:** Less ceremony, fewer files.  
+**Pros:** Less ceremony, fewer files.
 **Cons:** Couples the HTTP contract to the application layer. A WebApi concern (e.g., `[JsonPropertyName]`) bleeds into Application.
 
 ### Option C — Separate Request → Map to Command
@@ -307,7 +361,7 @@ public sealed record CreateBookRequest(string Title, string Author, string ISBN,
 var command = new CreateBookCommand(request.Title, request.Author, request.ISBN, request.Price, request.Year);
 ```
 
-**Pros:** Clean separation of HTTP schema from use-case schema. Best practice for large teams.  
+**Pros:** Clean separation of HTTP schema from use-case schema. Best practice for large teams.
 **Cons:** More boilerplate. Consider Mapperly or AutoMapper to reduce mapping code.
 
 ### Naming Conventions
@@ -322,13 +376,13 @@ var command = new CreateBookCommand(request.Title, request.Author, request.ISBN,
 
 ### How Deep to Go
 
-**Shallow (startup/small team):**  
+**Shallow (startup/small team):**
 One `BookDto` used everywhere. One `CreateBookRequest` for create, one `UpdateBookRequest` for update.
 
-**Medium (growth stage):**  
+**Medium (growth stage):**
 Separate read models from write models. `BookDto` for reads, `CreateBookCommand`/`UpdateBookCommand` as write contracts.
 
-**Deep (enterprise/multi-version):**  
+**Deep (enterprise/multi-version):**
 Version-namespaced DTOs (`V1.BookResponse`, `V2.BookResponse`). Separate DTOs per query (list vs. detail). Explicit mapping classes (Mapperly or custom static mappers).
 
 ---
@@ -393,7 +447,423 @@ app.MapPost("/api/books", CreateBook)
 
 ---
 
-## 8. Pagination Abstractions
+## 8. Authentication & Authorization
+
+### JWT Bearer — The Standard for APIs
+
+```csharp
+// Program.cs
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Middleware ordering matters
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
+### Applying Auth to Endpoints
+
+```csharp
+// Entire group
+var group = app.MapGroup("/api/books")
+    .RequireAuthorization();
+
+// Single endpoint
+group.MapDelete("/{id:guid}", DeleteBook)
+    .RequireAuthorization("AdminOnly");
+
+// Allow anonymous on specific endpoints within a protected group
+group.MapGet("/", GetAllBooks)
+    .AllowAnonymous();
+```
+
+### Policy-Based Authorization
+
+```csharp
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"))
+    .AddPolicy("CanManageBooks", policy =>
+        policy.RequireClaim("permission", "books:write"));
+```
+
+For complex rules, implement `IAuthorizationRequirement` + `IAuthorizationHandler`:
+
+```csharp
+public sealed record ResourceOwnerRequirement : IAuthorizationRequirement;
+
+public sealed class ResourceOwnerHandler : AuthorizationHandler<ResourceOwnerRequirement, Book>
+{
+    protected override Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        ResourceOwnerRequirement requirement,
+        Book resource)
+    {
+        if (context.User.FindFirstValue(ClaimTypes.NameIdentifier) == resource.OwnerId.ToString())
+            context.Succeed(requirement);
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+### API Key Authentication (for Service-to-Service)
+
+```csharp
+public sealed class ApiKeyEndpointFilter : IEndpointFilter
+{
+    private readonly IConfiguration _config;
+
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        if (!context.HttpContext.Request.Headers.TryGetValue("X-Api-Key", out var key)
+            || key != _config["ApiKey"])
+            return Results.Unauthorized();
+
+        return await next(context);
+    }
+}
+```
+
+### Which Approach to Use
+
+| Approach | Best For |
+|---|---|
+| JWT Bearer | User-facing APIs, SPAs, mobile apps |
+| API Key | Service-to-service, webhooks, simple internal APIs |
+| OAuth 2.0 / OpenID Connect | Delegated access, third-party integrations, SSO |
+| Cookie auth | Server-rendered apps (Razor Pages, Blazor Server) |
+
+---
+
+## 9. Global Exception Handling
+
+The Result pattern handles **expected** failures (not found, conflict, validation). But **unexpected** exceptions (database connection drops, null references, third-party SDK failures) still need a catch-all that returns a consistent Problem Details response.
+
+### `IExceptionHandler` (.NET 8+)
+
+The modern replacement for exception-handling middleware:
+
+```csharp
+public sealed class GlobalExceptionHandler : IExceptionHandler
+{
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "InternalError",
+            Detail = "An unexpected error occurred."
+        }, cancellationToken);
+
+        return true;
+    }
+}
+```
+
+Registration:
+
+```csharp
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// In the pipeline — must come before routing
+app.UseExceptionHandler();
+```
+
+### How This Complements the Result Pattern
+
+```
+Expected failures (domain logic)  →  Result pattern  →  ToProblemResult()
+Unexpected failures (crashes)     →  IExceptionHandler → ProblemDetails 500
+```
+
+Both produce RFC 7807 Problem Details — API consumers get a consistent error shape regardless of the failure source.
+
+### What NOT to Do
+
+- Don't catch `Exception` inside handlers — let unexpected errors bubble up to `IExceptionHandler`
+- Don't return stack traces in production — log them, but return a generic message
+- Don't use exception middleware for expected failures — that's what the Result pattern is for
+
+---
+
+## 10. Structured Logging & Observability
+
+### Serilog Setup
+
+```csharp
+// Program.cs
+builder.Host.UseSerilog((context, config) =>
+    config.ReadFrom.Configuration(context.Configuration));
+```
+
+```json
+// appsettings.json
+{
+  "Serilog": {
+    "Using": ["Serilog.Sinks.Console", "Serilog.Sinks.Seq"],
+    "MinimumLevel": { "Default": "Information" },
+    "WriteTo": [
+      { "Name": "Console" },
+      { "Name": "Seq", "Args": { "serverUrl": "http://localhost:5341" } }
+    ],
+    "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId"]
+  }
+}
+```
+
+### Request Logging Middleware
+
+```csharp
+// Replaces verbose ASP.NET Core request logging with a single structured log line
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+    };
+});
+```
+
+### Correlation IDs
+
+Track requests across services with a correlation ID header:
+
+```csharp
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+        ?? Guid.NewGuid().ToString();
+
+    context.Response.Headers["X-Correlation-Id"] = correlationId;
+
+    using (LogContext.PushProperty("CorrelationId", correlationId))
+    {
+        await next();
+    }
+});
+```
+
+### MediatR Logging Behavior
+
+See Section 16 for the `LoggingBehavior` pattern that logs command/query names and execution duration.
+
+### OpenTelemetry (Production Observability)
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter());
+```
+
+OpenTelemetry provides distributed tracing and metrics. Serilog handles logs. Together they cover the three pillars of observability.
+
+---
+
+## 11. Configuration — Options Pattern
+
+### Strongly-Typed Settings
+
+```csharp
+// Define a settings class
+public sealed class JwtSettings
+{
+    public const string SectionName = "Jwt";
+
+    public string Issuer { get; init; } = string.Empty;
+    public string Audience { get; init; } = string.Empty;
+    public string Key { get; init; } = string.Empty;
+    public int ExpiryMinutes { get; init; }
+}
+```
+
+```json
+// appsettings.json
+{
+  "Jwt": {
+    "Issuer": "bookstore-api",
+    "Audience": "bookstore-client",
+    "Key": "your-secret-key-here",
+    "ExpiryMinutes": 60
+  }
+}
+```
+
+### Registration
+
+```csharp
+// Bind and validate at startup
+builder.Services.AddOptions<JwtSettings>()
+    .BindConfiguration(JwtSettings.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+```
+
+### Injection
+
+```csharp
+// IOptions<T> — singleton, read once at startup
+// IOptionsSnapshot<T> — scoped, re-reads per request (useful for reloadable config)
+// IOptionsMonitor<T> — singleton, notifies on change
+
+public class TokenService(IOptions<JwtSettings> options)
+{
+    private readonly JwtSettings _settings = options.Value;
+}
+```
+
+### Why Not `IConfiguration` Directly?
+
+| `IConfiguration["Jwt:Key"]` | `IOptions<JwtSettings>` |
+|---|---|
+| Returns `string?` — no type safety | Strongly typed, IDE autocomplete |
+| No validation | `ValidateDataAnnotations()` catches issues at startup |
+| Magic string keys | Compile-time property access |
+| Scattered across codebase | Centralized in one settings class |
+
+---
+
+## 12. API Versioning
+
+### URL-Based Versioning (Simplest)
+
+```csharp
+var v1 = app.MapGroup("/api/v1/books").WithTags("Books v1");
+var v2 = app.MapGroup("/api/v2/books").WithTags("Books v2");
+
+v1.MapGet("/", GetAllBooksV1);
+v2.MapGet("/", GetAllBooksV2);  // returns different shape
+```
+
+**Pros:** Obvious, easy to route, cache-friendly.
+**Cons:** URL changes break clients. Multiple route groups to maintain.
+
+### Header-Based Versioning (with `Asp.Versioning`)
+
+```csharp
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new HeaderApiVersionReader("X-Api-Version");
+});
+```
+
+**Pros:** URLs stay clean. Easy to default.
+**Cons:** Less discoverable. Harder to test in a browser.
+
+### Which to Choose
+
+| Approach | Best For |
+|---|---|
+| URL path (`/v1/`, `/v2/`) | Public APIs, breaking changes are rare |
+| Header (`X-Api-Version`) | Internal APIs, gradual migration |
+| Query string (`?api-version=2`) | Compromise — visible but doesn't change the path |
+
+### When to Version
+
+Version when you make **breaking changes** to the response shape, remove fields, or change behavior. Don't version for additive changes (new optional fields, new endpoints) — those are backwards-compatible.
+
+---
+
+## 13. Idempotency
+
+### The Problem
+
+`POST /api/orders` called twice due to a network retry creates two orders. Non-GET operations need idempotency guarantees for safety.
+
+### Idempotency Keys
+
+The client sends a unique key with the request. The server stores the result and returns the cached response on replay.
+
+```csharp
+public sealed class IdempotencyFilter : IEndpointFilter
+{
+    private readonly IIdempotencyStore _store;
+
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        if (!context.HttpContext.Request.Headers.TryGetValue("Idempotency-Key", out var key))
+            return await next(context);
+
+        var cached = await _store.GetAsync(key!);
+        if (cached is not null)
+            return cached;
+
+        var result = await next(context);
+        await _store.SetAsync(key!, result, TimeSpan.FromHours(24));
+
+        return result;
+    }
+}
+```
+
+Apply to mutation endpoints:
+
+```csharp
+group.MapPost("/", CreateBook)
+    .AddEndpointFilter<IdempotencyFilter>();
+```
+
+### Storage Options
+
+| Store | Tradeoff |
+|---|---|
+| In-memory (`ConcurrentDictionary`) | Simple, lost on restart — fine for dev |
+| Redis | Distributed, TTL support, production-ready |
+| Database table | Transactional with the main operation — strongest guarantee |
+
+### Which Operations Need It?
+
+| Method | Naturally Idempotent? | Needs Key? |
+|---|---|---|
+| GET | Yes | No |
+| PUT | Yes (full replace) | Usually no |
+| DELETE | Yes | Usually no |
+| POST | **No** | **Yes** |
+| PATCH | Depends | Sometimes |
+
+---
+
+## 14. Pagination Abstractions
 
 ### Standard Offset-Based Pagination
 
@@ -429,7 +899,7 @@ EF Core implementation: order by a stable column (usually `Id` or `CreatedAt`), 
 
 ---
 
-## 9. Domain Events and Outbox Pattern
+## 15. Domain Events and Outbox Pattern
 
 ### Why Domain Events
 
@@ -480,7 +950,7 @@ Libraries: **MassTransit**, **Wolverine**, **Quartz.NET** (for the worker).
 
 ---
 
-## 10. Cross-Cutting Concerns via Pipeline Behaviors
+## 16. Cross-Cutting Concerns via Pipeline Behaviors
 
 MediatR pipeline behaviors are middleware for your application layer:
 
@@ -523,7 +993,7 @@ public sealed class LoggingBehavior<TRequest, TResponse>
 
 ---
 
-## 11. Folder & Project Structure Deep Dive
+## 17. Folder & Project Structure Deep Dive
 
 ### Project Boundaries (What Belongs Where)
 
@@ -531,7 +1001,7 @@ public sealed class LoggingBehavior<TRequest, TResponse>
 Bookstore.SharedKernel        ← Zero business logic. Base types, Result, Error, interfaces.
                                  No NuGet dependencies besides the BCL.
 
-Bookstore.Domain              ← Pure C#. Entities, value objects, domain events, domain errors.
+Bookstore.Domain              ← Pure C#. Entities, value objects, domain events.
                                  No EF Core, no MediatR, no HTTP.
 
 Bookstore.Application         ← Use cases. Commands, queries, handlers, DTOs.
@@ -599,13 +1069,13 @@ This maximizes locality — every piece of a feature is in one place. The tradeo
 | DTOs | Single `BookDto` | Read vs. Write DTOs | Per-operation DTOs + versioning |
 | Commands | One per CRUD op | Separate create/update/delete | Fine-grained domain operations (`PublishBookCommand`, `RetireBookCommand`) |
 | Queries | One per endpoint | + Dedicated read models | + Separate read database (CQRS read side) |
-| Errors | Generic `Error` record | Domain-specific error types per aggregate | Rich error types with metadata, error codes by HTTP status |
+| Errors | Single `Error` record | Typed error hierarchy (`NotFoundError`, `ConflictError`) | Rich error types with metadata per aggregate |
 | Validators | Inline in handler | Separate validator class | Composite validators, async validators |
 | Tests | Happy-path unit tests | Unit + integration tests | Unit + integration + contract tests + architecture tests |
 
 ---
 
-## 12. When NOT To Abstract
+## 18. When NOT To Abstract
 
 Abstraction for its own sake is a liability. Here are anti-patterns to avoid:
 
@@ -616,7 +1086,7 @@ If your service has 3-4 resources and will stay that way, CQRS + Clean Architect
 ### Generic Repository on Top of EF Core
 
 ```csharp
-// ❌ Pointless — DbContext IS already a unit of work + repository
+// Pointless — DbContext IS already a unit of work + repository
 public interface IRepository<T> { Task<T?> GetByIdAsync(Guid id); ... }
 ```
 
@@ -642,16 +1112,23 @@ A chain of 6+ behaviors makes debugging a stack trace nightmare. Prefer behavior
 
 ---
 
-## 13. Summary Checklist
+## 19. Summary Checklist
 
 Use this as a decision guide when starting a new API project:
 
-- [ ] **Result Pattern** — avoid exceptions for expected failures; use `Result<T>`
+- [ ] **Result Pattern** — typed error hierarchy + extension method for HTTP mapping
 - [ ] **CQRS** — separate reads from writes using commands and queries
 - [ ] **Vertical Slices** — group files by use case, not by layer type
 - [ ] **IEndpointDefinition** — keep `Program.cs` clean; one class per resource
 - [ ] **IApplicationDbContext** — thin interface over EF Core; no generic repository
 - [ ] **EntityBase / AuditableEntity** — standardize Id, CreatedAt, UpdatedAt
+- [ ] **Authentication** — JWT Bearer for user-facing, API keys for service-to-service
+- [ ] **Authorization** — policy-based with `AddAuthorizationBuilder()`
+- [ ] **Global exception handling** — `IExceptionHandler` for unexpected errors, Result pattern for expected
+- [ ] **Structured logging** — Serilog + correlation IDs + request logging middleware
+- [ ] **Options pattern** — `IOptions<T>` with `ValidateOnStart()` for all configuration
+- [ ] **API versioning** — URL-based for public APIs, header-based for internal
+- [ ] **Idempotency** — idempotency keys for POST operations
 - [ ] **Domain Events** — decouple side effects from aggregates
 - [ ] **Outbox Pattern** — reliable event dispatch in distributed systems
 - [ ] **Pipeline Behaviors** — logging, validation, caching as cross-cutting middleware
@@ -664,4 +1141,4 @@ Use this as a decision guide when starting a new API project:
 
 ---
 
-*This document reflects patterns from the .NET Clean Architecture community, including practices popularized by Milan Jovanović, Jason Taylor's CleanArchitecture template, the Ardalis.Result library, and production systems using MediatR, FluentValidation, and EF Core.*
+*This document reflects patterns from the .NET Clean Architecture community, including practices popularized by Milan Jovanovic, Jason Taylor's CleanArchitecture template, the Ardalis.Result library, and production systems using MediatR, FluentValidation, and EF Core.*

@@ -1,6 +1,7 @@
+using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
-using MediatR;
+using Mediator;
 
 namespace Bookstore.Application.Books.Commands.DeleteBook;
 
-public sealed record DeleteBookCommand(Guid Id) : IRequest<Result>;
+public sealed record DeleteBookCommand(BookId Id) : ICommand<Result>;

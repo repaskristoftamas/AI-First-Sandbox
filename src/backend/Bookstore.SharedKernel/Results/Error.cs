@@ -1,7 +1,9 @@
 namespace Bookstore.SharedKernel.Results;
 
-public sealed record Error(string Code, string Description)
-{
-    public static readonly Error None = new(string.Empty, string.Empty);
-    public static readonly Error NullValue = new("Error.NullValue", "A null value was provided.");
-}
+public abstract record Error(string Description);
+
+public sealed record NotFoundError(string Description) : Error(Description);
+
+public sealed record ConflictError(string Description) : Error(Description);
+
+public sealed record ValidationError(string Description) : Error(Description);

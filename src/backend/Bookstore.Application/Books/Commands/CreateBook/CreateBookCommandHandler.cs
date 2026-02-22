@@ -1,38 +1,33 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Application.Books.Commands.CreateBook;
 
-internal sealed class CreateBookCommandHandler : IRequestHandler<CreateBookCommand, Result<Guid>>
+internal sealed class CreateBookCommandHandler(IApplicationDbContext context) : ICommandHandler<CreateBookCommand, Result<Guid>>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IApplicationDbContext _context = context;
 
-    public CreateBookCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<Result<Guid>> Handle(CreateBookCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(CreateBookCommand command, CancellationToken cancellationToken)
     {
         bool isbnExists = await _context.Books
-            .AnyAsync(b => b.ISBN == request.ISBN, cancellationToken);
+            .AnyAsync(b => b.ISBN == command.ISBN, cancellationToken);
 
         if (isbnExists)
-            return Result.Failure<Guid>(BookErrors.Conflict(request.ISBN));
+            return Result.Failure<Guid>(new ConflictError($"A book with ISBN '{command.ISBN}' already exists."));
 
         var book = Book.Create(
-            request.Title,
-            request.Author,
-            request.ISBN,
-            request.Price,
-            request.PublicationYear);
+            command.Title,
+            command.Author,
+            command.ISBN,
+            command.Price,
+            command.PublicationYear);
 
         _context.Books.Add(book);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(book.Id);
+        return Result.Success(book.Id.Value);
     }
 }

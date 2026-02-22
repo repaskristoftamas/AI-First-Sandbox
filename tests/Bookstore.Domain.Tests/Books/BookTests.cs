@@ -20,7 +20,7 @@ public class BookTests
         var book = Book.Create(title, author, isbn, price, publicationYear);
 
         // Assert
-        book.Id.Should().NotBeEmpty();
+        book.Id.Value.Should().NotBeEmpty();
         book.Title.Should().Be(title);
         book.Author.Should().Be(author);
         book.ISBN.Should().Be(isbn);

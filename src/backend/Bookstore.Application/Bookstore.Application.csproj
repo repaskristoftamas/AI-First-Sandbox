@@ -5,8 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="12.4.1" />
+    <InternalsVisibleTo Include="Bookstore.Application.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
+    <PackageReference Include="Mediator.SourceGenerator" Version="3.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+    <PackageReference Include="Riok.Mapperly" Version="4.3.1">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
     <ProjectReference Include="..\Bookstore.SharedKernel\Bookstore.SharedKernel.csproj" />
     <ProjectReference Include="..\Bookstore.Domain\Bookstore.Domain.csproj" />
   </ItemGroup>

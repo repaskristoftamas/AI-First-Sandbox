@@ -2,7 +2,7 @@ using Bookstore.SharedKernel.Abstractions;
 
 namespace Bookstore.Domain.Books;
 
-public sealed class Book : EntityBase
+public sealed class Book : AuditableEntity<BookId>
 {
     private Book() { }
 
@@ -16,7 +16,7 @@ public sealed class Book : EntityBase
     {
         return new Book
         {
-            Id = Guid.NewGuid(),
+            Id = BookId.New(),
             Title = title,
             Author = author,
             ISBN = isbn,

@@ -1,6 +1,8 @@
 using Bookstore.Domain.Books;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Bookstore.Infrastructure.Data.Configurations;
 
@@ -8,7 +10,19 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
 {
     public void Configure(EntityTypeBuilder<Book> builder)
     {
+        var converter = new ValueConverter<BookId, Guid>(
+            id => id.Value,
+            guid => new BookId(guid));
+
+        var comparer = new ValueComparer<BookId>(
+            (a, b) => a.Value == b.Value,
+            id => id.Value.GetHashCode(),
+            id => new BookId(id.Value));
+
         builder.HasKey(b => b.Id);
+
+        builder.Property(b => b.Id)
+            .HasConversion(converter, comparer);
 
         builder.Property(b => b.Title)
             .IsRequired()
@@ -27,5 +41,10 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
 
         builder.Property(b => b.Price)
             .HasPrecision(10, 2);
+
+        builder.Property(b => b.CreatedAt)
+            .IsRequired();
+
+        builder.Property(b => b.UpdatedAt);
     }
 }

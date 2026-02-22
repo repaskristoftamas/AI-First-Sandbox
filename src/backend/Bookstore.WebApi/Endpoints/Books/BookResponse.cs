@@ -1,6 +1,6 @@
-namespace Bookstore.Application.Books.DTOs;
+namespace Bookstore.WebApi.Endpoints.Books;
 
-public sealed record BookDto(
+public sealed record BookResponse(
     Guid Id,
     string Title,
     string Author,
