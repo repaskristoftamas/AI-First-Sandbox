@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/backend/">
+    <Project Path="src/backend/Bookstore.Application/Bookstore.Application.csproj" />
+    <Project Path="src/backend/Bookstore.Domain/Bookstore.Domain.csproj" />
+    <Project Path="src/backend/Bookstore.Infrastructure/Bookstore.Infrastructure.csproj" />
+    <Project Path="src/backend/Bookstore.SharedKernel/Bookstore.SharedKernel.csproj" />
+    <Project Path="src/backend/Bookstore.WebApi/Bookstore.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Bookstore.Application.Tests/Bookstore.Application.Tests.csproj" />
+    <Project Path="tests/Bookstore.Domain.Tests/Bookstore.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
