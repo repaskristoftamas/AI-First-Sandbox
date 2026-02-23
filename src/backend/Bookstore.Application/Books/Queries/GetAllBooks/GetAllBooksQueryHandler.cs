@@ -17,6 +17,6 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<BookDto>>(books.Select(b => b.ToDto()).ToList());
+        return Result.Success<IReadOnlyList<BookDto>>([.. books.Select(b => b.ToDto())]);
     }
 }
