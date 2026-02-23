@@ -1,14 +1,20 @@
 using Bookstore.SharedKernel.Results;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Bookstore.WebApi.Extensions;
 
 public static class ErrorExtensions
 {
-    public static IResult ToProblemResult(this Error error) => error switch
+    public static ProblemHttpResult ToProblemHttpResult(this Error error)
     {
-        NotFoundError e   => Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "NotFound", detail: e.Description),
-        ConflictError e   => Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "Conflict", detail: e.Description),
-        ValidationError e => Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "ValidationError", detail: e.Description),
-        _                 => Results.Problem(statusCode: StatusCodes.Status500InternalServerError, title: "InternalError", detail: error.Description)
-    };
+        var (statusCode, title) = error switch
+        {
+            NotFoundError   => (StatusCodes.Status404NotFound, "NotFound"),
+            ConflictError   => (StatusCodes.Status409Conflict, "Conflict"),
+            ValidationError => (StatusCodes.Status400BadRequest, "ValidationError"),
+            _               => (StatusCodes.Status500InternalServerError, "InternalError")
+        };
+
+        return TypedResults.Problem(statusCode: statusCode, title: title, detail: error.Description);
+    }
 }

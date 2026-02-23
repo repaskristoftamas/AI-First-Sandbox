@@ -389,7 +389,31 @@ Version-namespaced DTOs (`V1.BookResponse`, `V2.BookResponse`). Separate DTOs pe
 
 ## 7. Validation Abstractions
 
-### FluentValidation + MediatR Pipeline Behavior
+### The Problem
+
+Every layer of your application has a different validation responsibility, but most projects either validate everything in one place (missing some concerns) or validate the same thing in multiple places (duplicating logic). The architectural question is: *what should be validated where, and how should validation failures be communicated?*
+
+### The Three Layers of Validation
+
+Validation is not a single concern — it spans three distinct layers, each with a different purpose:
+
+```
+HTTP Boundary (WebApi)        →  "Is this a well-formed request?"
+Application Layer (Handlers)  →  "Does this operation make business sense?"
+Domain Layer (Entities)        →  "Does this violate an invariant?"
+```
+
+| Layer | What It Validates | Examples | Failure Means |
+|---|---|---|---|
+| **HTTP Boundary** | Shape, format, required fields | Missing `Title`, `Price` is negative, `ISBN` doesn't match regex | 400 Bad Request |
+| **Application** | Business rules requiring external state | ISBN already exists (DB check), user has no permission for this operation | 409 Conflict, 403 Forbidden |
+| **Domain** | Entity invariants — things that must *always* be true | `Price` cannot be set below zero, `Title` cannot be empty | Exception (should never reach here if upper layers validate) |
+
+**Key insight:** HTTP boundary validation and domain invariants often *look* similar (both check `Title` is not empty), but they serve different purposes. The HTTP check produces a user-friendly error response. The domain check is a safety net that throws if a developer bypasses the upper layers.
+
+### Approach A — FluentValidation + MediatR Pipeline Behavior (Recommended)
+
+The most popular approach in CQRS projects. Validators live alongside commands/queries and run automatically via a pipeline behavior before the handler executes.
 
 ```csharp
 // 1. Define a validator alongside the command
@@ -400,6 +424,7 @@ public class CreateBookCommandValidator : AbstractValidator<CreateBookCommand>
         RuleFor(x => x.Title).NotEmpty().MaximumLength(250);
         RuleFor(x => x.ISBN).NotEmpty().Matches(@"^978-\d{10}$");
         RuleFor(x => x.Price).GreaterThan(0);
+        RuleFor(x => x.PublicationYear).InclusiveBetween(1450, DateTime.UtcNow.Year);
     }
 }
 
@@ -422,28 +447,132 @@ public sealed class ValidationBehavior<TRequest, TResponse>
             .ToList();
 
         if (failures.Count != 0)
-            throw new ValidationException(failures); // or return a failed Result
+            return (TResponse)Result.Failure(
+                new ValidationError(string.Join("; ", failures.Select(f => f.ErrorMessage))));
 
         return await next();
     }
 }
 ```
 
-### Registering Validators
+Registration:
 
 ```csharp
 services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 ```
 
-### Minimal API Filter Alternative
+**Pros:** Declarative, composable, auto-discovered, testable in isolation, integrates with Result pattern.
+**Cons:** Additional NuGet dependency, learning curve for complex rules, async validators need care.
 
-For projects not using MediatR, endpoint filters provide a similar capability:
+### Approach B — Data Annotations
+
+Built into .NET, no extra packages. Works well for simple models but becomes unwieldy for complex rules.
 
 ```csharp
+public sealed record CreateBookRequest
+{
+    [Required, MaxLength(250)]
+    public string Title { get; init; } = string.Empty;
+
+    [Required, RegularExpression(@"^978-\d{10}$")]
+    public string ISBN { get; init; } = string.Empty;
+
+    [Range(0.01, double.MaxValue)]
+    public decimal Price { get; init; }
+}
+```
+
+**Pros:** Zero dependencies, familiar to ASP.NET developers, tooling support.
+**Cons:** Attribute-based — can't express conditional rules, cross-property rules, or rules requiring injected services. No clean way to integrate with CQRS pipeline.
+
+### Approach C — Manual Validation in Handlers
+
+No framework — just `if` statements at the top of the handler.
+
+```csharp
+public async Task<Result<Guid>> Handle(CreateBookCommand cmd, CancellationToken ct)
+{
+    if (string.IsNullOrWhiteSpace(cmd.Title))
+        return Result.Failure<Guid>(new ValidationError("Title is required."));
+
+    if (cmd.Price <= 0)
+        return Result.Failure<Guid>(new ValidationError("Price must be positive."));
+
+    // ... proceed with handler logic
+}
+```
+
+**Pros:** No dependencies, explicit, easy to debug.
+**Cons:** Mixes validation with business logic, can't reuse across handlers, doesn't scale.
+
+### Approach D — Minimal API Endpoint Filters
+
+For projects not using MediatR, endpoint filters provide validation at the HTTP boundary:
+
+```csharp
+public sealed class ValidationFilter<T> : IEndpointFilter where T : class
+{
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        var request = context.Arguments.OfType<T>().FirstOrDefault();
+        if (request is null) return Results.BadRequest();
+
+        var validator = context.HttpContext.RequestServices.GetService<IValidator<T>>();
+        if (validator is null) return await next(context);
+
+        var result = await validator.ValidateAsync(request);
+        return result.IsValid
+            ? await next(context)
+            : Results.ValidationProblem(result.ToDictionary());
+    }
+}
+
+// Usage
 app.MapPost("/api/books", CreateBook)
     .AddEndpointFilter<ValidationFilter<CreateBookRequest>>();
 ```
+
+**Pros:** Runs before the handler, HTTP-native, works without MediatR.
+**Cons:** Only validates at HTTP boundary — doesn't protect against invalid commands dispatched internally.
+
+### Comparison
+
+| Approach | Best For | Complexity | Testability | Scales To |
+|---|---|---|---|---|
+| **FluentValidation + Pipeline** | CQRS projects with cross-cutting validation | Medium | Excellent | Large |
+| **Data Annotations** | Simple DTOs, small APIs | Low | Limited | Small |
+| **Manual in Handler** | One-off rules, prototype stage | Low | Good (but coupled) | Small |
+| **Endpoint Filters** | Non-MediatR minimal APIs | Medium | Good | Medium |
+
+### Domain Invariants — The Last Line of Defense
+
+Domain validation is *not* the same as input validation. Domain invariants are enforced inside the entity and should throw if violated — they represent states that must *never* exist:
+
+```csharp
+public class Book : AuditableEntity
+{
+    public static Book Create(string title, string author, string isbn, decimal price, int year)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentException.ThrowIfNullOrWhiteSpace(isbn);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(price);
+
+        return new Book { Title = title, Author = author, ISBN = isbn, Price = price, Year = year };
+    }
+}
+```
+
+These guard clauses are *not* for producing user-friendly messages — that's the job of FluentValidation. These exist to catch programming errors where a developer bypasses validation and passes invalid data directly.
+
+### What NOT to Do
+
+- **Don't validate only at the domain level** — users get exceptions instead of structured error responses
+- **Don't throw `ValidationException` from pipeline behaviors** — return a `Result.Failure` with a `ValidationError` to stay consistent with your error handling strategy
+- **Don't duplicate identical rules across layers** — validate shape/format at the boundary, validate business rules in the handler, enforce invariants in the domain
+- **Don't use async validators for rules that don't need I/O** — `ValidateAsync` has overhead; use sync validation when no database or service call is required
+- **Don't skip validation for internal commands** — if a background job dispatches a command, it should still pass through the validation pipeline
 
 ---
 
@@ -619,6 +748,39 @@ Both produce RFC 7807 Problem Details — API consumers get a consistent error s
 
 ## 10. Structured Logging & Observability
 
+### The Problem
+
+Most projects start with `Console.WriteLine` or `_logger.LogInformation("Something happened")` — unstructured text that's impossible to search, filter, or correlate at scale. When a production incident occurs, you need to answer questions like *"show me all requests from user X that touched the Orders service in the last hour"* — and flat text logs can't do that.
+
+The architectural question is: *what should you log, where should logs go, and how do you connect logs across services and layers?*
+
+### Structured vs. Unstructured Logging
+
+The single most impactful logging decision is whether to use structured logging.
+
+```csharp
+// Unstructured — impossible to query programmatically
+_logger.LogInformation($"Book {book.Id} created by user {userId} with price {book.Price}");
+
+// Structured — each value is a searchable, filterable property
+_logger.LogInformation("Book {BookId} created by {UserId} with price {Price}",
+    book.Id, userId, book.Price);
+```
+
+The structured version produces a log entry with discrete properties (`BookId`, `UserId`, `Price`) that log aggregation tools can index. This is the foundation — everything else builds on top of it.
+
+**Critical rule:** Never use string interpolation (`$"..."`) with `ILogger`. It defeats structured logging — the values become part of the message template instead of separate properties.
+
+### Choosing a Logging Framework
+
+| Framework | Strengths | Weaknesses | Best For |
+|---|---|---|---|
+| **Built-in `ILogger`** | Zero dependencies, Microsoft-supported, DI-integrated | Limited sinks, no enrichment, basic formatting | Small projects, libraries |
+| **Serilog** | Rich sink ecosystem, structured-first, config-driven, enrichers | NuGet dependency, learning curve for advanced config | Most production APIs |
+| **NLog** | Mature, flexible layouts, many targets | XML-heavy config, less structured-first than Serilog | Legacy projects, teams familiar with NLog |
+
+**Recommendation:** Use Serilog for application projects. Use `ILogger` (the Microsoft abstraction) as your injection surface so you're not tightly coupled to Serilog — Serilog plugs in as the *provider* behind `ILogger`.
+
 ### Serilog Setup
 
 ```csharp
@@ -632,7 +794,13 @@ builder.Host.UseSerilog((context, config) =>
 {
   "Serilog": {
     "Using": ["Serilog.Sinks.Console", "Serilog.Sinks.Seq"],
-    "MinimumLevel": { "Default": "Information" },
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft.AspNetCore": "Warning",
+        "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+      }
+    },
     "WriteTo": [
       { "Name": "Console" },
       { "Name": "Seq", "Args": { "serverUrl": "http://localhost:5341" } }
@@ -642,22 +810,60 @@ builder.Host.UseSerilog((context, config) =>
 }
 ```
 
+**Key point:** Override noisy namespaces. ASP.NET Core and EF Core emit verbose `Information`-level logs for every request and query — suppress them to `Warning` and use dedicated middleware (below) for cleaner request logging.
+
+### Log Level Strategy
+
+Choosing the right log level is an architectural decision — it determines what's visible during normal operation vs. during incident investigation.
+
+| Level | When to Use | Examples |
+|---|---|---|
+| **Trace** | Step-by-step execution detail — *never* in production | Entering/exiting methods, variable values |
+| **Debug** | Diagnostic information useful during development | Cache hit/miss, SQL query generated, request deserialized |
+| **Information** | Normal operational events — things you'd want on a dashboard | Request completed, command handled, user logged in |
+| **Warning** | Something unexpected but recoverable happened | Retry triggered, deprecated endpoint called, rate limit approaching |
+| **Error** | An operation failed — requires attention | Unhandled exception, external service timeout, database connection lost |
+| **Fatal/Critical** | Application is about to crash or is in an unrecoverable state | Out of memory, configuration missing at startup, database migration failed |
+
+**Production default:** `Information`. Set `Debug` per-namespace when investigating issues — Serilog's `MinimumLevel.Override` makes this possible without redeployment if you use a reloadable config source.
+
+### What to Log vs. What NOT to Log
+
+| Log This | Never Log This |
+|---|---|
+| Command/query names and duration | Passwords, tokens, API keys |
+| User ID (not username/email unless needed) | Credit card numbers, SSNs |
+| Request path, method, status code | Full request/response bodies in production |
+| Correlation IDs, trace IDs | Connection strings |
+| Error messages and exception types | PII (emails, phone numbers) without consent |
+| Business events (order placed, book created) | Health check noise (log these at `Debug` only) |
+
+If you accidentally log sensitive data, it persists in your log storage and may violate GDPR, HIPAA, or PCI-DSS. Treat log output as a security surface.
+
 ### Request Logging Middleware
 
+Replace ASP.NET Core's built-in verbose request logging (multiple lines per request) with a single structured line:
+
 ```csharp
-// Replaces verbose ASP.NET Core request logging with a single structured log line
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
     {
-        diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        diagnosticContext.Set("UserId",
+            httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
     };
+
+    // Don't log health check endpoints — they create noise
+    options.GetLevel = (httpContext, elapsed, ex) =>
+        httpContext.Request.Path.StartsWithSegments("/health")
+            ? LogEventLevel.Debug
+            : LogEventLevel.Information;
 });
 ```
 
 ### Correlation IDs
 
-Track requests across services with a correlation ID header:
+Track a single logical operation across multiple services and layers. The first service generates the ID; downstream services propagate it.
 
 ```csharp
 app.Use(async (context, next) =>
@@ -674,11 +880,68 @@ app.Use(async (context, next) =>
 });
 ```
 
+When calling downstream services, forward the header:
+
+```csharp
+httpClient.DefaultRequestHeaders.Add("X-Correlation-Id", correlationId);
+```
+
+Now every log entry across every service for the same user action shares a `CorrelationId` — you can filter an entire distributed operation in one query.
+
 ### MediatR Logging Behavior
 
-See Section 16 for the `LoggingBehavior` pattern that logs command/query names and execution duration.
+See Section 16 for the `LoggingBehavior` pattern that logs command/query names and execution duration. This gives you application-level observability without touching endpoint code.
 
-### OpenTelemetry (Production Observability)
+### Health Checks
+
+Health checks are part of observability — they tell orchestrators (Docker, Kubernetes, load balancers) whether your service is ready to receive traffic.
+
+```csharp
+// Registration
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString, name: "database")
+    .AddRedis(redisConnectionString, name: "cache");   // if applicable
+
+// Endpoint
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+```
+
+| Check Type | Purpose | Example |
+|---|---|---|
+| **Liveness** (`/health/live`) | Is the process alive? | Always returns 200 — if it doesn't, restart the container |
+| **Readiness** (`/health/ready`) | Can the service handle requests? | Checks DB connection, cache connection, dependent services |
+| **Startup** (`/health/startup`) | Has the service finished initializing? | Migrations complete, caches warmed, config loaded |
+
+Docker Compose integration:
+
+```yaml
+healthcheck:
+  test: curl --fail http://localhost:8080/health || exit 1
+  interval: 15s
+  timeout: 5s
+  retries: 3
+```
+
+### Centralized Log Aggregation
+
+In production, logs must leave the application and flow to a centralized system for search, alerting, and dashboards.
+
+| Stack | Components | Best For |
+|---|---|---|
+| **Seq** | Seq server (single binary) | Small teams, .NET-native, structured logging built-in |
+| **ELK** | Elasticsearch + Logstash + Kibana | Large scale, flexible, widely adopted |
+| **Grafana + Loki** | Loki (log storage) + Grafana (dashboards) | Cost-effective, pairs with Prometheus metrics |
+| **Application Insights** | Azure-native APM | Azure-hosted projects, integrated tracing + metrics + logs |
+| **Datadog / New Relic** | SaaS APM platforms | Teams that prefer managed solutions, broad integrations |
+
+**Recommendation for .NET projects:** Start with **Seq** for development (free single-user, excellent structured log viewer). Move to **Application Insights** or **Grafana + Loki** for production depending on your cloud provider.
+
+### OpenTelemetry — The Three Pillars
+
+OpenTelemetry is the vendor-neutral standard for observability. It covers all three pillars: **logs**, **traces**, and **metrics**.
 
 ```csharp
 builder.Services.AddOpenTelemetry()
@@ -689,10 +952,35 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter())
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
         .AddOtlpExporter());
 ```
 
-OpenTelemetry provides distributed tracing and metrics. Serilog handles logs. Together they cover the three pillars of observability.
+| Pillar | What It Answers | Tool |
+|---|---|---|
+| **Logs** | What happened? | Serilog → Seq / Loki / Application Insights |
+| **Traces** | How did a request flow across services? | OpenTelemetry → Jaeger / Zipkin / Application Insights |
+| **Metrics** | What's the trend? (Request rate, error rate, latency) | OpenTelemetry → Prometheus / Grafana / Application Insights |
+
+### How Deep to Go
+
+| Concern | Shallow | Medium | Deep |
+|---|---|---|---|
+| **Framework** | Built-in `ILogger` with Console | Serilog with Console + file sink | Serilog with Seq/Loki + enrichers + filters |
+| **Request logging** | Default ASP.NET Core logs | `UseSerilogRequestLogging()` | + Correlation IDs + user context enrichment |
+| **Health checks** | None | `/health` with DB check | Liveness/readiness/startup separation |
+| **Aggregation** | Console output | Seq (development) | Centralized stack (ELK / Loki / App Insights) |
+| **Tracing** | None | OpenTelemetry basic instrumentation | Distributed tracing with custom spans |
+| **Alerting** | Manual log review | Log-level-based alerts | SLO-based alerting with error budgets |
+
+### What NOT to Do
+
+- **Don't use string interpolation with `ILogger`** — `$"User {name}"` defeats structured logging. Use message templates: `"User {Name}"`.
+- **Don't log at `Information` level in hot paths** — a loop logging 10,000 items at `Information` will flood your log store. Use `Debug` or `Trace` for high-volume paths.
+- **Don't log full request/response bodies in production** — they may contain sensitive data and consume enormous storage.
+- **Don't ignore log volume costs** — centralized logging is priced by ingestion volume. Suppress noisy namespaces and use sampling for high-throughput services.
+- **Don't skip health checks** — without them, your orchestrator can't distinguish a healthy service from a crashed one.
+- **Don't treat logging as an afterthought** — instrument logging at the same time you write the feature, not after a production incident forces you to.
 
 ---
 
@@ -865,9 +1153,18 @@ group.MapPost("/", CreateBook)
 
 ## 14. Pagination Abstractions
 
-### Standard Offset-Based Pagination
+### The Problem
+
+Returning all records from a database table in a single response doesn't scale. A `GET /api/books` endpoint returning 50,000 books will be slow, consume excessive memory, and overwhelm the client. Pagination solves this, but the *type* of pagination you choose has significant implications for performance, client complexity, and user experience.
+
+The architectural question is: *which pagination strategy fits your data access patterns, and how do you standardize it across all list endpoints?*
+
+### Offset-Based Pagination (Page + PageSize)
+
+The most familiar approach — clients request a specific page number and size.
 
 ```csharp
+// Shared abstractions (SharedKernel or Application layer)
 public sealed record PagedQuery(int Page = 1, int PageSize = 20);
 
 public sealed class PagedResult<T>
@@ -882,20 +1179,168 @@ public sealed class PagedResult<T>
 }
 ```
 
-### Cursor-Based Pagination (Preferred for Large Datasets)
+EF Core implementation:
 
 ```csharp
-public sealed record CursorPagedQuery(string? After, int First = 20);
+public async Task<PagedResult<BookDto>> Handle(GetBooksPagedQuery request, CancellationToken ct)
+{
+    var query = _context.Books.AsNoTracking();
+
+    var totalCount = await query.CountAsync(ct);
+
+    var items = await query
+        .OrderBy(b => b.Title)
+        .Skip((request.Page - 1) * request.PageSize)
+        .Take(request.PageSize)
+        .Select(b => new BookDto(b.Id, b.Title, b.Author, b.ISBN, b.Price, b.PublicationYear))
+        .ToListAsync(ct);
+
+    return new PagedResult<BookDto>
+    {
+        Items = items,
+        TotalCount = totalCount,
+        Page = request.Page,
+        PageSize = request.PageSize
+    };
+}
+```
+
+**Pros:** Simple for clients, supports "jump to page N", familiar UX pattern.
+**Cons:** `COUNT(*)` is expensive on large tables. `OFFSET` scans and discards rows — page 1000 is much slower than page 1. Inconsistent results if data is inserted/deleted between page requests.
+
+### Cursor-Based Pagination (Keyset Pagination)
+
+Instead of a page number, the client sends the last seen value (cursor) and asks for the next N items after it. The database uses a `WHERE` clause instead of `OFFSET`, which is consistently fast regardless of position.
+
+```csharp
+public sealed record CursorPagedQuery(Guid? After = null, int First = 20);
 
 public sealed class CursorPagedResult<T>
 {
     public IReadOnlyList<T> Items { get; init; } = [];
-    public string? NextCursor { get; init; }
+    public Guid? NextCursor { get; init; }
     public bool HasNextPage => NextCursor is not null;
 }
 ```
 
-EF Core implementation: order by a stable column (usually `Id` or `CreatedAt`), filter by `WHERE Id > @cursor`.
+EF Core implementation:
+
+```csharp
+public async Task<CursorPagedResult<BookDto>> Handle(GetBooksCursorQuery request, CancellationToken ct)
+{
+    var query = _context.Books.AsNoTracking().OrderBy(b => b.Id);
+
+    if (request.After is not null)
+        query = (IOrderedQueryable<Book>)query.Where(b => b.Id.CompareTo(request.After.Value) > 0);
+
+    var items = await query
+        .Take(request.First + 1)   // fetch one extra to detect if there's a next page
+        .Select(b => new BookDto(b.Id, b.Title, b.Author, b.ISBN, b.Price, b.PublicationYear))
+        .ToListAsync(ct);
+
+    var hasNextPage = items.Count > request.First;
+    if (hasNextPage) items.RemoveAt(items.Count - 1);
+
+    return new CursorPagedResult<BookDto>
+    {
+        Items = items,
+        NextCursor = hasNextPage ? items[^1].Id : null,
+        HasNextPage = hasNextPage
+    };
+}
+```
+
+**Pros:** Constant-time performance regardless of position (no `OFFSET` scan). No inconsistency from concurrent inserts/deletes. Works well with infinite scroll UIs.
+**Cons:** Can't "jump to page N". Requires a stable, unique, sortable column for the cursor. Slightly more complex for clients.
+
+### Comparison
+
+| Concern | Offset-Based | Cursor-Based |
+|---|---|---|
+| **Performance at depth** | Degrades (page 1000 is slow) | Constant (always fast) |
+| **Jump to page N** | Yes | No |
+| **Data consistency** | Gaps/duplicates possible between pages | Consistent — no items skipped or repeated |
+| **Total count** | Available (but expensive) | Not available without a separate query |
+| **Client complexity** | Simple (`?page=3&pageSize=20`) | Moderate (`?after=<guid>&first=20`) |
+| **Best for** | Admin panels, dashboards, small datasets | Public APIs, mobile apps, large/real-time datasets |
+
+### Filtering and Sorting Alongside Pagination
+
+Pagination rarely exists in isolation — clients typically want to filter and sort as well. Standardize these as query parameters:
+
+```csharp
+public sealed record GetBooksPagedQuery(
+    int Page = 1,
+    int PageSize = 20,
+    string? Search = null,
+    string? SortBy = "Title",
+    bool SortDescending = false) : IQuery<PagedResult<BookDto>>;
+```
+
+Endpoint:
+
+```
+GET /api/books?page=2&pageSize=10&search=tolkien&sortBy=Price&sortDescending=true
+```
+
+EF Core dynamic sorting (safe approach — whitelist allowed columns):
+
+```csharp
+private static readonly Dictionary<string, Expression<Func<Book, object>>> SortColumns = new(StringComparer.OrdinalIgnoreCase)
+{
+    ["Title"] = b => b.Title,
+    ["Author"] = b => b.Author,
+    ["Price"] = b => b.Price,
+    ["PublicationYear"] = b => b.PublicationYear
+};
+
+// In the handler
+var sortExpression = SortColumns.GetValueOrDefault(request.SortBy ?? "Title", b => b.Title);
+query = request.SortDescending
+    ? query.OrderByDescending(sortExpression)
+    : query.OrderBy(sortExpression);
+```
+
+**Never** pass user input directly into `OrderBy` as a raw string — this opens the door to injection or runtime exceptions. Always whitelist allowed sort columns.
+
+### Pagination Limits
+
+Always enforce server-side limits to prevent clients from requesting the entire dataset:
+
+```csharp
+public sealed record PagedQuery
+{
+    private const int MaxPageSize = 100;
+
+    public int Page { get; init; } = 1;
+
+    private int _pageSize = 20;
+    public int PageSize
+    {
+        get => _pageSize;
+        init => _pageSize = Math.Min(value, MaxPageSize);
+    }
+}
+```
+
+### How Deep to Go
+
+| Concern | Shallow | Medium | Deep |
+|---|---|---|---|
+| **Strategy** | Return all items (no pagination) | Offset-based with `PagedResult<T>` | Cursor-based for public APIs, offset for admin |
+| **Sorting** | Fixed sort order | Single `sortBy` parameter with whitelist | Multi-column sort, per-field direction |
+| **Filtering** | None or basic `?search=` | Per-field filters (`?author=X&minPrice=10`) | Full filter expression language (OData, custom DSL) |
+| **Metadata** | Items only | `TotalCount`, `HasNextPage`, `TotalPages` | Hypermedia links (`next`, `prev`, `first`, `last`) |
+| **Limits** | None | Max page size enforced | Rate limiting + max page size + query timeout |
+
+### What NOT to Do
+
+- **Don't return unbounded collections** — every list endpoint should paginate, even if you "only have 50 books right now." Data grows.
+- **Don't use `OFFSET` for deep pagination on large tables** — page 10,000 means scanning and discarding 200,000 rows. Use cursor-based instead.
+- **Don't allow arbitrary page sizes** — a client requesting `pageSize=1000000` can bring down your service. Always cap with a server-side maximum.
+- **Don't rely on `COUNT(*)` for cursor-based pagination** — it defeats the performance advantage. If you need total count, offer it as an optional parameter (`?includeTotalCount=true`).
+- **Don't paginate over unstable sort orders** — sorting by a column that changes (e.g., `UpdatedAt`) causes items to shift between pages mid-traversal. Use a stable tiebreaker column (typically `Id`).
+- **Don't build raw SQL sort expressions from user input** — whitelist allowed columns to prevent injection and unexpected errors.
 
 ---
 

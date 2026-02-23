@@ -34,7 +34,7 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
 
         builder.Property(b => b.ISBN)
             .IsRequired()
-            .HasMaxLength(20);
+            .HasMaxLength(13);
 
         builder.HasIndex(b => b.ISBN)
             .IsUnique();

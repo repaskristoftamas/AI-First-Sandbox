@@ -6,6 +6,7 @@ using Bookstore.Application.Books.Queries.GetBookById;
 using Bookstore.Domain.Books;
 using Bookstore.WebApi.Extensions;
 using Mediator;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bookstore.WebApi.Endpoints.Books;
@@ -17,48 +18,40 @@ public sealed class BookEndpoints : IEndpointDefinition
         var group = app.MapGroup("/api/books").WithTags("Books");
 
         group.MapGet("/", GetAllBooks)
-            .WithName("GetAllBooks")
-            .Produces<IReadOnlyList<BookResponse>>();
+            .WithName("GetAllBooks");
 
         group.MapGet("/{id:guid}", GetBookById)
-            .WithName("GetBookById")
-            .Produces<BookResponse>()
-            .Produces(StatusCodes.Status404NotFound);
+            .WithName("GetBookById");
 
         group.MapPost("/", CreateBook)
-            .WithName("CreateBook")
-            .Produces<Guid>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status409Conflict);
+            .WithName("CreateBook");
 
         group.MapPut("/{id:guid}", UpdateBook)
-            .WithName("UpdateBook")
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict);
+            .WithName("UpdateBook");
 
         group.MapDelete("/{id:guid}", DeleteBook)
-            .WithName("DeleteBook")
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status404NotFound);
+            .WithName("DeleteBook");
     }
 
-    private static async Task<IResult> GetAllBooks(ISender sender, CancellationToken cancellationToken)
+    private static async Task<Results<Ok<List<BookResponse>>, ProblemHttpResult>> GetAllBooks(
+        ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllBooksQuery(), cancellationToken);
         return result.IsSuccess
-            ? Results.Ok(result.Value.Select(d => d.ToResponse()).ToList())
-            : result.Error.ToProblemResult();
+            ? TypedResults.Ok(result.Value.Select(d => d.ToResponse()).ToList())
+            : result.Error.ToProblemHttpResult();
     }
 
-    private static async Task<IResult> GetBookById(Guid id, ISender sender, CancellationToken cancellationToken)
+    private static async Task<Results<Ok<BookResponse>, ProblemHttpResult>> GetBookById(
+        Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetBookByIdQuery(new BookId(id)), cancellationToken);
         return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToProblemResult();
+            ? TypedResults.Ok(result.Value.ToResponse())
+            : result.Error.ToProblemHttpResult();
     }
 
-    private static async Task<IResult> CreateBook(
+    private static async Task<Results<CreatedAtRoute<Guid>, ProblemHttpResult>> CreateBook(
         [FromBody] CreateBookRequest request,
         ISender sender,
         CancellationToken cancellationToken)
@@ -66,11 +59,11 @@ public sealed class BookEndpoints : IEndpointDefinition
         var command = new CreateBookCommand(request.Title, request.Author, request.ISBN, request.Price, request.PublicationYear);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess
-            ? Results.CreatedAtRoute("GetBookById", new { id = result.Value }, result.Value)
-            : result.Error.ToProblemResult();
+            ? TypedResults.CreatedAtRoute(result.Value, "GetBookById", new { id = result.Value })
+            : result.Error.ToProblemHttpResult();
     }
 
-    private static async Task<IResult> UpdateBook(
+    private static async Task<Results<NoContent, ProblemHttpResult>> UpdateBook(
         Guid id,
         [FromBody] UpdateBookRequest request,
         ISender sender,
@@ -79,15 +72,16 @@ public sealed class BookEndpoints : IEndpointDefinition
         var command = new UpdateBookCommand(new BookId(id), request.Title, request.Author, request.ISBN, request.Price, request.PublicationYear);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess
-            ? Results.NoContent()
-            : result.Error.ToProblemResult();
+            ? TypedResults.NoContent()
+            : result.Error.ToProblemHttpResult();
     }
 
-    private static async Task<IResult> DeleteBook(Guid id, ISender sender, CancellationToken cancellationToken)
+    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteBook(
+        Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new DeleteBookCommand(new BookId(id)), cancellationToken);
         return result.IsSuccess
-            ? Results.NoContent()
-            : result.Error.ToProblemResult();
+            ? TypedResults.NoContent()
+            : result.Error.ToProblemHttpResult();
     }
 }

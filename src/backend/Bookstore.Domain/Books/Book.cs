@@ -12,9 +12,8 @@ public sealed class Book : AuditableEntity<BookId>
     public decimal Price { get; private set; }
     public int PublicationYear { get; private set; }
 
-    public static Book Create(string title, string author, string isbn, decimal price, int publicationYear)
-    {
-        return new Book
+    public static Book Create(string title, string author, string isbn, decimal price, int publicationYear) => 
+        new()
         {
             Id = BookId.New(),
             Title = title,
@@ -23,7 +22,7 @@ public sealed class Book : AuditableEntity<BookId>
             Price = price,
             PublicationYear = publicationYear
         };
-    }
+    
 
     public void Update(string title, string author, string isbn, decimal price, int publicationYear)
     {
