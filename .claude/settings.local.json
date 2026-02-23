@@ -18,7 +18,14 @@
       "Bash(netstat:*)",
       "Bash(cd /c/Users/repas/source/repos/Bookstore-API && docker compose down && docker compose up --build -d 2>&1)",
       "Bash(cd /c/Users/repas/source/repos/Bookstore-API && docker compose down 2>&1 && docker compose up --build -d 2>&1)",
-      "WebFetch(domain:github.github.com)"
+      "WebFetch(domain:github.github.com)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:www.eliostruyf.com)",
+      "WebFetch(domain:www.devtoolsacademy.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.qodo.ai)",
+      "WebFetch(domain:pullflow.com)",
+      "WebFetch(domain:skywork.ai)"
     ]
   }
 }
