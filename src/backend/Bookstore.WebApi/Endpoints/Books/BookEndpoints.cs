@@ -11,8 +11,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Bookstore.WebApi.Endpoints.Books;
 
+/// <summary>
+/// Defines the CRUD endpoints for managing books in the catalog.
+/// </summary>
 public sealed class BookEndpoints : IEndpointDefinition
 {
+    /// <summary>
+    /// Registers all book-related routes under the /api/books group.
+    /// </summary>
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/books").WithTags("Books");
@@ -33,6 +39,9 @@ public sealed class BookEndpoints : IEndpointDefinition
             .WithName("DeleteBook");
     }
 
+    /// <summary>
+    /// Retrieves all books in the catalog.
+    /// </summary>
     private static async Task<Results<Ok<List<BookResponse>>, ProblemHttpResult>> GetAllBooks(
         ISender sender, CancellationToken cancellationToken)
     {
@@ -42,6 +51,9 @@ public sealed class BookEndpoints : IEndpointDefinition
             : result.Error.ToProblemHttpResult();
     }
 
+    /// <summary>
+    /// Retrieves a single book by its identifier.
+    /// </summary>
     private static async Task<Results<Ok<BookResponse>, ProblemHttpResult>> GetBookById(
         Guid id, ISender sender, CancellationToken cancellationToken)
     {
@@ -51,6 +63,9 @@ public sealed class BookEndpoints : IEndpointDefinition
             : result.Error.ToProblemHttpResult();
     }
 
+    /// <summary>
+    /// Creates a new book in the catalog from the provided request body.
+    /// </summary>
     private static async Task<Results<CreatedAtRoute<Guid>, ProblemHttpResult>> CreateBook(
         [FromBody] CreateBookRequest request,
         ISender sender,
@@ -63,6 +78,9 @@ public sealed class BookEndpoints : IEndpointDefinition
             : result.Error.ToProblemHttpResult();
     }
 
+    /// <summary>
+    /// Updates all properties of an existing book identified by the route parameter.
+    /// </summary>
     private static async Task<Results<NoContent, ProblemHttpResult>> UpdateBook(
         Guid id,
         [FromBody] UpdateBookRequest request,
@@ -76,6 +94,9 @@ public sealed class BookEndpoints : IEndpointDefinition
             : result.Error.ToProblemHttpResult();
     }
 
+    /// <summary>
+    /// Deletes a book from the catalog by its identifier.
+    /// </summary>
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteBook(
         Guid id, ISender sender, CancellationToken cancellationToken)
     {

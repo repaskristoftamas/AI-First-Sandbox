@@ -5,10 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Application.Books.Commands.UpdateBook;
 
+/// <summary>
+/// Handles updating a book's properties, enforcing existence and ISBN uniqueness.
+/// </summary>
 internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : ICommandHandler<UpdateBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
 
+    /// <summary>
+    /// Locates the book, verifies no ISBN conflict with other books, and applies the updates.
+    /// </summary>
     public async ValueTask<Result> Handle(UpdateBookCommand command, CancellationToken cancellationToken)
     {
         var book = await _context.Books

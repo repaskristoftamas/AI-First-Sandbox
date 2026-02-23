@@ -6,8 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Bookstore.Infrastructure;
 
+/// <summary>
+/// Registers infrastructure-layer services into the dependency injection container.
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Adds the EF Core database context and its abstraction to the service collection.
+    /// </summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)

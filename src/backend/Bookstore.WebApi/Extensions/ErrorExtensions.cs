@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Bookstore.WebApi.Extensions;
 
+/// <summary>
+/// Extension methods for converting domain errors to HTTP problem responses.
+/// </summary>
 public static class ErrorExtensions
 {
+    /// <summary>
+    /// Converts an <see cref="Error"/> to a <see cref="ProblemHttpResult"/> with the appropriate HTTP status code.
+    /// </summary>
     public static ProblemHttpResult ToProblemHttpResult(this Error error)
     {
         var (statusCode, title) = error switch
