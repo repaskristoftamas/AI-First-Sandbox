@@ -55,3 +55,9 @@ nunit-*.xml
 
 # Environment-specific settings
 appsettings.Development.json
+
+# Claude Code
+session.log
+latest
+.claude/settings.local.json
+.claude/worktrees/
