@@ -4,8 +4,11 @@ using Riok.Mapperly.Abstractions;
 namespace Bookstore.WebApi.Endpoints.Books;
 
 /// <summary>
-/// Mapperly-generated mapper that converts <see cref="BookDto"/> objects to <see cref="BookResponse"/> models.
+/// Converts <see cref="BookDto"/> objects to <see cref="BookResponse"/> models.
 /// </summary>
+/// <remarks>
+/// Implementation is generated at compile time by Mapperly.
+/// </remarks>
 [Mapper]
 internal static partial class BookResponseMapper
 {

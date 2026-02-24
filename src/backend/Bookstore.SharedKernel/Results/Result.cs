@@ -8,8 +8,11 @@ public class Result
     private readonly Error? _error;
 
     /// <summary>
-    /// Initializes a new result, enforcing that success and error state are consistent.
+    /// Initializes a new result.
     /// </summary>
+    /// <remarks>
+    /// Enforces that success and error state are consistent.
+    /// </remarks>
     /// <param name="isSuccess">Whether the operation succeeded.</param>
     /// <param name="error">The error describing the failure, or <c>null</c> for a success.</param>
     /// <exception cref="InvalidOperationException">Thrown when <paramref name="isSuccess"/> is <c>true</c> with a non-null error, or <c>false</c> with a null error.</exception>
@@ -35,8 +38,11 @@ public class Result
     public bool IsFailure => !IsSuccess;
 
     /// <summary>
-    /// The error describing why the operation failed. Throws if the result is a success.
+    /// The error describing why the operation failed.
     /// </summary>
+    /// <remarks>
+    /// Throws <see cref="InvalidOperationException"/> if the result is a success.
+    /// </remarks>
     /// <exception cref="InvalidOperationException">Thrown when accessed on a successful result.</exception>
     public Error Error => IsFailure
         ? _error!
@@ -80,8 +86,11 @@ public class Result<TValue> : Result
     private readonly TValue? _value;
 
     /// <summary>
-    /// Initializes a new result with an optional value, enforcing consistency between success state and error.
+    /// Initializes a new result with an optional value.
     /// </summary>
+    /// <remarks>
+    /// Enforces consistency between success state and error.
+    /// </remarks>
     /// <param name="value">The value produced by the operation, or <c>default</c> on failure.</param>
     /// <param name="isSuccess">Whether the operation succeeded.</param>
     /// <param name="error">The error describing the failure, or <c>null</c> for a success.</param>
@@ -96,16 +105,22 @@ public class Result<TValue> : Result
     }
 
     /// <summary>
-    /// The value produced by a successful operation. Throws if the result is a failure.
+    /// The value produced by a successful operation.
     /// </summary>
+    /// <remarks>
+    /// Throws <see cref="InvalidOperationException"/> if the result is a failure.
+    /// </remarks>
     /// <exception cref="InvalidOperationException">Thrown when accessed on a failed result.</exception>
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
 
     /// <summary>
-    /// Implicitly wraps a value in a successful result, enabling concise return statements.
+    /// Implicitly wraps a value in a successful result.
     /// </summary>
+    /// <remarks>
+    /// Enables concise return statements without explicitly calling <see cref="Result.Success{TValue}"/>.
+    /// </remarks>
     /// <param name="value">The value to wrap.</param>
     /// <returns>A successful <see cref="Result{TValue}"/> containing <paramref name="value"/>.</returns>
     public static implicit operator Result<TValue>(TValue value) => Success(value);

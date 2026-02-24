@@ -6,15 +6,21 @@ using Microsoft.EntityFrameworkCore;
 namespace Bookstore.Application.Books.Commands.UpdateBook;
 
 /// <summary>
-/// Handles updating a book's properties, enforcing existence and ISBN uniqueness.
+/// Handles updating a book's properties.
 /// </summary>
+/// <remarks>
+/// Enforces existence and ISBN uniqueness before applying changes.
+/// </remarks>
 internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : ICommandHandler<UpdateBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
 
     /// <summary>
-    /// Locates the book, verifies no ISBN conflict with other books, and applies the updates.
+    /// Applies the updated properties to an existing book.
     /// </summary>
+    /// <remarks>
+    /// Locates the book by identifier and verifies no ISBN conflict with other books before applying the updates.
+    /// </remarks>
     /// <param name="command">The command containing the updated book properties.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A success result, or a <see cref="NotFoundError"/>/<see cref="ConflictError"/> on failure.</returns>
