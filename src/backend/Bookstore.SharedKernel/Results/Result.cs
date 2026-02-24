@@ -103,5 +103,6 @@ public class Result<TValue> : Result
     /// Implicitly wraps a value in a successful result, enabling concise return statements.
     /// </summary>
     /// <param name="value">The value to wrap.</param>
+    /// <returns>A successful <see cref="Result{TValue}"/> containing <paramref name="value"/>.</returns>
     public static implicit operator Result<TValue>(TValue value) => Success(value);
 }
