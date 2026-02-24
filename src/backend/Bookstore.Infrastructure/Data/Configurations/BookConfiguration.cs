@@ -14,6 +14,7 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
     /// <summary>
     /// Configures the Book table schema including the strongly-typed identifier conversion, column constraints, and unique index on ISBN.
     /// </summary>
+    /// <param name="builder">The builder used to configure the <see cref="Book"/> entity.</param>
     public void Configure(EntityTypeBuilder<Book> builder)
     {
         var converter = new ValueConverter<BookId, Guid>(

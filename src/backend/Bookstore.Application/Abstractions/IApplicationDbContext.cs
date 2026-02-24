@@ -16,5 +16,7 @@ public interface IApplicationDbContext
     /// <summary>
     /// Persists all pending changes to the underlying data store.
     /// </summary>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The number of state entries written to the data store.</returns>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

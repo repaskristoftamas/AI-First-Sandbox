@@ -19,6 +19,7 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Registers all book-related routes under the /api/books group.
     /// </summary>
+    /// <param name="app">The endpoint route builder to register routes on.</param>
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/books").WithTags("Books");
@@ -42,6 +43,9 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Retrieves all books in the catalog.
     /// </summary>
+    /// <param name="sender">Mediator sender for dispatching the query.</param>
+    /// <param name="cancellationToken">Token to cancel the request.</param>
+    /// <returns>An OK result with the book list, or a problem response on failure.</returns>
     private static async Task<Results<Ok<List<BookResponse>>, ProblemHttpResult>> GetAllBooks(
         ISender sender, CancellationToken cancellationToken)
     {
@@ -54,6 +58,10 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Retrieves a single book by its identifier.
     /// </summary>
+    /// <param name="id">The unique identifier of the book.</param>
+    /// <param name="sender">Mediator sender for dispatching the query.</param>
+    /// <param name="cancellationToken">Token to cancel the request.</param>
+    /// <returns>An OK result with the book, or a problem response if not found.</returns>
     private static async Task<Results<Ok<BookResponse>, ProblemHttpResult>> GetBookById(
         Guid id, ISender sender, CancellationToken cancellationToken)
     {
@@ -66,6 +74,10 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Creates a new book in the catalog from the provided request body.
     /// </summary>
+    /// <param name="request">The request body containing the book details.</param>
+    /// <param name="sender">Mediator sender for dispatching the command.</param>
+    /// <param name="cancellationToken">Token to cancel the request.</param>
+    /// <returns>A 201 Created result with the new book's identifier, or a problem response on failure.</returns>
     private static async Task<Results<CreatedAtRoute<Guid>, ProblemHttpResult>> CreateBook(
         [FromBody] CreateBookRequest request,
         ISender sender,
@@ -81,6 +93,11 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Updates all properties of an existing book identified by the route parameter.
     /// </summary>
+    /// <param name="id">The unique identifier of the book to update.</param>
+    /// <param name="request">The request body containing the updated book properties.</param>
+    /// <param name="sender">Mediator sender for dispatching the command.</param>
+    /// <param name="cancellationToken">Token to cancel the request.</param>
+    /// <returns>A 204 No Content result on success, or a problem response on failure.</returns>
     private static async Task<Results<NoContent, ProblemHttpResult>> UpdateBook(
         Guid id,
         [FromBody] UpdateBookRequest request,
@@ -97,6 +114,10 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <summary>
     /// Deletes a book from the catalog by its identifier.
     /// </summary>
+    /// <param name="id">The unique identifier of the book to delete.</param>
+    /// <param name="sender">Mediator sender for dispatching the command.</param>
+    /// <param name="cancellationToken">Token to cancel the request.</param>
+    /// <returns>A 204 No Content result on success, or a problem response if not found.</returns>
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteBook(
         Guid id, ISender sender, CancellationToken cancellationToken)
     {
