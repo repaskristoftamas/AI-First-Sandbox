@@ -6,8 +6,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Bookstore.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core configuration for the <see cref="Book"/> entity, defining schema constraints and value conversions.
+/// </summary>
 internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
 {
+    /// <summary>
+    /// Configures the Book table schema including the strongly-typed identifier conversion, column constraints, and unique index on ISBN.
+    /// </summary>
     public void Configure(EntityTypeBuilder<Book> builder)
     {
         var converter = new ValueConverter<BookId, Guid>(
