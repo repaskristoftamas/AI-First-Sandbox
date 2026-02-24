@@ -85,6 +85,10 @@ public class Result<TValue> : Result
     /// <param name="value">The value produced by the operation, or <c>default</c> on failure.</param>
     /// <param name="isSuccess">Whether the operation succeeded.</param>
     /// <param name="error">The error describing the failure, or <c>null</c> for a success.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <paramref name="isSuccess"/> is <c>true</c> with a non-null <paramref name="error"/>,
+    /// or when <paramref name="isSuccess"/> is <c>false</c> with a <c>null</c> <paramref name="error"/>.
+    /// </exception>
     protected internal Result(TValue? value, bool isSuccess, Error? error)
         : base(isSuccess, error)
     {
