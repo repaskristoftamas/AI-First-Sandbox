@@ -13,10 +13,14 @@ internal static partial class BookMapper
     /// <summary>
     /// Maps a <see cref="Book"/> entity to its DTO representation.
     /// </summary>
+    /// <param name="book">The domain entity to convert.</param>
+    /// <returns>A <see cref="BookDto"/> containing the mapped values.</returns>
     public static partial BookDto ToDto(this Book book);
 
     /// <summary>
     /// Extracts the underlying <see cref="Guid"/> from a <see cref="BookId"/> for DTO mapping.
     /// </summary>
+    /// <param name="id">The strongly-typed book identifier.</param>
+    /// <returns>The underlying <see cref="Guid"/> value.</returns>
     private static Guid MapBookId(BookId id) => id.Value;
 }

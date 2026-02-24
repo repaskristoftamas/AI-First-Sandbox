@@ -11,6 +11,8 @@ public static class ErrorExtensions
     /// <summary>
     /// Converts an <see cref="Error"/> to a <see cref="ProblemHttpResult"/> with the appropriate HTTP status code.
     /// </summary>
+    /// <param name="error">The domain error to convert.</param>
+    /// <returns>A <see cref="ProblemHttpResult"/> with the status code and description matching the error type.</returns>
     public static ProblemHttpResult ToProblemHttpResult(this Error error)
     {
         var (statusCode, title) = error switch

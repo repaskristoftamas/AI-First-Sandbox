@@ -18,6 +18,7 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     /// <summary>
     /// Applies entity configurations from the infrastructure assembly.
     /// </summary>
+    /// <param name="modelBuilder">The builder used to construct the model for the context.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BookstoreDbContext).Assembly);
@@ -27,6 +28,8 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     /// <summary>
     /// Persists changes while automatically stamping audit timestamps on added and modified entities.
     /// </summary>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The number of state entries written to the data store.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var utcNow = DateTime.UtcNow;

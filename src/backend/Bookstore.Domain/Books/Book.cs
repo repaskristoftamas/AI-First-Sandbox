@@ -40,6 +40,12 @@ public sealed class Book : AuditableEntity<BookId>
     /// <summary>
     /// Factory method that creates a new book with a generated identifier.
     /// </summary>
+    /// <param name="title">Title of the book.</param>
+    /// <param name="author">Name of the book's author.</param>
+    /// <param name="isbn">International Standard Book Number.</param>
+    /// <param name="price">Retail price of the book.</param>
+    /// <param name="publicationYear">Year the book was published.</param>
+    /// <returns>A new <see cref="Book"/> instance with a unique identifier.</returns>
     public static Book Create(string title, string author, string isbn, decimal price, int publicationYear) =>
         new()
         {
@@ -54,6 +60,11 @@ public sealed class Book : AuditableEntity<BookId>
     /// <summary>
     /// Replaces all mutable properties of the book with the provided values.
     /// </summary>
+    /// <param name="title">Title of the book.</param>
+    /// <param name="author">Name of the book's author.</param>
+    /// <param name="isbn">International Standard Book Number.</param>
+    /// <param name="price">Retail price of the book.</param>
+    /// <param name="publicationYear">Year the book was published.</param>
     public void Update(string title, string author, string isbn, decimal price, int publicationYear)
     {
         Title = title;

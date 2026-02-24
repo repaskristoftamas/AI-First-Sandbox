@@ -17,6 +17,9 @@ internal sealed class GetBookByIdQueryHandler(IApplicationDbContext context) : I
     /// <summary>
     /// Looks up the book by its identifier and maps it to a DTO, or returns a not-found error.
     /// </summary>
+    /// <param name="query">The query containing the book identifier.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A result containing the <see cref="BookDto"/>, or a <see cref="NotFoundError"/> if not found.</returns>
     public async ValueTask<Result<BookDto>> Handle(GetBookByIdQuery query, CancellationToken cancellationToken)
     {
         var book = await _context.Books

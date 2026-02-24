@@ -15,6 +15,9 @@ internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : 
     /// <summary>
     /// Locates the book, verifies no ISBN conflict with other books, and applies the updates.
     /// </summary>
+    /// <param name="command">The command containing the updated book properties.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A success result, or a <see cref="NotFoundError"/>/<see cref="ConflictError"/> on failure.</returns>
     public async ValueTask<Result> Handle(UpdateBookCommand command, CancellationToken cancellationToken)
     {
         var book = await _context.Books

@@ -10,6 +10,8 @@ public static class ApplicationBuilderExtensions
     /// <summary>
     /// Discovers and registers all <see cref="IEndpointDefinition"/> implementations from the WebApi assembly.
     /// </summary>
+    /// <param name="app">The web application to register endpoints on.</param>
+    /// <returns>The same <see cref="IApplicationBuilder"/> for chaining.</returns>
     public static IApplicationBuilder RegisterEndpointDefinitions(this WebApplication app)
     {
         var endpointDefinitions = typeof(Program).Assembly

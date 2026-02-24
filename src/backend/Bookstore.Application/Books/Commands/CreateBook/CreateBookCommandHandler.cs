@@ -16,6 +16,9 @@ internal sealed class CreateBookCommandHandler(IApplicationDbContext context) : 
     /// <summary>
     /// Validates that the ISBN is not already in use, creates the book, and returns its identifier.
     /// </summary>
+    /// <param name="command">The command containing the book details to create.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A result containing the new book's identifier, or a <see cref="ConflictError"/> if the ISBN is taken.</returns>
     public async ValueTask<Result<Guid>> Handle(CreateBookCommand command, CancellationToken cancellationToken)
     {
         bool isbnExists = await _context.Books

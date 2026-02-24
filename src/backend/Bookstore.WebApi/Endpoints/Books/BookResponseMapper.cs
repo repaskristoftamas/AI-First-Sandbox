@@ -12,5 +12,7 @@ internal static partial class BookResponseMapper
     /// <summary>
     /// Maps a <see cref="BookDto"/> to an API response model.
     /// </summary>
+    /// <param name="dto">The DTO to convert.</param>
+    /// <returns>A <see cref="BookResponse"/> containing the mapped values.</returns>
     public static partial BookResponse ToResponse(this BookDto dto);
 }

@@ -15,6 +15,9 @@ internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : 
     /// <summary>
     /// Locates the book by identifier and removes it from the catalog.
     /// </summary>
+    /// <param name="command">The command containing the identifier of the book to delete.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A success result, or a <see cref="NotFoundError"/> if the book does not exist.</returns>
     public async ValueTask<Result> Handle(DeleteBookCommand command, CancellationToken cancellationToken)
     {
         var book = await _context.Books

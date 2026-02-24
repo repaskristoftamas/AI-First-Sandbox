@@ -17,6 +17,9 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     /// <summary>
     /// Fetches all books from the data store without change tracking and maps them to DTOs.
     /// </summary>
+    /// <param name="query">The query request.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A result containing a read-only list of <see cref="BookDto"/> objects.</returns>
     public async ValueTask<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery query, CancellationToken cancellationToken)
     {
         var books = await _context.Books
