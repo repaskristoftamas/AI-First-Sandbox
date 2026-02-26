@@ -5,8 +5,11 @@ using Riok.Mapperly.Abstractions;
 namespace Bookstore.Application.Books.Mappers;
 
 /// <summary>
-/// Mapperly-generated mapper that converts <see cref="Book"/> domain entities to <see cref="BookDto"/> objects.
+/// Converts <see cref="Book"/> domain entities to <see cref="BookDto"/> objects.
 /// </summary>
+/// <remarks>
+/// Implementation is generated at compile time by Mapperly.
+/// </remarks>
 [Mapper]
 internal static partial class BookMapper
 {

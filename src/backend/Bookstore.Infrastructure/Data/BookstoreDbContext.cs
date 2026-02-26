@@ -6,8 +6,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Bookstore.Infrastructure.Data;
 
 /// <summary>
-/// EF Core database context for the bookstore, implementing automatic audit timestamp tracking.
+/// EF Core database context for the bookstore.
 /// </summary>
+/// <remarks>
+/// Implements automatic audit timestamp tracking for entities that implement <see cref="IAuditable"/>.
+/// </remarks>
 public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options) : DbContext(options), IApplicationDbContext
 {
     /// <summary>
@@ -26,8 +29,11 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     }
 
     /// <summary>
-    /// Persists changes while automatically stamping audit timestamps on added and modified entities.
+    /// Persists all pending changes to the data store.
     /// </summary>
+    /// <remarks>
+    /// Automatically stamps audit timestamps on added and modified entities before saving.
+    /// </remarks>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The number of state entries written to the data store.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

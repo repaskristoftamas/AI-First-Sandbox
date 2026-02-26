@@ -6,8 +6,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Bookstore.Application.Books.Commands.DeleteBook;
 
 /// <summary>
-/// Handles deletion of a book, returning a not-found error if the book does not exist.
+/// Handles deletion of a book.
 /// </summary>
+/// <remarks>
+/// Returns a not-found error if the book does not exist.
+/// </remarks>
 internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : ICommandHandler<DeleteBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;

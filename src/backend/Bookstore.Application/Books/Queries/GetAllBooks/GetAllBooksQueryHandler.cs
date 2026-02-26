@@ -15,8 +15,11 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     private readonly IApplicationDbContext _context = context;
 
     /// <summary>
-    /// Fetches all books from the data store without change tracking and maps them to DTOs.
+    /// Fetches all books from the data store and maps them to DTOs.
     /// </summary>
+    /// <remarks>
+    /// Queries without change tracking for better read performance.
+    /// </remarks>
     /// <param name="query">The query request.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A result containing a read-only list of <see cref="BookDto"/> objects.</returns>

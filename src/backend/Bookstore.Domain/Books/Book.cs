@@ -8,8 +8,11 @@ namespace Bookstore.Domain.Books;
 public sealed class Book : AuditableEntity<BookId>
 {
     /// <summary>
-    /// Required by EF Core for materialization.
+    /// Initializes a new instance of the <see cref="Book"/> class.
     /// </summary>
+    /// <remarks>
+    /// Required by EF Core for materialization.
+    /// </remarks>
     private Book() { }
 
     /// <summary>
