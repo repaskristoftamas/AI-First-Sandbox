@@ -8,6 +8,8 @@
     <InternalsVisibleTo Include="Bookstore.Application.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
     <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
     <PackageReference Include="Mediator.SourceGenerator" Version="3.0.1">
       <PrivateAssets>all</PrivateAssets>

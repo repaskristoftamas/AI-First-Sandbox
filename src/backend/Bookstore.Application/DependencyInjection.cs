@@ -1,3 +1,6 @@
+using System.Reflection;
+using Bookstore.Application.Behaviors;
+using FluentValidation;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +12,7 @@ namespace Bookstore.Application;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Adds Mediator and application-layer services to the service collection.
+    /// Adds Mediator, FluentValidation validators, and application-layer services to the service collection.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
@@ -19,6 +22,9 @@ public static class DependencyInjection
         {
             options.ServiceLifetime = ServiceLifetime.Scoped;
         });
+
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         return services;
     }

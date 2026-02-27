@@ -1,4 +1,5 @@
 using Bookstore.Application.Abstractions;
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,11 @@ namespace Bookstore.Infrastructure.Data;
 /// </remarks>
 public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options) : DbContext(options), IApplicationDbContext
 {
+    /// <summary>
+    /// Queryable set of authors persisted in the data store.
+    /// </summary>
+    public DbSet<Author> Authors => Set<Author>();
+
     /// <summary>
     /// Queryable set of books persisted in the data store.
     /// </summary>
