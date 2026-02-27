@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.WORKFLOW_PAT }}
           script: |
             await github.rest.issues.createComment({
               owner: context.repo.owner,
