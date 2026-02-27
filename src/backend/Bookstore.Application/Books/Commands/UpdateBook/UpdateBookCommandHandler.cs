@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.SharedKernel.Results;
+using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,9 @@ namespace Bookstore.Application.Books.Commands.UpdateBook;
 /// <remarks>
 /// Enforces existence and ISBN uniqueness before applying changes.
 /// </remarks>
-internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : ICommandHandler<UpdateBookCommand, Result>
+internal sealed class UpdateBookCommandHandler(
+    IApplicationDbContext context,
+    IValidator<UpdateBookCommand> validator) : ICommandHandler<UpdateBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
 
@@ -26,6 +29,13 @@ internal sealed class UpdateBookCommandHandler(IApplicationDbContext context) : 
     /// <returns>A success result, or a <see cref="NotFoundError"/>/<see cref="ConflictError"/> on failure.</returns>
     public async ValueTask<Result> Handle(UpdateBookCommand command, CancellationToken cancellationToken)
     {
+        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            var failures = validationResult.Errors;
+            return Result.Failure(new ValidationError(string.Join("; ", failures.Select(f => f.ErrorMessage))));
+        }
+
         var book = await _context.Books
             .FirstOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
 

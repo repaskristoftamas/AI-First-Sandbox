@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.SharedKernel.Results;
+using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,9 @@ namespace Bookstore.Application.Authors.Commands.UpdateAuthor;
 /// <remarks>
 /// Returns a not-found error if the author does not exist.
 /// </remarks>
-internal sealed class UpdateAuthorCommandHandler(IApplicationDbContext context) : ICommandHandler<UpdateAuthorCommand, Result>
+internal sealed class UpdateAuthorCommandHandler(
+    IApplicationDbContext context,
+    IValidator<UpdateAuthorCommand> validator) : ICommandHandler<UpdateAuthorCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
 
@@ -23,6 +26,13 @@ internal sealed class UpdateAuthorCommandHandler(IApplicationDbContext context) 
     /// <returns>A success result, or a <see cref="NotFoundError"/> if the author does not exist.</returns>
     public async ValueTask<Result> Handle(UpdateAuthorCommand command, CancellationToken cancellationToken)
     {
+        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            var failures = validationResult.Errors;
+            return Result.Failure(new ValidationError(string.Join("; ", failures.Select(f => f.ErrorMessage))));
+        }
+
         var author = await _context.Authors
             .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);
 
