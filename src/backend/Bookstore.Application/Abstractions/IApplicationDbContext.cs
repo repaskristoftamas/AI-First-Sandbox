@@ -1,3 +1,4 @@
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,11 @@ namespace Bookstore.Application.Abstractions;
 /// </summary>
 public interface IApplicationDbContext
 {
+    /// <summary>
+    /// Queryable set of authors in the catalog.
+    /// </summary>
+    DbSet<Author> Authors { get; }
+
     /// <summary>
     /// Queryable set of books in the catalog.
     /// </summary>

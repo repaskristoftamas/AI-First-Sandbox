@@ -1,0 +1,12 @@
+namespace Bookstore.WebApi.Endpoints.Authors;
+
+/// <summary>
+/// API request model for creating a new author in the catalog.
+/// </summary>
+/// <param name="FirstName">First name of the author.</param>
+/// <param name="LastName">Last name of the author.</param>
+/// <param name="DateOfBirth">Date of birth of the author.</param>
+public sealed record CreateAuthorRequest(
+    string FirstName,
+    string LastName,
+    DateOnly DateOfBirth);
