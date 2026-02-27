@@ -20,6 +20,7 @@ internal sealed class CreateAuthorCommandHandler(IApplicationDbContext context) 
     /// <returns>A result containing the new author's identifier.</returns>
     public async ValueTask<Result<Guid>> Handle(CreateAuthorCommand command, CancellationToken cancellationToken)
     {
+        //TODO when there are more properties, switch to parameter object
         var createResult = Author.Create(command.FirstName, command.LastName, command.DateOfBirth);
 
         if (createResult.IsFailure)

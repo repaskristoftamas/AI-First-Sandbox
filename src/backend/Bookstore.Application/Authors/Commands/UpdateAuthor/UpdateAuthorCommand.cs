@@ -16,3 +16,5 @@ public sealed record UpdateAuthorCommand(
     string FirstName,
     string LastName,
     DateOnly DateOfBirth) : ICommand<Result>;
+
+//TODO when there are more properties, switch to parameter object
