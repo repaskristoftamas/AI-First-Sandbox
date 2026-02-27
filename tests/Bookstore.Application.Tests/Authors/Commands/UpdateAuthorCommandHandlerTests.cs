@@ -20,7 +20,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options);
-        _handler = new UpdateAuthorCommandHandler(_context);
+        _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator());
     }
 
     [Fact]
