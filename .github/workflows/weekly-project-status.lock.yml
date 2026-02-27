@@ -24,7 +24,7 @@
 # Generates a lightweight weekly summary of the BookStore project board activity,
 # covering completed, in-progress, and planned work. Posts the result as a GitHub issue.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"afa0402ebf8cebb176f0c7068c37e385a658fd9dc365f38b8889dcf8c0343b5f","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"ee28a81b70cd75a13642cf98789cd5f9bde0c047fc304da0b3962a6da22fcb91","compiler_version":"v0.50.4"}
 
 name: "Weekly Project Status"
 "on":
@@ -205,6 +205,7 @@ jobs:
     permissions:
       contents: read
       issues: read
+      pull-requests: read
     concurrency:
       group: "gh-aw-claude-${{ github.workflow }}"
     env:
