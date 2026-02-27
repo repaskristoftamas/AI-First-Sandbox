@@ -41,15 +41,20 @@ public sealed class AuthorEndpoints : IEndpointDefinition
     }
 
     /// <summary>
-    /// Retrieves all authors in the catalog.
+    /// Retrieves a page of authors from the catalog.
     /// </summary>
+    /// <param name="page">One-based page number (default: 1).</param>
+    /// <param name="pageSize">Number of results per page (default: 20).</param>
     /// <param name="sender">Mediator sender for dispatching the query.</param>
     /// <param name="cancellationToken">Token to cancel the request.</param>
-    /// <returns>An OK result with the author list, or a problem response on failure.</returns>
+    /// <returns>An OK result with the author page, or a problem response on failure.</returns>
     private static async Task<Results<Ok<List<AuthorResponse>>, ProblemHttpResult>> GetAllAuthors(
-        ISender sender, CancellationToken cancellationToken)
+        ISender sender,
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var result = await sender.Send(new GetAllAuthorsQuery(), cancellationToken);
+        var result = await sender.Send(new GetAllAuthorsQuery(page, pageSize), cancellationToken);
         return result.IsSuccess
             ? TypedResults.Ok(result.Value.Select(d => d.ToResponse()).ToList())
             : result.Error.ToProblemHttpResult();

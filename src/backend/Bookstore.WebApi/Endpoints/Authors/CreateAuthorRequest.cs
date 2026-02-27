@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Bookstore.WebApi.Endpoints.Authors;
 
 /// <summary>
@@ -7,6 +9,6 @@ namespace Bookstore.WebApi.Endpoints.Authors;
 /// <param name="LastName">Last name of the author.</param>
 /// <param name="DateOfBirth">Date of birth of the author.</param>
 public sealed record CreateAuthorRequest(
-    string FirstName,
-    string LastName,
+    [Required, StringLength(100, MinimumLength = 1)] string FirstName,
+    [Required, StringLength(100, MinimumLength = 1)] string LastName,
     DateOnly DateOfBirth);

@@ -5,6 +5,8 @@ using Mediator;
 namespace Bookstore.Application.Authors.Queries.GetAllAuthors;
 
 /// <summary>
-/// Query to retrieve all authors in the catalog.
+/// Query to retrieve a page of authors from the catalog.
 /// </summary>
-public sealed record GetAllAuthorsQuery : IQuery<Result<IReadOnlyList<AuthorDto>>>;
+/// <param name="Page">One-based page number.</param>
+/// <param name="PageSize">Number of authors per page.</param>
+public sealed record GetAllAuthorsQuery(int Page = 1, int PageSize = 20) : IQuery<Result<IReadOnlyList<AuthorDto>>>;

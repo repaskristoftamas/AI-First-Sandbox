@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Bookstore.Application.Tests.Authors.Commands;
 
-public class CreateAuthorCommandHandlerTests : IDisposable
+public class CreateAuthorCommandHandlerTests : IAsyncDisposable
 {
     private readonly BookstoreDbContext _context;
     private readonly CreateAuthorCommandHandler _handler;
@@ -52,5 +52,19 @@ public class CreateAuthorCommandHandlerTests : IDisposable
         persisted.DateOfBirth.Should().Be(new DateOnly(1963, 12, 18));
     }
 
-    public void Dispose() => _context.Dispose();
+    [Fact]
+    public async Task Handle_ShouldReturnValidationFailure_WhenFirstNameIsEmpty()
+    {
+        // Arrange
+        var command = new CreateAuthorCommand("", "Martin", new DateOnly(1952, 12, 5));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<SharedKernel.Results.ValidationError>();
+    }
+
+    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
 }

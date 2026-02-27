@@ -1,4 +1,5 @@
 using Bookstore.SharedKernel.Abstractions;
+using Bookstore.SharedKernel.Results;
 
 namespace Bookstore.Domain.Authors;
 
@@ -36,15 +37,26 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <param name="firstName">First name of the author.</param>
     /// <param name="lastName">Last name of the author.</param>
     /// <param name="dateOfBirth">Date of birth of the author.</param>
-    /// <returns>A new <see cref="Author"/> instance with a unique identifier.</returns>
-    public static Author Create(string firstName, string lastName, DateOnly dateOfBirth) =>
-        new()
+    /// <returns>A successful result containing the new <see cref="Author"/>, or a validation error.</returns>
+    public static Result<Author> Create(string firstName, string lastName, DateOnly dateOfBirth)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure<Author>(new ValidationError("First name is required."));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            return Result.Failure<Author>(new ValidationError("Last name is required."));
+
+        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
+            return Result.Failure<Author>(new ValidationError("Date of birth must be in the past."));
+
+        return Result.Success(new Author
         {
             Id = AuthorId.New(),
             FirstName = firstName,
             LastName = lastName,
             DateOfBirth = dateOfBirth
-        };
+        });
+    }
 
     /// <summary>
     /// Replaces all mutable properties of the author with the provided values.
@@ -52,10 +64,22 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <param name="firstName">First name of the author.</param>
     /// <param name="lastName">Last name of the author.</param>
     /// <param name="dateOfBirth">Date of birth of the author.</param>
-    public void Update(string firstName, string lastName, DateOnly dateOfBirth)
+    /// <returns>A success result, or a validation error if any value is invalid.</returns>
+    public Result Update(string firstName, string lastName, DateOnly dateOfBirth)
     {
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure(new ValidationError("First name is required."));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            return Result.Failure(new ValidationError("Last name is required."));
+
+        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
+            return Result.Failure(new ValidationError("Date of birth must be in the past."));
+
         FirstName = firstName;
         LastName = lastName;
         DateOfBirth = dateOfBirth;
+
+        return Result.Success();
     }
 }

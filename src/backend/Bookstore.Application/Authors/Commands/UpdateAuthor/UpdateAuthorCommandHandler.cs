@@ -29,7 +29,10 @@ internal sealed class UpdateAuthorCommandHandler(IApplicationDbContext context) 
         if (author is null)
             return Result.Failure(new NotFoundError("The author with the specified identifier was not found."));
 
-        author.Update(command.FirstName, command.LastName, command.DateOfBirth);
+        var updateResult = author.Update(command.FirstName, command.LastName, command.DateOfBirth);
+
+        if (updateResult.IsFailure)
+            return updateResult;
 
         await _context.SaveChangesAsync(cancellationToken);
 

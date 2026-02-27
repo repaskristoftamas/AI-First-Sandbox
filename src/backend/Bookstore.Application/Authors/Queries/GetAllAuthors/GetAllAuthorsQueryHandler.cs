@@ -27,6 +27,8 @@ internal sealed class GetAllAuthorsQueryHandler(IApplicationDbContext context) :
     {
         var authors = await _context.Authors
             .AsNoTracking()
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<AuthorDto>>([.. authors.Select(a => a.ToDto())]);
