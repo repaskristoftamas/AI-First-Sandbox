@@ -35,12 +35,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           claude --print --permission-mode bypassPermissions \
-            "Fetch PR #${PR_NUMBER} from repaskristoftamas/Bookstore-API. \
-             Read all review comments on the PR. \
-             Evaluate each concern: if it is a valid code quality issue, fix it in the codebase. \
-             If a concern is not valid or is a matter of personal preference with no clear improvement, skip it. \
-             After fixing valid concerns, run the tests to verify nothing is broken. \
-             Commit any fixes using conventional commits. Do not push."
+            "/address-review-ci ${PR_NUMBER}"
 
       - name: Push fixes
         run: git push origin ${{ github.event.pull_request.head.ref }}
