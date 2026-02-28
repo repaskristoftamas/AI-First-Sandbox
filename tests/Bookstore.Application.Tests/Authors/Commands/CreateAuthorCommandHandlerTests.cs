@@ -18,7 +18,7 @@ public class CreateAuthorCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options);
-        _handler = new CreateAuthorCommandHandler(_context);
+        _handler = new CreateAuthorCommandHandler(_context, new CreateAuthorCommandValidator());
     }
 
     [Fact]

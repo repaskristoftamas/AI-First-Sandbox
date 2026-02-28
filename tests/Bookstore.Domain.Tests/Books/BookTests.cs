@@ -17,7 +17,7 @@ public class BookTests
         const int publicationYear = 2017;
 
         // Act
-        var book = Book.Create(title, author, isbn, price, publicationYear);
+        var book = Book.Create(title, author, isbn, price, publicationYear).Value;
 
         // Assert
         book.Id.Value.Should().NotBeEmpty();
@@ -32,7 +32,7 @@ public class BookTests
     public void Update_ShouldModifyBookProperties()
     {
         // Arrange
-        var book = Book.Create("Old Title", "Old Author", "978-0000000000", 10m, 2000);
+        var book = Book.Create("Old Title", "Old Author", "978-0000000000", 10m, 2000).Value;
 
         // Act
         book.Update("New Title", "New Author", "978-1111111111", 20m, 2023);

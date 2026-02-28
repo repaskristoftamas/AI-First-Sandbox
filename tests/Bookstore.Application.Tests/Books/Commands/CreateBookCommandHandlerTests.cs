@@ -19,7 +19,7 @@ public class CreateBookCommandHandlerTests : IDisposable
             .Options;
 
         _context = new BookstoreDbContext(options);
-        _handler = new CreateBookCommandHandler(_context);
+        _handler = new CreateBookCommandHandler(_context, new CreateBookCommandValidator());
     }
 
     [Fact]
@@ -34,6 +34,20 @@ public class CreateBookCommandHandlerTests : IDisposable
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnValidationFailure_WhenTitleIsEmpty()
+    {
+        // Arrange
+        var command = new CreateBookCommand("", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Fact]
