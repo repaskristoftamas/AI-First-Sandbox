@@ -20,14 +20,14 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options);
-        _handler = new UpdateBookCommandHandler(_context, new UpdateBookCommandValidator());
+        _handler = new UpdateBookCommandHandler(_context, new UpdateBookCommandValidator(TimeProvider.System), TimeProvider.System);
     }
 
     [Fact]
     public async Task Handle_ShouldUpdateBook_WhenBookExists()
     {
         // Arrange
-        var book = Book.Create("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008).Value;
+        var book = Book.Create("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 
@@ -61,8 +61,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnConflict_WhenIsbnAlreadyExistsOnAnotherBook()
     {
         // Arrange
-        var existingBook = Book.Create("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008).Value;
-        var bookToUpdate = Book.Create("Refactoring", "Martin Fowler", "978-0201485677", 49.99m, 1999).Value;
+        var existingBook = Book.Create("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var bookToUpdate = Book.Create("Refactoring", "Martin Fowler", "978-0201485677", 49.99m, 1999, TimeProvider.System).Value;
         _context.Books.AddRange(existingBook, bookToUpdate);
         await _context.SaveChangesAsync();
 

@@ -15,10 +15,12 @@ namespace Bookstore.Application.Books.Commands.UpdateBook;
 /// </remarks>
 internal sealed class UpdateBookCommandHandler(
     IApplicationDbContext context,
-    IValidator<UpdateBookCommand> validator) : ICommandHandler<UpdateBookCommand, Result>
+    IValidator<UpdateBookCommand> validator,
+    TimeProvider timeProvider) : ICommandHandler<UpdateBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
     private readonly IValidator<UpdateBookCommand> _validator = validator;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
     /// Applies the updated properties to an existing book.
@@ -47,7 +49,9 @@ internal sealed class UpdateBookCommandHandler(
         if (isbnConflict)
             return Result.Failure(new ConflictError($"A book with ISBN '{command.ISBN}' already exists."));
 
-        book.Update(command.Title, command.Author, command.ISBN, command.Price, command.PublicationYear);
+        var updateResult = book.Update(command.Title, command.Author, command.ISBN, command.Price, command.PublicationYear, _timeProvider);
+        if (updateResult.IsFailure)
+            return updateResult;
 
         await _context.SaveChangesAsync(cancellationToken);
 

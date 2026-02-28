@@ -16,10 +16,12 @@ namespace Bookstore.Application.Books.Commands.CreateBook;
 /// </remarks>
 internal sealed class CreateBookCommandHandler(
     IApplicationDbContext context,
-    IValidator<CreateBookCommand> validator) : ICommandHandler<CreateBookCommand, Result<Guid>>
+    IValidator<CreateBookCommand> validator,
+    TimeProvider timeProvider) : ICommandHandler<CreateBookCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context = context;
     private readonly IValidator<CreateBookCommand> _validator = validator;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
     /// Creates a new book and returns its identifier.
@@ -47,7 +49,8 @@ internal sealed class CreateBookCommandHandler(
             command.Author,
             command.ISBN,
             command.Price,
-            command.PublicationYear);
+            command.PublicationYear,
+            _timeProvider);
 
         if (createResult.IsFailure)
             return Result.Failure<Guid>(createResult.Error);

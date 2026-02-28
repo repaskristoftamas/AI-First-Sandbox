@@ -49,8 +49,12 @@ public sealed class Book : AuditableEntity<BookId>
     /// <param name="isbn">International Standard Book Number.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
-    /// <returns>A new <see cref="Book"/> instance with a unique identifier.</returns>
-    public static Result<Book> Create(string title, string author, string isbn, decimal price, int publicationYear)
+    /// <param name="timeProvider">Provides the current date for publication year validation.</param>
+    /// <returns>
+    /// A <see cref="Result{Book}"/> containing the new <see cref="Book"/> instance on success,
+    /// or a <see cref="ValidationError"/> if any argument is invalid.
+    /// </returns>
+    public static Result<Book> Create(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(title))
             return Result.Failure<Book>(new ValidationError("Title is required."));
@@ -61,10 +65,10 @@ public sealed class Book : AuditableEntity<BookId>
         if (string.IsNullOrWhiteSpace(isbn))
             return Result.Failure<Book>(new ValidationError("ISBN is required."));
 
-        if (price < 0)
-            return Result.Failure<Book>(new ValidationError("Price cannot be negative."));
+        if (price <= 0)
+            return Result.Failure<Book>(new ValidationError("Price must be greater than zero."));
 
-        if (publicationYear < 0 || publicationYear > DateTime.Now.Year)
+        if (publicationYear < 1450 || publicationYear > timeProvider.GetLocalNow().Year)
             return Result.Failure<Book>(new ValidationError("Publication year must be a valid year."));
     
         return Result.Success(new Book
@@ -86,22 +90,26 @@ public sealed class Book : AuditableEntity<BookId>
     /// <param name="isbn">International Standard Book Number.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
-    public Result Update(string title, string author, string isbn, decimal price, int publicationYear)
+    /// <param name="timeProvider">Provides the current date for publication year validation.</param>
+    /// <returns>
+    /// A success <see cref="Result"/> if all values are valid, or a <see cref="ValidationError"/> otherwise.
+    /// </returns>
+    public Result Update(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.", nameof(title));
+            return Result.Failure(new ValidationError("Title is required."));
 
         if (string.IsNullOrWhiteSpace(author))
-            throw new ArgumentException("Author is required.", nameof(author));
-        
-        if (string.IsNullOrWhiteSpace(isbn))
-            throw new ArgumentException("ISBN is required.", nameof(isbn));
-        
-        if (price < 0)
-            throw new ArgumentException("Price cannot be negative.", nameof(price));
+            return Result.Failure(new ValidationError("Author is required."));
 
-        if (publicationYear < 0 || publicationYear > DateTime.Now.Year)
-            throw new ArgumentException("Publication year must be a valid year.", nameof(publicationYear));
+        if (string.IsNullOrWhiteSpace(isbn))
+            return Result.Failure(new ValidationError("ISBN is required."));
+
+        if (price <= 0)
+            return Result.Failure(new ValidationError("Price must be greater than zero."));
+
+        if (publicationYear < 1450 || publicationYear > timeProvider.GetLocalNow().Year)
+            return Result.Failure(new ValidationError("Publication year must be a valid year."));
 
         Title = title;
         Author = author;

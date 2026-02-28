@@ -19,7 +19,7 @@ public class CreateBookCommandHandlerTests : IDisposable
             .Options;
 
         _context = new BookstoreDbContext(options);
-        _handler = new CreateBookCommandHandler(_context, new CreateBookCommandValidator());
+        _handler = new CreateBookCommandHandler(_context, new CreateBookCommandValidator(TimeProvider.System), TimeProvider.System);
     }
 
     [Fact]

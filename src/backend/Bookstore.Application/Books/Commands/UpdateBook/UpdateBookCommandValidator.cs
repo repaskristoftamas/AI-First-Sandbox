@@ -8,7 +8,8 @@ namespace Bookstore.Application.Books.Commands.UpdateBook;
 public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCommand>
 {
     /// <summary>Initializes the validation rules.</summary>
-    public UpdateBookCommandValidator()
+    /// <param name="timeProvider">Provides the current date for publication year validation.</param>
+    public UpdateBookCommandValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.Title)
             .NotEmpty()
@@ -26,6 +27,6 @@ public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCom
             .GreaterThan(0);
 
         RuleFor(x => x.PublicationYear)
-            .InclusiveBetween(1450, DateTime.Today.Year);
+            .InclusiveBetween(1450, timeProvider.GetLocalNow().Year);
     }
 }

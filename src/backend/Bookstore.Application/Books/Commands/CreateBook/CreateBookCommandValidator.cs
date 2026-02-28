@@ -8,7 +8,8 @@ namespace Bookstore.Application.Books.Commands.CreateBook;
 public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCommand>
 {
     /// <summary>Initializes the validation rules.</summary>
-    public CreateBookCommandValidator()
+    /// <param name="timeProvider">Provides the current date for publication year validation.</param>
+    public CreateBookCommandValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.Title)
             .NotEmpty()
@@ -26,6 +27,6 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .GreaterThan(0);
 
         RuleFor(x => x.PublicationYear)
-            .InclusiveBetween(1450, DateTime.Today.Year);
+            .InclusiveBetween(1450, timeProvider.GetLocalNow().Year);
     }
 }
