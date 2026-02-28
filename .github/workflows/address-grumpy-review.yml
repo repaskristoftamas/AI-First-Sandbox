@@ -7,7 +7,7 @@ on:
 jobs:
   address:
     # Filter to grumpy reviewer reviews only via the unique signature it embeds
-    if: contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer')
+    if: "contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
