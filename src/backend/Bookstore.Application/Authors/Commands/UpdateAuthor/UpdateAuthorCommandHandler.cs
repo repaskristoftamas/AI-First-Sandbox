@@ -1,4 +1,5 @@
 using Bookstore.Application.Abstractions;
+using Bookstore.Application.Extensions;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
 using Mediator;
@@ -17,6 +18,7 @@ internal sealed class UpdateAuthorCommandHandler(
     IValidator<UpdateAuthorCommand> validator) : ICommandHandler<UpdateAuthorCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
+    private readonly IValidator<UpdateAuthorCommand> _validator = validator;
 
     /// <summary>
     /// Applies the updated properties to an existing author.
@@ -26,12 +28,9 @@ internal sealed class UpdateAuthorCommandHandler(
     /// <returns>A success result, or a <see cref="NotFoundError"/> if the author does not exist.</returns>
     public async ValueTask<Result> Handle(UpdateAuthorCommand command, CancellationToken cancellationToken)
     {
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        var validationResult = await _validator.ValidateAsync(command, cancellationToken);
         if (!validationResult.IsValid)
-        {
-            var failures = validationResult.Errors;
-            return Result.Failure(new ValidationError(string.Join("; ", failures.Select(f => f.ErrorMessage))));
-        }
+            return validationResult.ToFailureResult();
 
         var author = await _context.Authors
             .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);

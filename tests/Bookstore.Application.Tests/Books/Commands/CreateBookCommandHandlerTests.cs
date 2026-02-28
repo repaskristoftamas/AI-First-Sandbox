@@ -37,6 +37,20 @@ public class CreateBookCommandHandlerTests : IDisposable
     }
 
     [Fact]
+    public async Task Handle_ShouldReturnValidationFailure_WhenTitleIsEmpty()
+    {
+        // Arrange
+        var command = new CreateBookCommand("", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    [Fact]
     public async Task Handle_ShouldReturnFailure_WhenIsbnAlreadyExists()
     {
         // Arrange

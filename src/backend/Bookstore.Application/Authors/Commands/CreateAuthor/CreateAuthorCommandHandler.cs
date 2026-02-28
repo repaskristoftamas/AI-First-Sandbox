@@ -1,4 +1,5 @@
 using Bookstore.Application.Abstractions;
+using Bookstore.Application.Extensions;
 using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
@@ -14,6 +15,7 @@ internal sealed class CreateAuthorCommandHandler(
     IValidator<CreateAuthorCommand> validator) : ICommandHandler<CreateAuthorCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context = context;
+    private readonly IValidator<CreateAuthorCommand> _validator = validator;
 
     /// <summary>
     /// Creates a new author and returns its identifier.
@@ -23,12 +25,9 @@ internal sealed class CreateAuthorCommandHandler(
     /// <returns>A result containing the new author's identifier.</returns>
     public async ValueTask<Result<Guid>> Handle(CreateAuthorCommand command, CancellationToken cancellationToken)
     {
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        var validationResult = await _validator.ValidateAsync(command, cancellationToken);
         if (!validationResult.IsValid)
-        {
-            var failures = validationResult.Errors;
-            return Result.Failure<Guid>(new ValidationError(string.Join("; ", failures.Select(f => f.ErrorMessage))));
-        }
+            return validationResult.ToFailureResult<Guid>();
 
         //TODO when there are more properties, switch to parameter object
         var createResult = Author.Create(command.FirstName, command.LastName, command.DateOfBirth);
