@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          cache: 'packages'
+          cache: true
         env:
           DOTNET_INSTALL_DIR: /usr/share/dotnet
 
