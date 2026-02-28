@@ -3,6 +3,7 @@ using Bookstore.Infrastructure;
 using Bookstore.WebApi.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddCors(options =>
