@@ -78,7 +78,6 @@ public sealed class Book : AuditableEntity<BookId>
         });
     }
 
-
     /// <summary>
     /// Replaces all mutable properties of the book with the provided values.
     /// </summary>
