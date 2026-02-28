@@ -89,19 +89,19 @@ public sealed class Book : AuditableEntity<BookId>
     public Result Update(string title, string author, string isbn, decimal price, int publicationYear)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.", nameof(title));
+            return Result.Failure(new ValidationError("Title is required."));
 
         if (string.IsNullOrWhiteSpace(author))
-            throw new ArgumentException("Author is required.", nameof(author));
-        
+            return Result.Failure(new ValidationError("Author is required."));
+
         if (string.IsNullOrWhiteSpace(isbn))
-            throw new ArgumentException("ISBN is required.", nameof(isbn));
-        
+            return Result.Failure(new ValidationError("ISBN is required."));
+
         if (price < 0)
-            throw new ArgumentException("Price cannot be negative.", nameof(price));
+            return Result.Failure(new ValidationError("Price cannot be negative."));
 
         if (publicationYear < 0 || publicationYear > DateTime.Now.Year)
-            throw new ArgumentException("Publication year must be a valid year.", nameof(publicationYear));
+            return Result.Failure(new ValidationError("Publication year must be a valid year."));
 
         Title = title;
         Author = author;
