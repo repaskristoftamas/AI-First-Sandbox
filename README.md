@@ -6,7 +6,7 @@ This project uses [Claude Code](https://claude.ai/claude-code) commands and [Git
 
 ### 1. Draft an Issue
 
-**Command:** `/user:draft-issue <description in free text>`
+**Command:** `/draft-issue <description in free text>`
 
 Describe what you want in plain language. Claude Code will:
 
@@ -21,7 +21,7 @@ You iterate on the draft until you're satisfied, then approve it. Claude creates
 
 ### 2. Implement the Issue
 
-**Command:** `/user:work-issue <issue-number>`
+**Command:** `/work-issue <issue-number>`
 
 Point Claude Code at a GitHub issue number. It will:
 
@@ -42,9 +42,9 @@ The PR is left open for human review -- Claude never merges it.
 
 ### 3. Code Review by Grumpy Reviewer
 
-**Trigger:** Comment `/grumpy` on any open pull request.
+**Trigger:** Automatic — fires when a PR is opened.
 
-A GitHub Actions workflow ([`.github/workflows/grumpy-reviewer.lock.yml`](.github/workflows/grumpy-reviewer.lock.yml)) kicks in:
+[`.github/workflows/auto-grumpy.yml`](.github/workflows/auto-grumpy.yml) posts a `/grumpy` comment on the PR automatically, which triggers the reviewer workflow ([`.github/workflows/grumpy-reviewer.lock.yml`](.github/workflows/grumpy-reviewer.lock.yml)):
 
 1. **Activation** -- Validates the commenter has write access and the comment is on a PR
 2. **Agent** -- Spins up a sandboxed Claude Code instance in CI with read-only access to the repo and PR diff
@@ -56,32 +56,60 @@ A GitHub Actions workflow ([`.github/workflows/grumpy-reviewer.lock.yml`](.githu
 
 The reviewer persona is a sarcastic senior developer with 40+ years of experience. It has persistent memory across reviews to track recurring patterns and avoid repeating itself.
 
+### 4. Address Review (Automatic)
+
+**Trigger:** Automatic — fires when the Grumpy Reviewer submits its review.
+
+[`.github/workflows/address-grumpy-review.yml`](.github/workflows/address-grumpy-review.yml) detects the review via the `pull_request_review` event, filtering on the unique signature the reviewer embeds in every review body. A Claude Code instance runs on the CI runner with full project context (coding standards, architecture rules, testing conventions, agent definitions) and executes the `/address-review-ci` command:
+
+1. Fetches all inline review comments and the overall review summary
+2. Reads the diff and each affected file for full context
+3. Classifies every comment as `fix`, `discuss`, or `skip` against the project's established conventions
+4. Applies all `fix` changes to the codebase
+5. Builds (`dotnet build`) and runs the full test suite (`dotnet test`), fixing any failures
+6. Commits the fixes using the `/commit` skill
+7. Replies to every review comment on GitHub explaining the outcome
+8. Moves the issue to **Ready for Review** on the project board
+9. Pushes the commit back to the PR branch
+
+The PR is then ready for a final human review. Claude never merges it.
+
 ### End-to-End Flow
 
 ```
 You describe a feature
         |
         v
-/user:draft-issue "add pagination to books endpoint"
+/draft-issue "add pagination to books endpoint"
         |
         v
 Claude explores codebase, drafts issue, suggests improvements
         |
         v
-You review, iterate, approve --> Issue created on GitHub
+You review, iterate, approve → Issue created on GitHub
         |
         v
-/user:work-issue 42
+/work-issue 42
         |
         v
 Claude branches, implements, builds, tests, commits, opens PR
         |
+        v [PR opened — automatic from here]
+        |
         v
-Comment "/grumpy" on the PR
+auto-grumpy.yml posts /grumpy comment
         |
         v
 Grumpy Reviewer analyzes diff, posts inline comments, submits review
         |
         v
-You address feedback, merge when ready
+address-grumpy-review.yml detects the review signature
+        |
+        v
+Claude evaluates each comment (fix / discuss / skip),
+applies fixes, builds, tests, commits, replies to comments,
+updates project board → pushes to PR branch
+        |
+        v
+You do a final review, merge when satisfied
 ```
