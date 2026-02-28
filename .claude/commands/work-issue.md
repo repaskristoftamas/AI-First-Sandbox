@@ -34,13 +34,6 @@
 
 11. **Push and create PR** — Push the branch, then use the `/pr` skill to create the pull request. Ensure the PR body references `Closes #$ARGUMENTS` and the target branch is `main`.
 
-12. **Update project board** — Move the issue to "Ready for Review":
-    ```bash
-    gh project item-edit --id "$ITEM_ID" --project-id PVT_kwHOApxqws4BP2Z2 \
-      --field-id PVTSSF_lAHOApxqws4BP2Z2zg-I7Tg \
-      --single-select-option-id d9d9aaf5
-    ```
-
 ## Rules
 
 - Do NOT merge the PR — leave it for human review.
