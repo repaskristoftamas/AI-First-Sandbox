@@ -29,11 +29,6 @@ jobs:
         env:
           DOTNET_INSTALL_DIR: /usr/share/dotnet
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Verify .NET version
         run: |
           echo "Installed .NET versions:"
@@ -41,29 +36,16 @@ jobs:
           echo "Active version:"
           dotnet --version
 
-      - name: Verify Node.js version
-        run: |
-          echo "Node.js version:"
-          node --version
-          echo "npm version:"
-          npm --version
-
       - name: Restore backend dependencies
-        run: dotnet restore src/backend/BookStore.slnx
+        run: dotnet restore src/backend/Bookstore.slnx
 
       - name: Build backend solution
-        run: dotnet build src/backend/BookStore.slnx --no-restore
-
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: src/frontend
+        run: dotnet build src/backend/Bookstore.slnx --no-restore
 
       - name: Log environment info
         run: |
           echo "=== Copilot Setup Complete ==="
           echo "Date: $(date -Iseconds)"
           echo ".NET Version: $(dotnet --version)"
-          echo "Node.js Version: $(node --version)"
-          echo "npm Version: $(npm --version)"
           echo "User: $(whoami)"
           echo "Working Dir: $(pwd)"
