@@ -29,8 +29,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldUpdateBook_WhenBookExists()
     {
         // Arrange
-        var author = SeedAuthor("Robert", "Martin");
-        var newAuthor = SeedAuthor("David", "Thomas");
+        var author = await SeedAuthor("Robert", "Martin");
+        var newAuthor = await SeedAuthor("David", "Thomas");
         var book = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
@@ -51,7 +51,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnNotFound_WhenBookDoesNotExist()
     {
         // Arrange
-        var author = SeedAuthor("Robert", "Martin");
+        var author = await SeedAuthor("Robert", "Martin");
         var command = new UpdateBookCommand(BookId.New(), "Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
@@ -66,7 +66,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnConflict_WhenIsbnAlreadyExistsOnAnotherBook()
     {
         // Arrange
-        var author = SeedAuthor("Robert", "Martin");
+        var author = await SeedAuthor("Robert", "Martin");
         var existingBook = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
         var bookToUpdate = Book.Create("Refactoring", author.Id, "978-0201485677", 49.99m, 1999, TimeProvider.System).Value;
         _context.Books.AddRange(existingBook, bookToUpdate);
@@ -86,7 +86,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnValidationFailure_WhenTitleIsEmpty()
     {
         // Arrange
-        var author = SeedAuthor("Robert", "Martin");
+        var author = await SeedAuthor("Robert", "Martin");
         var command = new UpdateBookCommand(BookId.New(), "", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
@@ -101,7 +101,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnNotFound_WhenAuthorDoesNotExist()
     {
         // Arrange
-        var author = SeedAuthor("Robert", "Martin");
+        var author = await SeedAuthor("Robert", "Martin");
         var book = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
@@ -155,11 +155,11 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     /// <summary>
     /// Creates and persists an author to satisfy the foreign key requirement.
     /// </summary>
-    private Author SeedAuthor(string firstName, string lastName)
+    private async Task<Author> SeedAuthor(string firstName, string lastName)
     {
         var author = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5)).Value;
         _context.Authors.Add(author);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return author;
     }
 

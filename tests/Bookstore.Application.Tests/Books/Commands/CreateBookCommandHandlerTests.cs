@@ -29,7 +29,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnSuccessWithBookId_WhenBookIsCreated()
     {
         // Arrange
-        var author = SeedAuthor();
+        var author = await SeedAuthor();
         var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
@@ -44,7 +44,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnValidationFailure_WhenTitleIsEmpty()
     {
         // Arrange
-        var author = SeedAuthor();
+        var author = await SeedAuthor();
         var command = new CreateBookCommand("", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
@@ -59,7 +59,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnFailure_WhenIsbnAlreadyExists()
     {
         // Arrange
-        var author = SeedAuthor();
+        var author = await SeedAuthor();
         var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
         await _handler.Handle(command, CancellationToken.None);
 
@@ -120,11 +120,11 @@ public class CreateBookCommandHandlerTests : IDisposable
     /// <summary>
     /// Creates and persists an author to satisfy the foreign key requirement.
     /// </summary>
-    private Author SeedAuthor()
+    private async Task<Author> SeedAuthor()
     {
         var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
         _context.Authors.Add(author);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return author;
     }
 
