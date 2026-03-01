@@ -3,21 +3,45 @@ name: Address grumpy review
 on:
   pull_request_review:
     types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to address'
+        required: true
+        type: number
 
 jobs:
   address:
-    # Filter to grumpy reviewer reviews only via the unique signature it embeds
-    if: "contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer')"
+    # Skip the signature check when manually dispatched
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
 
     steps:
+      - name: Resolve PR metadata
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER=${{ inputs.pr_number }}
+          else
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          fi
+          BRANCH=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefName --jq '.headRefName')
+          AUTHOR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json author --jq '.author.login')
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ steps.pr.outputs.branch }}
           fetch-depth: 0
           token: ${{ secrets.WORKFLOW_PAT }}
 
@@ -33,15 +57,14 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           claude --print --permission-mode bypassPermissions \
-            "/address-review-ci ${PR_NUMBER}"
+            "/address-review-ci ${{ steps.pr.outputs.number }}"
 
       - name: Push fixes
-        run: git push origin ${{ github.event.pull_request.head.ref }}
+        run: git push origin ${{ steps.pr.outputs.branch }}
 
       - name: Request human review
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-reviewer ${{ github.event.pull_request.user.login }}
+        run: gh pr edit ${{ steps.pr.outputs.number }} --add-reviewer ${{ steps.pr.outputs.author }}
