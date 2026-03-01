@@ -1,6 +1,9 @@
 using Bookstore.Application;
 using Bookstore.Infrastructure;
+using Bookstore.Infrastructure.Data;
 using Bookstore.WebApi.Extensions;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton(TimeProvider.System);
@@ -18,6 +21,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<BookstoreDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {

@@ -16,7 +16,7 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
     public BookstoreDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<BookstoreDbContext>()
-            .UseSqlServer("Server=localhost;Database=BookstoreDb;Trusted_Connection=True;")
+            .UseSqlServer("Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=passWORD123;TrustServerCertificate=True")
             .Options;
 
         return new BookstoreDbContext(options);
