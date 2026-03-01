@@ -40,3 +40,8 @@ jobs:
 
       - name: Push fixes
         run: git push origin ${{ github.event.pull_request.head.ref }}
+
+      - name: Request human review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-reviewer ${{ github.event.pull_request.user.login }}
