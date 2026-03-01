@@ -1,4 +1,5 @@
 using Bookstore.Application.Abstractions;
+using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : 
             .FirstOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure(new NotFoundError("The book with the specified identifier was not found."));
+            return Result.Failure(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
         _context.Books.Remove(book);
         await _context.SaveChangesAsync(cancellationToken);

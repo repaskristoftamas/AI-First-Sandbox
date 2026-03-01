@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Extensions;
+using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
 using Mediator;
@@ -36,7 +37,7 @@ internal sealed class UpdateAuthorCommandHandler(
             .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);
 
         if (author is null)
-            return Result.Failure(new NotFoundError("The author with the specified identifier was not found."));
+            return Result.Failure(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
         var updateResult = author.Update(command.FirstName, command.LastName, command.DateOfBirth);
 

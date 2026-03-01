@@ -56,20 +56,9 @@ public sealed class Book : AuditableEntity<BookId>
     /// </returns>
     public static Result<Book> Create(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            return Result.Failure<Book>(new ValidationError("Title is required."));
-
-        if (string.IsNullOrWhiteSpace(author))
-            return Result.Failure<Book>(new ValidationError("Author is required."));
-
-        if (string.IsNullOrWhiteSpace(isbn))
-            return Result.Failure<Book>(new ValidationError("ISBN is required."));
-
-        if (price <= 0)
-            return Result.Failure<Book>(new ValidationError("Price must be greater than zero."));
-
-        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
-            return Result.Failure<Book>(new ValidationError("Publication year must be a valid year."));
+        var validation = Validate(title, author, isbn, price, publicationYear, timeProvider);
+        if (validation.IsFailure)
+            return Result.Failure<Book>(validation.Error);
     
         return Result.Success(new Book
         {
@@ -96,26 +85,39 @@ public sealed class Book : AuditableEntity<BookId>
     /// </returns>
     public Result Update(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            return Result.Failure(new ValidationError("Title is required."));
-
-        if (string.IsNullOrWhiteSpace(author))
-            return Result.Failure(new ValidationError("Author is required."));
-
-        if (string.IsNullOrWhiteSpace(isbn))
-            return Result.Failure(new ValidationError("ISBN is required."));
-
-        if (price <= 0)
-            return Result.Failure(new ValidationError("Price must be greater than zero."));
-
-        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
-            return Result.Failure(new ValidationError("Publication year must be a valid year."));
+        var validation = Validate(title, author, isbn, price, publicationYear, timeProvider);
+        if (validation.IsFailure)
+            return validation;
 
         Title = title;
         Author = author;
         ISBN = isbn;
         Price = price;
         PublicationYear = publicationYear;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Validates the book fields and returns a failure result if any value is invalid.
+    /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
+    /// </summary>
+    private static Result Validate(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Title), BookErrorCodes.TitleRequired, "Title is required.")]));
+
+        if (string.IsNullOrWhiteSpace(author))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Author), BookErrorCodes.AuthorRequired, "Author is required.")]));
+
+        if (string.IsNullOrWhiteSpace(isbn))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(ISBN), BookErrorCodes.IsbnRequired, "ISBN is required.")]));
+
+        if (price <= 0)
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Price), BookErrorCodes.PriceInvalid, "Price must be greater than zero.")]));
+
+        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(PublicationYear), BookErrorCodes.PublicationYearInvalid, "Publication year must be a valid year.")]));
 
         return Result.Success();
     }

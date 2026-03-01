@@ -1,4 +1,5 @@
 using Bookstore.WebApi.Endpoints;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bookstore.WebApi.Extensions;
 
@@ -8,22 +9,15 @@ namespace Bookstore.WebApi.Extensions;
 public static class ApplicationBuilderExtensions
 {
     /// <summary>
-    /// Discovers and registers all <see cref="IEndpointDefinition"/> implementations from the WebApi assembly.
+    /// Resolves all registered <see cref="IEndpointDefinition"/> implementations from DI
+    /// and maps their routes onto the application.
     /// </summary>
     /// <param name="app">The web application to register endpoints on.</param>
     /// <returns>The same <see cref="IApplicationBuilder"/> for chaining.</returns>
     public static IApplicationBuilder RegisterEndpointDefinitions(this WebApplication app)
     {
-        var endpointDefinitions = typeof(Program).Assembly
-            .GetTypes()
-            .Where(t => typeof(IEndpointDefinition).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-            .Select(Activator.CreateInstance)
-            .Cast<IEndpointDefinition>();
-
-        foreach (var endpointDefinition in endpointDefinitions)
-        {
-            endpointDefinition.RegisterEndpoints(app);
-        }
+        foreach (var definition in app.Services.GetRequiredService<IEnumerable<IEndpointDefinition>>())
+            definition.RegisterEndpoints(app);
 
         return app;
     }

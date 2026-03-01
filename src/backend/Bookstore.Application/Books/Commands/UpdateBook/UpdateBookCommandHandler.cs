@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Extensions;
+using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
 using Mediator;
@@ -41,13 +42,13 @@ internal sealed class UpdateBookCommandHandler(
             .FirstOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure(new NotFoundError("The book with the specified identifier was not found."));
+            return Result.Failure(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
         bool isbnConflict = await _context.Books
             .AnyAsync(b => b.ISBN == command.ISBN && b.Id != command.Id, cancellationToken);
 
         if (isbnConflict)
-            return Result.Failure(new ConflictError($"A book with ISBN '{command.ISBN}' already exists."));
+            return Result.Failure(new ConflictError(BookErrorCodes.IsbnConflict, $"A book with ISBN '{command.ISBN}' already exists."));
 
         var updateResult = book.Update(command.Title, command.Author, command.ISBN, command.Price, command.PublicationYear, _timeProvider);
         if (updateResult.IsFailure)

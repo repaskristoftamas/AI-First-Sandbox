@@ -9,10 +9,11 @@ namespace Bookstore.WebApi.Extensions;
 public static class ErrorExtensions
 {
     /// <summary>
-    /// Converts an <see cref="Error"/> to a <see cref="ProblemHttpResult"/> with the appropriate HTTP status code.
+    /// Converts an <see cref="Error"/> to a <see cref="ProblemHttpResult"/> with the appropriate HTTP status code
+    /// and a machine-readable error code in the extensions.
     /// </summary>
     /// <param name="error">The domain error to convert.</param>
-    /// <returns>A <see cref="ProblemHttpResult"/> with the status code and description matching the error type.</returns>
+    /// <returns>A <see cref="ProblemHttpResult"/> with the status code, description, and error code matching the error type.</returns>
     public static ProblemHttpResult ToProblemHttpResult(this Error error)
     {
         var (statusCode, title) = error switch
@@ -23,6 +24,14 @@ public static class ErrorExtensions
             _               => (StatusCodes.Status500InternalServerError, "InternalError")
         };
 
-        return TypedResults.Problem(statusCode: statusCode, title: title, detail: error.Description);
+        var extensions = error is ValidationError validationError
+            ? new Dictionary<string, object?>(2) { ["errorCode"] = error.Code, ["failures"] = validationError.Failures }
+            : new Dictionary<string, object?>(1) { ["errorCode"] = error.Code };
+
+        return TypedResults.Problem(
+            statusCode: statusCode,
+            title: title,
+            detail: error.Description,
+            extensions: extensions);
     }
 }

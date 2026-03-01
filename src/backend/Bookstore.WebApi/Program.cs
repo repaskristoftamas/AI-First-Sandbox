@@ -1,5 +1,8 @@
 using Bookstore.Application;
 using Bookstore.Infrastructure;
+using Bookstore.WebApi.Endpoints;
+using Bookstore.WebApi.Endpoints.Authors;
+using Bookstore.WebApi.Endpoints.Books;
 using Bookstore.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddTransient<IEndpointDefinition, AuthorEndpoints>();
+builder.Services.AddTransient<IEndpointDefinition, BookEndpoints>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>

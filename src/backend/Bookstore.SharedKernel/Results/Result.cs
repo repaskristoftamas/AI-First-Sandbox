@@ -12,11 +12,12 @@ public class Result
     /// </summary>
     /// <remarks>
     /// Enforces that success and error state are consistent.
+    /// Only accessible to <see cref="Result{TValue}"/> within the same assembly.
     /// </remarks>
     /// <param name="isSuccess">Whether the operation succeeded.</param>
     /// <param name="error">The error describing the failure, or <c>null</c> for a success.</param>
     /// <exception cref="InvalidOperationException">Thrown when <paramref name="isSuccess"/> is <c>true</c> with a non-null error, or <c>false</c> with a null error.</exception>
-    protected Result(bool isSuccess, Error? error)
+    private protected Result(bool isSuccess, Error? error)
     {
         if (isSuccess && error is not null)
             throw new InvalidOperationException();
@@ -81,7 +82,7 @@ public class Result
 /// <summary>
 /// Represents the outcome of an operation that can succeed with a value or fail with an error.
 /// </summary>
-public class Result<TValue> : Result
+public sealed class Result<TValue> : Result
 {
     private readonly TValue? _value;
 
@@ -98,7 +99,7 @@ public class Result<TValue> : Result
     /// Thrown when <paramref name="isSuccess"/> is <c>true</c> with a non-null <paramref name="error"/>,
     /// or when <paramref name="isSuccess"/> is <c>false</c> with a <c>null</c> <paramref name="error"/>.
     /// </exception>
-    protected internal Result(TValue? value, bool isSuccess, Error? error)
+    internal Result(TValue? value, bool isSuccess, Error? error)
         : base(isSuccess, error)
     {
         _value = value;

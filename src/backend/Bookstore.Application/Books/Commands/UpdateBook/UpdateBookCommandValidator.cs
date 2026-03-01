@@ -1,3 +1,4 @@
+using Bookstore.Domain.Books;
 using FluentValidation;
 
 namespace Bookstore.Application.Books.Commands.UpdateBook;
@@ -12,21 +13,22 @@ public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCom
     public UpdateBookCommandValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.Title)
-            .NotEmpty()
-            .MaximumLength(250);
+            .NotEmpty().WithErrorCode(BookErrorCodes.TitleRequired)
+            .MaximumLength(250).WithErrorCode(BookErrorCodes.TitleTooLong);
 
         RuleFor(x => x.Author)
-            .NotEmpty()
-            .MaximumLength(200);
+            .NotEmpty().WithErrorCode(BookErrorCodes.AuthorRequired)
+            .MaximumLength(200).WithErrorCode(BookErrorCodes.AuthorTooLong);
 
         RuleFor(x => x.ISBN)
-            .NotEmpty()
-            .MaximumLength(20);
+            .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
+            .MaximumLength(20).WithErrorCode(BookErrorCodes.IsbnTooLong);
 
         RuleFor(x => x.Price)
-            .GreaterThan(0);
+            .GreaterThan(0).WithErrorCode(BookErrorCodes.PriceInvalid);
 
         RuleFor(x => x.PublicationYear)
-            .InclusiveBetween(1450, timeProvider.GetUtcNow().Year);
+            .InclusiveBetween(1450, timeProvider.GetLocalNow().Year)
+            .WithErrorCode(BookErrorCodes.PublicationYearInvalid);
     }
 }

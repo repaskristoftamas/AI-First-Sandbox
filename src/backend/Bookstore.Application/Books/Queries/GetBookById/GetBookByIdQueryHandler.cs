@@ -1,6 +1,7 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Books.DTOs;
 using Bookstore.Application.Books.Mappers;
+using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ internal sealed class GetBookByIdQueryHandler(IApplicationDbContext context) : I
             .FirstOrDefaultAsync(b => b.Id == query.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure<BookDto>(new NotFoundError("The book with the specified identifier was not found."));
+            return Result.Failure<BookDto>(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
         return Result.Success(book.ToDto());
     }
