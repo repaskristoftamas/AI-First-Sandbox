@@ -25,6 +25,8 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+await app.Services.MigrateDatabaseAsync(app.Lifetime.ApplicationStopping);
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

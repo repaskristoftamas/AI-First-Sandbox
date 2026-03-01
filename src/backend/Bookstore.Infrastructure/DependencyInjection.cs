@@ -29,4 +29,18 @@ public static class DependencyInjection
 
         return services;
     }
+
+    /// <summary>
+    /// Applies any pending EF Core migrations to the database.
+    /// </summary>
+    /// <param name="services">The application's root service provider.</param>
+    /// <param name="cancellationToken">Token to cancel the migration if the host is stopping.</param>
+    public static async Task MigrateDatabaseAsync(
+        this IServiceProvider services,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookstoreDbContext>();
+        await dbContext.Database.MigrateAsync(cancellationToken);
+    }
 }
