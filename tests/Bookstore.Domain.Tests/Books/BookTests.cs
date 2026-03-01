@@ -106,7 +106,7 @@ public class BookTests
     {
         // Arrange
         var book = Book.Create("Title", "Author", "978-0000000000", 10m, 2000, TimeProvider.System).Value;
-        var futureYear = TimeProvider.System.GetLocalNow().Year + 1;
+        var futureYear = TimeProvider.System.GetUtcNow().Year + 1;
 
         // Act
         var result = book.Update("Title", "Author", "978-0000000000", 10m, futureYear, TimeProvider.System);

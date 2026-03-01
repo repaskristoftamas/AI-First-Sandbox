@@ -27,6 +27,6 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .GreaterThan(0);
 
         RuleFor(x => x.PublicationYear)
-            .InclusiveBetween(1450, timeProvider.GetLocalNow().Year);
+            .InclusiveBetween(1450, timeProvider.GetUtcNow().Year);
     }
 }
