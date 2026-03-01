@@ -16,9 +16,8 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .NotEmpty().WithErrorCode(BookErrorCodes.TitleRequired)
             .MaximumLength(250).WithErrorCode(BookErrorCodes.TitleTooLong);
 
-        RuleFor(x => x.Author)
-            .NotEmpty().WithErrorCode(BookErrorCodes.AuthorRequired)
-            .MaximumLength(200).WithErrorCode(BookErrorCodes.AuthorTooLong);
+        RuleFor(x => x.AuthorId)
+            .NotEmpty().WithErrorCode(BookErrorCodes.AuthorRequired);
 
         RuleFor(x => x.ISBN)
             .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
@@ -28,7 +27,7 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .GreaterThan(0).WithErrorCode(BookErrorCodes.PriceInvalid);
 
         RuleFor(x => x.PublicationYear)
-            .InclusiveBetween(1450, timeProvider.GetLocalNow().Year)
+            .InclusiveBetween(1450, timeProvider.GetUtcNow().Year)
             .WithErrorCode(BookErrorCodes.PublicationYearInvalid);
     }
 }

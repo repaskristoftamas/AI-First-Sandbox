@@ -5,7 +5,7 @@ namespace Bookstore.Application.Books.DTOs;
 /// </summary>
 /// <param name="Id">Unique identifier of the book.</param>
 /// <param name="Title">Title of the book.</param>
-/// <param name="Author">Name of the book's author.</param>
+/// <param name="AuthorId">Identifier of the author who wrote this book.</param>
 /// <param name="ISBN">International Standard Book Number, uniquely identifying the publication.</param>
 /// <param name="Price">Retail price of the book.</param>
 /// <param name="PublicationYear">Year the book was published.</param>
@@ -14,7 +14,7 @@ namespace Bookstore.Application.Books.DTOs;
 public sealed record BookDto(
     Guid Id,
     string Title,
-    string Author,
+    Guid AuthorId,
     string ISBN,
     decimal Price,
     int PublicationYear,

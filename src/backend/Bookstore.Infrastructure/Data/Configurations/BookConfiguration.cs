@@ -1,3 +1,4 @@
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -37,13 +38,27 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
         builder.Property(b => b.Id)
             .HasConversion(converter, comparer);
 
+        var authorIdConverter = new ValueConverter<AuthorId, Guid>(
+            id => id.Value,
+            guid => new AuthorId(guid));
+
+        var authorIdComparer = new ValueComparer<AuthorId>(
+            (a, b) => a.Value == b.Value,
+            id => id.Value.GetHashCode(),
+            id => new AuthorId(id.Value));
+
         builder.Property(b => b.Title)
             .IsRequired()
             .HasMaxLength(250);
 
-        builder.Property(b => b.Author)
-            .IsRequired()
-            .HasMaxLength(250);
+        builder.Property(b => b.AuthorId)
+            .HasConversion(authorIdConverter, authorIdComparer)
+            .IsRequired();
+
+        builder.HasOne<Author>()
+            .WithMany()
+            .HasForeignKey(b => b.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(b => b.ISBN)
             .IsRequired()

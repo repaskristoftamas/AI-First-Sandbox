@@ -1,11 +1,12 @@
-using Xunit;
 using Bookstore.Application.Books.Commands.CreateBook;
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Commands;
 
@@ -28,7 +29,8 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnSuccessWithBookId_WhenBookIsCreated()
     {
         // Arrange
-        var command = new CreateBookCommand("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+        var author = await SeedAuthor();
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -42,7 +44,8 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnValidationFailure_WhenTitleIsEmpty()
     {
         // Arrange
-        var command = new CreateBookCommand("", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+        var author = await SeedAuthor();
+        var command = new CreateBookCommand("", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -56,10 +59,11 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnFailure_WhenIsbnAlreadyExists()
     {
         // Arrange
-        var command = new CreateBookCommand("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+        var author = await SeedAuthor();
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
         await _handler.Handle(command, CancellationToken.None);
 
-        var duplicateCommand = new CreateBookCommand("Clean Code 2nd Ed", "Robert C. Martin", "978-0132350884", 40m, 2020);
+        var duplicateCommand = new CreateBookCommand("Clean Code 2nd Ed", author.Id.Value, "978-0132350884", 40m, 2020);
 
         // Act
         var result = await _handler.Handle(duplicateCommand, CancellationToken.None);
@@ -67,6 +71,21 @@ public class CreateBookCommandHandlerTests : IDisposable
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnNotFound_WhenAuthorDoesNotExist()
+    {
+        // Arrange
+        var command = new CreateBookCommand("Clean Code", Guid.NewGuid(), "978-0132350884", 35.99m, 2008);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>()
+            .Which.Code.Should().Be(BookErrorCodes.AuthorNotFound);
     }
 
     [Fact]
@@ -83,7 +102,11 @@ public class CreateBookCommandHandlerTests : IDisposable
         await using var context = new BookstoreDbContext(options, fakeTimeProvider);
         var handler = new CreateBookCommandHandler(context, new CreateBookCommandValidator(fakeTimeProvider), fakeTimeProvider);
 
-        var command = new CreateBookCommand("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008);
+        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -92,6 +115,17 @@ public class CreateBookCommandHandlerTests : IDisposable
         result.IsSuccess.Should().BeTrue();
         var created = await context.Books.FindAsync(new BookId(result.Value));
         created!.CreatedAt.Should().Be(frozenTime);
+    }
+
+    /// <summary>
+    /// Creates and persists an author to satisfy the foreign key requirement.
+    /// </summary>
+    private async Task<Author> SeedAuthor()
+    {
+        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
+        _context.Authors.Add(author);
+        await _context.SaveChangesAsync();
+        return author;
     }
 
     public void Dispose() => _context.Dispose();

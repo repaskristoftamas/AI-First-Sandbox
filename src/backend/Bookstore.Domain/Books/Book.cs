@@ -1,3 +1,4 @@
+using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Abstractions;
 using Bookstore.SharedKernel.Results;
 
@@ -22,9 +23,9 @@ public sealed class Book : AuditableEntity<BookId>
     public string Title { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Name of the book's author.
+    /// Identifier of the author who wrote this book.
     /// </summary>
-    public string Author { get; private set; } = string.Empty;
+    public AuthorId AuthorId { get; private set; }
 
     /// <summary>
     /// International Standard Book Number, uniquely identifying the publication.
@@ -45,7 +46,7 @@ public sealed class Book : AuditableEntity<BookId>
     /// Factory method that creates a new book with a generated identifier.
     /// </summary>
     /// <param name="title">Title of the book.</param>
-    /// <param name="author">Name of the book's author.</param>
+    /// <param name="authorId">Identifier of the author who wrote this book.</param>
     /// <param name="isbn">International Standard Book Number.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
@@ -54,17 +55,17 @@ public sealed class Book : AuditableEntity<BookId>
     /// A <see cref="Result{Book}"/> containing the new <see cref="Book"/> instance on success,
     /// or a <see cref="ValidationError"/> if any argument is invalid.
     /// </returns>
-    public static Result<Book> Create(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    public static Result<Book> Create(string title, AuthorId authorId, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
-        var validation = Validate(title, author, isbn, price, publicationYear, timeProvider);
+        var validation = Validate(title, isbn, price, publicationYear, timeProvider);
         if (validation.IsFailure)
             return Result.Failure<Book>(validation.Error);
-    
+
         return Result.Success(new Book
         {
             Id = BookId.New(),
             Title = title,
-            Author = author,
+            AuthorId = authorId,
             ISBN = isbn,
             Price = price,
             PublicationYear = publicationYear
@@ -75,7 +76,7 @@ public sealed class Book : AuditableEntity<BookId>
     /// Replaces all mutable properties of the book with the provided values.
     /// </summary>
     /// <param name="title">Title of the book.</param>
-    /// <param name="author">Name of the book's author.</param>
+    /// <param name="authorId">Identifier of the author who wrote this book.</param>
     /// <param name="isbn">International Standard Book Number.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
@@ -83,14 +84,14 @@ public sealed class Book : AuditableEntity<BookId>
     /// <returns>
     /// A success <see cref="Result"/> if all values are valid, or a <see cref="ValidationError"/> otherwise.
     /// </returns>
-    public Result Update(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    public Result Update(string title, AuthorId authorId, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
-        var validation = Validate(title, author, isbn, price, publicationYear, timeProvider);
+        var validation = Validate(title, isbn, price, publicationYear, timeProvider);
         if (validation.IsFailure)
             return validation;
 
         Title = title;
-        Author = author;
+        AuthorId = authorId;
         ISBN = isbn;
         Price = price;
         PublicationYear = publicationYear;
@@ -102,13 +103,10 @@ public sealed class Book : AuditableEntity<BookId>
     /// Validates the book fields and returns a failure result if any value is invalid.
     /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
     /// </summary>
-    private static Result Validate(string title, string author, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    private static Result Validate(string title, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(title))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Title), BookErrorCodes.TitleRequired, "Title is required.")]));
-
-        if (string.IsNullOrWhiteSpace(author))
-            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Author), BookErrorCodes.AuthorRequired, "Author is required.")]));
 
         if (string.IsNullOrWhiteSpace(isbn))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(ISBN), BookErrorCodes.IsbnRequired, "ISBN is required.")]));

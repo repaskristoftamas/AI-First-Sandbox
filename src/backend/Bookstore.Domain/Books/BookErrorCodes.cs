@@ -11,17 +11,17 @@ public static class BookErrorCodes
     /// <summary>A book with the given ISBN already exists.</summary>
     public const string IsbnConflict = "BOOK_ISBN_CONFLICT";
 
+    /// <summary>The referenced author does not exist.</summary>
+    public const string AuthorNotFound = "BOOK_AUTHOR_NOT_FOUND";
+
     /// <summary>Title is missing or whitespace.</summary>
     public const string TitleRequired = "BOOK_TITLE_REQUIRED";
 
     /// <summary>Title exceeds the maximum allowed length.</summary>
     public const string TitleTooLong = "BOOK_TITLE_TOO_LONG";
 
-    /// <summary>Author name is missing or whitespace.</summary>
+    /// <summary>Author identifier is missing or empty.</summary>
     public const string AuthorRequired = "BOOK_AUTHOR_REQUIRED";
-
-    /// <summary>Author name exceeds the maximum allowed length.</summary>
-    public const string AuthorTooLong = "BOOK_AUTHOR_TOO_LONG";
 
     /// <summary>ISBN is missing or whitespace.</summary>
     public const string IsbnRequired = "BOOK_ISBN_REQUIRED";
