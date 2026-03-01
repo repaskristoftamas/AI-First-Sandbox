@@ -19,7 +19,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options);
+        _context = new BookstoreDbContext(options, TimeProvider.System);
         _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator());
     }
 

@@ -19,6 +19,6 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
             .UseSqlServer("Server=localhost;Database=BookstoreDb;Trusted_Connection=True;")
             .Options;
 
-        return new BookstoreDbContext(options);
+        return new BookstoreDbContext(options, TimeProvider.System);
     }
 }
