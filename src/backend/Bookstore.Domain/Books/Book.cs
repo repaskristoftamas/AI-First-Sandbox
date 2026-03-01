@@ -59,9 +59,6 @@ public sealed class Book : AuditableEntity<BookId>
         var validation = Validate(title, author, isbn, price, publicationYear, timeProvider);
         if (validation.IsFailure)
             return Result.Failure<Book>(validation.Error);
-
-        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
-            return Result.Failure<Book>(new ValidationError("Publication year must be a valid year."));
     
         return Result.Success(new Book
         {
@@ -120,13 +117,7 @@ public sealed class Book : AuditableEntity<BookId>
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Price), BookErrorCodes.PriceInvalid, "Price must be greater than zero.")]));
 
         if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
-            return Result.Failure(new ValidationError("Publication year must be a valid year."));
-
-        Title = title;
-        Author = author;
-        ISBN = isbn;
-        Price = price;
-        PublicationYear = publicationYear;
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(PublicationYear), BookErrorCodes.PublicationYearInvalid, "Publication year must be a valid year.")]));
 
         return Result.Success();
     }
