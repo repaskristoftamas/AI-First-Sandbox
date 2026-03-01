@@ -83,7 +83,7 @@ public sealed class BookEndpoints : IEndpointDefinition
         ISender sender,
         CancellationToken cancellationToken)
     {
-        var command = new CreateBookCommand(request.Title, request.Author, request.ISBN, request.Price, request.PublicationYear);
+        var command = new CreateBookCommand(request.Title, request.AuthorId, request.ISBN, request.Price, request.PublicationYear);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess
             ? TypedResults.CreatedAtRoute(result.Value, "GetBookById", new { id = result.Value })
@@ -104,7 +104,7 @@ public sealed class BookEndpoints : IEndpointDefinition
         ISender sender,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateBookCommand(new BookId(id), request.Title, request.Author, request.ISBN, request.Price, request.PublicationYear);
+        var command = new UpdateBookCommand(new BookId(id), request.Title, request.AuthorId, request.ISBN, request.Price, request.PublicationYear);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess
             ? TypedResults.NoContent()

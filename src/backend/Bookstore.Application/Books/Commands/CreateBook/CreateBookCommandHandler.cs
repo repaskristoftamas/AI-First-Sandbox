@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Extensions;
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
@@ -12,7 +13,7 @@ namespace Bookstore.Application.Books.Commands.CreateBook;
 /// Handles creation of a new book.
 /// </summary>
 /// <remarks>
-/// Enforces ISBN uniqueness before persisting.
+/// Enforces author existence and ISBN uniqueness before persisting.
 /// </remarks>
 internal sealed class CreateBookCommandHandler(
     IApplicationDbContext context,
@@ -27,16 +28,24 @@ internal sealed class CreateBookCommandHandler(
     /// Creates a new book and returns its identifier.
     /// </summary>
     /// <remarks>
-    /// Validates that the ISBN is not already in use before persisting the book.
+    /// Validates that the author exists and the ISBN is not already in use before persisting the book.
     /// </remarks>
     /// <param name="command">The command containing the book details to create.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>A result containing the new book's identifier, or a <see cref="ConflictError"/> if the ISBN is taken.</returns>
+    /// <returns>A result containing the new book's identifier, or a failure on validation/conflict errors.</returns>
     public async ValueTask<Result<Guid>> Handle(CreateBookCommand command, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(command, cancellationToken);
         if (!validationResult.IsValid)
             return validationResult.ToFailureResult<Guid>();
+
+        var authorId = new AuthorId(command.AuthorId);
+
+        bool authorExists = await _context.Authors
+            .AnyAsync(a => a.Id == authorId, cancellationToken);
+
+        if (!authorExists)
+            return Result.Failure<Guid>(new NotFoundError(BookErrorCodes.AuthorNotFound, "The author with the specified identifier was not found."));
 
         bool isbnExists = await _context.Books
             .AnyAsync(b => b.ISBN == command.ISBN, cancellationToken);
@@ -46,7 +55,7 @@ internal sealed class CreateBookCommandHandler(
 
         var createResult = Book.Create(
             command.Title,
-            command.Author,
+            authorId,
             command.ISBN,
             command.Price,
             command.PublicationYear,

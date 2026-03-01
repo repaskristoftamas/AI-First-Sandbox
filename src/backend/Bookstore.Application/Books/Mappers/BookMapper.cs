@@ -1,4 +1,5 @@
 using Bookstore.Application.Books.DTOs;
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Riok.Mapperly.Abstractions;
 
@@ -26,4 +27,11 @@ internal static partial class BookMapper
     /// <param name="id">The strongly-typed book identifier.</param>
     /// <returns>The underlying <see cref="Guid"/> value.</returns>
     private static Guid MapBookId(BookId id) => id.Value;
+
+    /// <summary>
+    /// Extracts the underlying <see cref="Guid"/> from an <see cref="AuthorId"/> for DTO mapping.
+    /// </summary>
+    /// <param name="id">The strongly-typed author identifier.</param>
+    /// <returns>The underlying <see cref="Guid"/> value.</returns>
+    private static Guid MapAuthorId(AuthorId id) => id.Value;
 }

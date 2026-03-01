@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Extensions;
+using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using FluentValidation;
@@ -12,7 +13,7 @@ namespace Bookstore.Application.Books.Commands.UpdateBook;
 /// Handles updating a book's properties.
 /// </summary>
 /// <remarks>
-/// Enforces existence and ISBN uniqueness before applying changes.
+/// Enforces existence, author existence, and ISBN uniqueness before applying changes.
 /// </remarks>
 internal sealed class UpdateBookCommandHandler(
     IApplicationDbContext context,
@@ -27,11 +28,11 @@ internal sealed class UpdateBookCommandHandler(
     /// Applies the updated properties to an existing book.
     /// </summary>
     /// <remarks>
-    /// Locates the book by identifier and verifies no ISBN conflict with other books before applying the updates.
+    /// Locates the book by identifier, verifies the author exists, and checks for ISBN conflicts before applying updates.
     /// </remarks>
     /// <param name="command">The command containing the updated book properties.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>A success result, or a <see cref="NotFoundError"/>/<see cref="ConflictError"/> on failure.</returns>
+    /// <returns>A success result, or a failure on not-found/conflict errors.</returns>
     public async ValueTask<Result> Handle(UpdateBookCommand command, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(command, cancellationToken);
@@ -44,13 +45,21 @@ internal sealed class UpdateBookCommandHandler(
         if (book is null)
             return Result.Failure(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
+        var authorId = new AuthorId(command.AuthorId);
+
+        bool authorExists = await _context.Authors
+            .AnyAsync(a => a.Id == authorId, cancellationToken);
+
+        if (!authorExists)
+            return Result.Failure(new NotFoundError(BookErrorCodes.AuthorNotFound, "The author with the specified identifier was not found."));
+
         bool isbnConflict = await _context.Books
             .AnyAsync(b => b.ISBN == command.ISBN && b.Id != command.Id, cancellationToken);
 
         if (isbnConflict)
             return Result.Failure(new ConflictError(BookErrorCodes.IsbnConflict, $"A book with ISBN '{command.ISBN}' already exists."));
 
-        var updateResult = book.Update(command.Title, command.Author, command.ISBN, command.Price, command.PublicationYear, _timeProvider);
+        var updateResult = book.Update(command.Title, authorId, command.ISBN, command.Price, command.PublicationYear, _timeProvider);
         if (updateResult.IsFailure)
             return updateResult;
 
