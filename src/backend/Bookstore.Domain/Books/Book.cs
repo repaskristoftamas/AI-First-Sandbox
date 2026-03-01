@@ -68,7 +68,7 @@ public sealed class Book : AuditableEntity<BookId>
         if (price <= 0)
             return Result.Failure<Book>(new ValidationError("Price must be greater than zero."));
 
-        if (publicationYear < 1450 || publicationYear > timeProvider.GetLocalNow().Year)
+        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
             return Result.Failure<Book>(new ValidationError("Publication year must be a valid year."));
     
         return Result.Success(new Book
@@ -108,7 +108,7 @@ public sealed class Book : AuditableEntity<BookId>
         if (price <= 0)
             return Result.Failure(new ValidationError("Price must be greater than zero."));
 
-        if (publicationYear < 1450 || publicationYear > timeProvider.GetLocalNow().Year)
+        if (publicationYear < 1450 || publicationYear > timeProvider.GetUtcNow().Year)
             return Result.Failure(new ValidationError("Publication year must be a valid year."));
 
         Title = title;

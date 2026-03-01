@@ -12,7 +12,7 @@ namespace Bookstore.Infrastructure.Data;
 /// <remarks>
 /// Implements automatic audit timestamp tracking for entities that implement <see cref="IAuditable"/>.
 /// </remarks>
-public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options) : DbContext(options), IApplicationDbContext
+public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider) : DbContext(options), IApplicationDbContext
 {
     /// <summary>
     /// Queryable set of authors persisted in the data store.
@@ -44,7 +44,7 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     /// <returns>The number of state entries written to the data store.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var utcNow = DateTime.UtcNow;
+        var utcNow = timeProvider.GetUtcNow();
 
         foreach (var entry in ChangeTracker.Entries<IAuditable>())
         {
