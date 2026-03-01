@@ -16,9 +16,7 @@ internal static class ValidationResultExtensions
     /// <returns>A failed <see cref="Result"/> containing a <see cref="ValidationError"/>.</returns>
     internal static Result ToFailureResult(this ValidationResult validationResult) =>
         Result.Failure(new ValidationError(
-            validationResult.Errors
-                .Select(f => new FieldValidationFailure(f.PropertyName, f.ErrorCode, f.ErrorMessage))
-                .ToList()));
+            [.. validationResult.Errors.Select(f => new FieldValidationFailure(f.PropertyName, f.ErrorCode, f.ErrorMessage))]));
 
     /// <summary>
     /// Converts a failed <see cref="ValidationResult"/> into a <see cref="Result{T}"/> failure,
@@ -29,7 +27,5 @@ internal static class ValidationResultExtensions
     /// <returns>A failed <see cref="Result{T}"/> containing a <see cref="ValidationError"/>.</returns>
     internal static Result<T> ToFailureResult<T>(this ValidationResult validationResult) =>
         Result.Failure<T>(new ValidationError(
-            validationResult.Errors
-                .Select(f => new FieldValidationFailure(f.PropertyName, f.ErrorCode, f.ErrorMessage))
-                .ToList()));
+            [.. validationResult.Errors.Select(f => new FieldValidationFailure(f.PropertyName, f.ErrorCode, f.ErrorMessage))]));
 }

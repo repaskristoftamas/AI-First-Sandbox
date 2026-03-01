@@ -56,19 +56,19 @@ public class Result
     public static Result Success() => new(true, null);
 
     /// <summary>
-    /// Creates a failed result with the specified error.
-    /// </summary>
-    /// <param name="error">The error describing the failure.</param>
-    /// <returns>A failed <see cref="Result"/>.</returns>
-    public static Result Failure(Error error) => new(false, error);
-
-    /// <summary>
     /// Creates a successful result carrying the specified value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value produced by the successful operation.</param>
     /// <returns>A successful <see cref="Result{TValue}"/> containing <paramref name="value"/>.</returns>
     public static Result<TValue> Success<TValue>(TValue value) => new(value, true, null);
+    
+    /// <summary>
+    /// Creates a failed result with the specified error.
+    /// </summary>
+    /// <param name="error">The error describing the failure.</param>
+    /// <returns>A failed <see cref="Result"/>.</returns>
+    public static Result Failure(Error error) => new(false, error);
 
     /// <summary>
     /// Creates a failed result of the specified value type with the given error.

@@ -1,5 +1,4 @@
 using Bookstore.WebApi.Endpoints;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Bookstore.WebApi.Extensions;
 
