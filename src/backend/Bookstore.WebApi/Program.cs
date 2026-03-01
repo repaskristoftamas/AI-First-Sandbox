@@ -1,6 +1,7 @@
 using Bookstore.Application;
 using Bookstore.Infrastructure;
 using Bookstore.WebApi.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton(TimeProvider.System);
@@ -18,6 +19,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+await app.Services.MigrateDatabaseAsync(app.Lifetime.ApplicationStopping);
 
 if (app.Environment.IsDevelopment())
 {

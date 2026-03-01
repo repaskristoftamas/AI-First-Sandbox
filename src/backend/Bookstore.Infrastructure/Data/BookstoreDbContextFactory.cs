@@ -15,8 +15,12 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
     /// <returns>A configured <see cref="BookstoreDbContext"/> instance.</returns>
     public BookstoreDbContext CreateDbContext(string[] args)
     {
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException(
+                "Set the 'ConnectionStrings__DefaultConnection' environment variable before running EF tooling.");
+
         var options = new DbContextOptionsBuilder<BookstoreDbContext>()
-            .UseSqlServer("Server=localhost;Database=BookstoreDb;Trusted_Connection=True;")
+            .UseSqlServer(connectionString)
             .Options;
 
         return new BookstoreDbContext(options, TimeProvider.System);
