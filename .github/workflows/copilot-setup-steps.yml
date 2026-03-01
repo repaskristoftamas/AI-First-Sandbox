@@ -37,10 +37,10 @@ jobs:
           dotnet --version
 
       - name: Restore backend dependencies
-        run: dotnet restore src/backend/Bookstore.slnx
+        run: dotnet restore Bookstore.slnx
 
       - name: Build backend solution
-        run: dotnet build src/backend/Bookstore.slnx --no-restore
+        run: dotnet build Bookstore.slnx --no-restore
 
       - name: Log environment info
         run: |
