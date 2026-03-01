@@ -22,8 +22,9 @@ public sealed record NotFoundError(string Code, string Description) : Error(Code
 public sealed record ConflictError(string Code, string Description) : Error(Code, Description);
 
 /// <summary>
-/// Represents a failure caused by invalid input or business rule violation.
+/// Represents a failure caused by invalid input or business rule violations.
+/// Carries per-field failure details so API clients can act on each error programmatically.
 /// </summary>
-/// <param name="Code">Machine-readable error code for programmatic consumption.</param>
-/// <param name="Description">Human-readable message describing the validation failure.</param>
-public sealed record ValidationError(string Code, string Description) : Error(Code, Description);
+/// <param name="Failures">The collection of field-level validation failures.</param>
+public sealed record ValidationError(IReadOnlyList<FieldValidationFailure> Failures)
+    : Error("VALIDATION_FAILED", string.Join("; ", Failures.Select(f => f.Description)));

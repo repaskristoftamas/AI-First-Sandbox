@@ -24,10 +24,14 @@ public static class ErrorExtensions
             _               => (StatusCodes.Status500InternalServerError, "InternalError")
         };
 
+        var extensions = error is ValidationError validationError
+            ? new Dictionary<string, object?>(2) { ["errorCode"] = error.Code, ["failures"] = validationError.Failures }
+            : new Dictionary<string, object?>(1) { ["errorCode"] = error.Code };
+
         return TypedResults.Problem(
             statusCode: statusCode,
             title: title,
             detail: error.Description,
-            extensions: new Dictionary<string, object?> { ["errorCode"] = error.Code });
+            extensions: extensions);
     }
 }

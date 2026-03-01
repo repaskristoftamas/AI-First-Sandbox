@@ -1,3 +1,4 @@
+using Bookstore.Domain.Authors;
 using FluentValidation;
 
 namespace Bookstore.Application.Authors.Commands.UpdateAuthor;
@@ -11,15 +12,16 @@ public sealed class UpdateAuthorCommandValidator : AbstractValidator<UpdateAutho
     public UpdateAuthorCommandValidator()
     {
         RuleFor(x => x.FirstName)
-            .NotEmpty()
-            .MaximumLength(100);
+            .NotEmpty().WithErrorCode(AuthorErrorCodes.FirstNameRequired)
+            .MaximumLength(100).WithErrorCode(AuthorErrorCodes.FirstNameTooLong);
 
         RuleFor(x => x.LastName)
-            .NotEmpty()
-            .MaximumLength(100);
+            .NotEmpty().WithErrorCode(AuthorErrorCodes.LastNameRequired)
+            .MaximumLength(100).WithErrorCode(AuthorErrorCodes.LastNameTooLong);
 
         RuleFor(x => x.DateOfBirth)
             .LessThan(DateOnly.FromDateTime(DateTime.Today))
-            .WithMessage("Date of birth must be in the past.");
+            .WithMessage("Date of birth must be in the past.")
+            .WithErrorCode(AuthorErrorCodes.DobInFuture);
     }
 }

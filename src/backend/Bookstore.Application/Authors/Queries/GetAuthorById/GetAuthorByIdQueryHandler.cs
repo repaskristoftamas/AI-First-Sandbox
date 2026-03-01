@@ -1,6 +1,7 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Authors.DTOs;
 using Bookstore.Application.Authors.Mappers;
+using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ internal sealed class GetAuthorByIdQueryHandler(IApplicationDbContext context) :
             .FirstOrDefaultAsync(a => a.Id == query.Id, cancellationToken);
 
         if (author is null)
-            return Result.Failure<AuthorDto>(new NotFoundError("AUTHOR_NOT_FOUND", "The author with the specified identifier was not found."));
+            return Result.Failure<AuthorDto>(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
         return Result.Success(author.ToDto());
     }

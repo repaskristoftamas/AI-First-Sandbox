@@ -1,4 +1,5 @@
 using Bookstore.Application.Abstractions;
+using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context) 
             .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);
 
         if (author is null)
-            return Result.Failure(new NotFoundError("AUTHOR_NOT_FOUND", "The author with the specified identifier was not found."));
+            return Result.Failure(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
         _context.Authors.Remove(author);
         await _context.SaveChangesAsync(cancellationToken);

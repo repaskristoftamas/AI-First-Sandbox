@@ -40,14 +40,9 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <returns>A successful result containing the new <see cref="Author"/>, or a validation error.</returns>
     public static Result<Author> Create(string firstName, string lastName, DateOnly dateOfBirth)
     {
-        if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure<Author>(new ValidationError("AUTHOR_FIRST_NAME_REQUIRED", "First name is required."));
-
-        if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure<Author>(new ValidationError("AUTHOR_LAST_NAME_REQUIRED", "Last name is required."));
-
-        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
-            return Result.Failure<Author>(new ValidationError("AUTHOR_DOB_IN_FUTURE", "Date of birth must be in the past."));
+        var validation = Validate(firstName, lastName, dateOfBirth);
+        if (validation.IsFailure)
+            return Result.Failure<Author>(validation.Error);
 
         return Result.Success(new Author
         {
@@ -67,18 +62,31 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <returns>A success result, or a validation error if any value is invalid.</returns>
     public Result Update(string firstName, string lastName, DateOnly dateOfBirth)
     {
-        if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure(new ValidationError("AUTHOR_FIRST_NAME_REQUIRED", "First name is required."));
-
-        if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure(new ValidationError("AUTHOR_LAST_NAME_REQUIRED", "Last name is required."));
-
-        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
-            return Result.Failure(new ValidationError("AUTHOR_DOB_IN_FUTURE", "Date of birth must be in the past."));
+        var validation = Validate(firstName, lastName, dateOfBirth);
+        if (validation.IsFailure)
+            return validation;
 
         FirstName = firstName;
         LastName = lastName;
         DateOfBirth = dateOfBirth;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Validates the author fields and returns a failure result if any value is invalid.
+    /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
+    /// </summary>
+    private static Result Validate(string firstName, string lastName, DateOnly dateOfBirth)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(FirstName), AuthorErrorCodes.FirstNameRequired, "First name is required.")]));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(LastName), AuthorErrorCodes.LastNameRequired, "Last name is required.")]));
+
+        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(DateOfBirth), AuthorErrorCodes.DobInFuture, "Date of birth must be in the past.")]));
 
         return Result.Success();
     }
