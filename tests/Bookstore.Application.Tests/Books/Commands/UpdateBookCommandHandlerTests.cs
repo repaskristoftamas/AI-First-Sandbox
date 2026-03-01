@@ -4,6 +4,7 @@ using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Commands;
@@ -88,6 +89,38 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldStampUpdatedAt_WithFrozenTime()
+    {
+        // Arrange
+        var createTime = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var updateTime = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        var fakeTimeProvider = new FakeTimeProvider(createTime);
+
+        var options = new DbContextOptionsBuilder<BookstoreDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        await using var context = new BookstoreDbContext(options, fakeTimeProvider);
+        var handler = new UpdateBookCommandHandler(context, new UpdateBookCommandValidator(fakeTimeProvider), fakeTimeProvider);
+
+        var book = Book.Create("Clean Code", "Robert C. Martin", "978-0132350884", 35.99m, 2008, fakeTimeProvider).Value;
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
+
+        fakeTimeProvider.SetUtcNow(updateTime);
+
+        var command = new UpdateBookCommand(book.Id, "The Pragmatic Programmer", "David Thomas", "978-0135957059", 45.99m, 1999);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var updated = await context.Books.FindAsync(book.Id);
+        updated!.UpdatedAt.Should().Be(updateTime);
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
