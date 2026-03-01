@@ -41,13 +41,13 @@ public sealed class Author : AuditableEntity<AuthorId>
     public static Result<Author> Create(string firstName, string lastName, DateOnly dateOfBirth)
     {
         if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure<Author>(new ValidationError("First name is required."));
+            return Result.Failure<Author>(new ValidationError("AUTHOR_FIRST_NAME_REQUIRED", "First name is required."));
 
         if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure<Author>(new ValidationError("Last name is required."));
+            return Result.Failure<Author>(new ValidationError("AUTHOR_LAST_NAME_REQUIRED", "Last name is required."));
 
         if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
-            return Result.Failure<Author>(new ValidationError("Date of birth must be in the past."));
+            return Result.Failure<Author>(new ValidationError("AUTHOR_DOB_IN_FUTURE", "Date of birth must be in the past."));
 
         return Result.Success(new Author
         {
@@ -68,13 +68,13 @@ public sealed class Author : AuditableEntity<AuthorId>
     public Result Update(string firstName, string lastName, DateOnly dateOfBirth)
     {
         if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure(new ValidationError("First name is required."));
+            return Result.Failure(new ValidationError("AUTHOR_FIRST_NAME_REQUIRED", "First name is required."));
 
         if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure(new ValidationError("Last name is required."));
+            return Result.Failure(new ValidationError("AUTHOR_LAST_NAME_REQUIRED", "Last name is required."));
 
         if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
-            return Result.Failure(new ValidationError("Date of birth must be in the past."));
+            return Result.Failure(new ValidationError("AUTHOR_DOB_IN_FUTURE", "Date of birth must be in the past."));
 
         FirstName = firstName;
         LastName = lastName;

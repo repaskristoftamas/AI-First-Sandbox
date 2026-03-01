@@ -42,7 +42,7 @@ internal sealed class CreateBookCommandHandler(
             .AnyAsync(b => b.ISBN == command.ISBN, cancellationToken);
 
         if (isbnExists)
-            return Result.Failure<Guid>(new ConflictError($"A book with ISBN '{command.ISBN}' already exists."));
+            return Result.Failure<Guid>(new ConflictError("BOOK_ISBN_CONFLICT", $"A book with ISBN '{command.ISBN}' already exists."));
 
         var createResult = Book.Create(
             command.Title,

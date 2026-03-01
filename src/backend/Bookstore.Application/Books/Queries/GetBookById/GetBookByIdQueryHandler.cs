@@ -33,7 +33,7 @@ internal sealed class GetBookByIdQueryHandler(IApplicationDbContext context) : I
             .FirstOrDefaultAsync(b => b.Id == query.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure<BookDto>(new NotFoundError("The book with the specified identifier was not found."));
+            return Result.Failure<BookDto>(new NotFoundError("BOOK_NOT_FOUND", "The book with the specified identifier was not found."));
 
         return Result.Success(book.ToDto());
     }

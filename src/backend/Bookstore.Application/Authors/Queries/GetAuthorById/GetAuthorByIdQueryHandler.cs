@@ -33,7 +33,7 @@ internal sealed class GetAuthorByIdQueryHandler(IApplicationDbContext context) :
             .FirstOrDefaultAsync(a => a.Id == query.Id, cancellationToken);
 
         if (author is null)
-            return Result.Failure<AuthorDto>(new NotFoundError("The author with the specified identifier was not found."));
+            return Result.Failure<AuthorDto>(new NotFoundError("AUTHOR_NOT_FOUND", "The author with the specified identifier was not found."));
 
         return Result.Success(author.ToDto());
     }

@@ -27,7 +27,7 @@ internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : 
             .FirstOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
 
         if (book is null)
-            return Result.Failure(new NotFoundError("The book with the specified identifier was not found."));
+            return Result.Failure(new NotFoundError("BOOK_NOT_FOUND", "The book with the specified identifier was not found."));
 
         _context.Books.Remove(book);
         await _context.SaveChangesAsync(cancellationToken);
