@@ -43,7 +43,7 @@ jobs:
         with:
           ref: ${{ steps.pr.outputs.branch }}
           fetch-depth: 0
-          token: ${{ secrets.WORKFLOW_PAT }}
+          token: ${{ secrets.GH_AW_GITHUB_TOKEN  }}
 
       - name: Set up git identity
         run: |
