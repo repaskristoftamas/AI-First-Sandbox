@@ -1,4 +1,4 @@
-name: Address grumpy review
+name: Address grumpy review (Anthropic API)
 
 on:
   pull_request_review:
