@@ -17,7 +17,7 @@ Describe what you want in plain language. Claude Code will:
 5. Flag risks, gaps, missing edge cases, or suggest splitting into multiple issues
 6. Present the draft for review
 
-You iterate on the draft until you're satisfied, then approve it. Claude creates the issue on GitHub via the MCP GitHub server.
+You iterate on the draft until you're satisfied, then approve it. Claude creates the issue on GitHub via the `gh` CLI.
 
 ### 2. Implement the Issue
 
@@ -26,7 +26,7 @@ You iterate on the draft until you're satisfied, then approve it. Claude creates
 Point Claude Code at a GitHub issue number. It will:
 
 1. Resolve the repo from `git remote origin`
-2. Fetch the issue details from GitHub (MCP `get_issue`)
+2. Fetch the issue details from GitHub (`gh issue view`)
 3. Explore the codebase to identify all files that need changes
 4. Create a feature branch (`issue-{number}-{short-description}`)
 5. Implement the changes following existing conventions
@@ -36,7 +36,7 @@ Point Claude Code at a GitHub issue number. It will:
 9. Commit with a message referencing the issue (e.g., `fix #14: remove RabbitMQ code`)
 10. Push and create a pull request that references `Closes #N`
 
-The commit and PR steps use Claude Code's built-in `/commit` and `/pr` skills. Skills are prompt templates that enforce consistent formatting (conventional commits, co-author line, structured PR description) on top of the same underlying tools (git, GitHub MCP). They don't add new capabilities -- they standardize *how* the tools are used.
+The commit and PR steps use Claude Code's built-in `/commit` and `/pr` skills. Skills are prompt templates that enforce consistent formatting (conventional commits, co-author line, structured PR description) on top of the same underlying tools (git, `gh` CLI). They don't add new capabilities -- they standardize *how* the tools are used.
 
 The PR is left open for human review -- Claude never merges it.
 

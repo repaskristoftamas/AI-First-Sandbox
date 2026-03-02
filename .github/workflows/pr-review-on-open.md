@@ -133,5 +133,4 @@ or "None"
 
 ## Tooling preference
 
-- Prefer GitHub MCP tools for PR/issue metadata and file diffs.
-- If needed, use `gh` CLI commands for equivalent read operations.
+- Use `gh` CLI commands for PR/issue metadata and file diffs.
