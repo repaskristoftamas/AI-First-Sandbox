@@ -86,7 +86,7 @@ Follow these convention documents exactly (read them from the repository before 
   - Input validation at API boundaries
   - Parameterized queries / EF Core usage (no string concatenation for SQL)
 - Check test quality against `.claude/rules/testing.md`:
-  - xUnit + FluentAssertions conventions
+  - xUnit + Shouldly conventions
   - Arrange-Act-Assert pattern
   - Test naming: `MethodName_Scenario_ExpectedResult`
   - InMemory EF Core DbContext for handler tests

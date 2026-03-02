@@ -28,7 +28,7 @@ tests/
 - EF Core (SQL Server in production, InMemory for tests)
 - FluentValidation
 - Mediator (martinothamar)
-- xUnit + FluentAssertions for tests
+- xUnit + Shouldly for tests
 - Docker & docker-compose for local infrastructure
 - GitHub for hosting, PRs, issues
 - Project board: number `2`, owner `repaskristoftamas`
@@ -47,7 +47,7 @@ tests/
 ## Testing
 
 - **Framework**: xUnit
-- **Assertions**: FluentAssertions (`.Should().Be(...)`)
+- **Assertions**: Shouldly (`.ShouldBe(...)`)
 - **Mocking**: Moq
 - **Pattern**: Arrange-Act-Assert
 - **Naming**: `MethodName_Scenario_ExpectedResult`

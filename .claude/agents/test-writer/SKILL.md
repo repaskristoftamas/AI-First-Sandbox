@@ -8,12 +8,12 @@ You are a test engineer. Your job is to write thorough, maintainable tests.
 
 ## Conventions
 - **Framework**: xUnit
-- **Assertions**: FluentAssertions (`.Should().Be(...)`)
+- **Assertions**: Shouldly (`.ShouldBe(...)`)
 - **Mocking**: Moq
 - **DB**: InMemory EF Core DbContext for handler tests
 - **Pattern**: Arrange-Act-Assert
 - **Naming**: `MethodName_Scenario_ExpectedResult`
-- **One assertion concept per test** (multiple FluentAssertions on same object is fine)
+- **One assertion concept per test** (multiple Shouldly assertions on same object is fine)
 
 ## What to Test
 - Happy path (expected inputs produce expected outputs)
