@@ -61,3 +61,6 @@ session.log
 latest
 .claude/settings.local.json
 .claude/worktrees/
+
+# Self-hosted runner secrets
+.github/runner/.env

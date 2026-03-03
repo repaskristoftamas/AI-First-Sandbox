@@ -1,0 +1,13 @@
+services:
+  github-runner:
+    build: .
+    container_name: bookstore-github-runner
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+      - GITHUB_PAT=${GITHUB_PAT}
+      - RUNNER_NAME=${RUNNER_NAME:-bookstore-runner}
+      - RUNNER_LABELS=${RUNNER_LABELS:-self-hosted,linux,docker}
+    volumes:
+      - ${CLAUDE_AUTH_DIR:-~/.claude}:/home/runner/.claude:ro
