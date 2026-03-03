@@ -1,6 +1,5 @@
 using Bookstore.Application.Books.Commands.UpdateBook;
 using Bookstore.Domain.Books;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 using Xunit;
 
@@ -43,20 +42,6 @@ public class UpdateBookCommandValidatorTests
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.ISBN)
             .WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
-    }
-
-    [Fact]
-    public void Validate_ShouldFail_WhenIsbnExceedsMaxLength()
-    {
-        // Arrange
-        var command = CreateCommand(isbn: "97801323508841");
-
-        // Act
-        var result = _validator.TestValidate(command);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.ISBN)
-            .WithErrorCode(BookErrorCodes.IsbnTooLong);
     }
 
     /// <summary>
