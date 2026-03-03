@@ -39,7 +39,8 @@ echo "Registering runner '${RUNNER_NAME}'..."
   --work "$RUNNER_WORKDIR" \
   --replace \
   --unattended \
-  --disableupdate
+  --disableupdate \
+  --ephemeral
 
 # Deregister on shutdown so the runner slot is freed
 cleanup() {
