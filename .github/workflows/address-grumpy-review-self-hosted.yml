@@ -8,8 +8,6 @@ name: Address grumpy review (self-hosted)
 on:
   pull_request_review:
     types: [submitted]
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -19,16 +17,10 @@ on:
 
 jobs:
   address:
+    # Skip the signature check when manually dispatched
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request_review' && (
-        contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer') ||
-        startsWith(github.event.review.body, '/claude-fix')
-      )) ||
-      (github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        contains(github.event.comment.body, '/claude-fix')
-      )
+      contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer')
     runs-on: self-hosted
     defaults:
       run:
@@ -45,8 +37,6 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             PR_NUMBER=${{ inputs.pr_number }}
-          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
-            PR_NUMBER=${{ github.event.issue.number }}
           else
             PR_NUMBER=${{ github.event.pull_request.number }}
           fi
