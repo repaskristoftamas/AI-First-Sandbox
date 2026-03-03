@@ -6,8 +6,8 @@ name: Address grumpy review (self-hosted)
 # To activate the automatic trigger, uncomment the pull_request_review block below
 # and disable (or delete) address-grumpy-review-api.yml to avoid both firing at once.
 on:
-  # pull_request_review:
-  #   types: [submitted]
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
     inputs:
       pr_number:
