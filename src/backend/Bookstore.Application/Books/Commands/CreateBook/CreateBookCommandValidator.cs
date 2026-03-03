@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Bookstore.Domain.Books;
 using FluentValidation;
 
@@ -6,7 +7,7 @@ namespace Bookstore.Application.Books.Commands.CreateBook;
 /// <summary>
 /// Validates a <see cref="CreateBookCommand"/> before it reaches the handler.
 /// </summary>
-public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCommand>
+public sealed partial class CreateBookCommandValidator : AbstractValidator<CreateBookCommand>
 {
     /// <summary>Initializes the validation rules.</summary>
     /// <param name="timeProvider">Provides the current date for publication year validation.</param>
@@ -21,7 +22,8 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
 
         RuleFor(x => x.ISBN)
             .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
-            .MaximumLength(20).WithErrorCode(BookErrorCodes.IsbnTooLong);
+            .MaximumLength(13).WithErrorCode(BookErrorCodes.IsbnTooLong)
+            .Matches(Isbn13Regex()).WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
 
         RuleFor(x => x.Price)
             .GreaterThan(0).WithErrorCode(BookErrorCodes.PriceInvalid);
@@ -30,4 +32,10 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .InclusiveBetween(1450, timeProvider.GetUtcNow().Year)
             .WithErrorCode(BookErrorCodes.PublicationYearInvalid);
     }
+
+    /// <summary>
+    /// Matches a valid ISBN-13: exactly 13 digits starting with 978 or 979.
+    /// </summary>
+    [GeneratedRegex(@"^(978|979)\d{10}$")]
+    private static partial Regex Isbn13Regex();
 }

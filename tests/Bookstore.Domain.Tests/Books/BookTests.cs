@@ -16,7 +16,7 @@ public class BookTests
         // Arrange
         const string title = "Clean Architecture";
         var authorId = AuthorId.New();
-        const string isbn = "978-0134494166";
+        const string isbn = "9780134494166";
         const decimal price = 39.99m;
         const int publicationYear = 2017;
 
@@ -36,31 +36,31 @@ public class BookTests
     public void Update_ShouldModifyBookProperties()
     {
         // Arrange
-        var book = Book.Create("Old Title", TestAuthorId, "978-0000000000", 10m, 2000, TimeProvider.System).Value;
+        var book = Book.Create("Old Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
         var newAuthorId = AuthorId.New();
 
         // Act
-        var result = book.Update("New Title", newAuthorId, "978-1111111111", 20m, 2023, TimeProvider.System);
+        var result = book.Update("New Title", newAuthorId, "9781111111111", 20m, 2023, TimeProvider.System);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         book.Title.Should().Be("New Title");
         book.AuthorId.Should().Be(newAuthorId);
-        book.ISBN.Should().Be("978-1111111111");
+        book.ISBN.Should().Be("9781111111111");
         book.Price.Should().Be(20m);
         book.PublicationYear.Should().Be(2023);
     }
 
     [Theory]
-    [InlineData("", "978-0000000000", "Title is required.")]
-    [InlineData("   ", "978-0000000000", "Title is required.")]
+    [InlineData("", "9780000000000", "Title is required.")]
+    [InlineData("   ", "9780000000000", "Title is required.")]
     [InlineData("Title", "", "ISBN is required.")]
     [InlineData("Title", "   ", "ISBN is required.")]
     public void Update_ShouldReturnValidationError_WhenStringFieldIsInvalid(
         string title, string isbn, string expectedMessage)
     {
         // Arrange
-        var book = Book.Create("Old Title", TestAuthorId, "978-0000000000", 10m, 2000, TimeProvider.System).Value;
+        var book = Book.Create("Old Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
 
         // Act
         var result = book.Update(title, TestAuthorId, isbn, 10m, 2000, TimeProvider.System);
@@ -77,10 +77,10 @@ public class BookTests
     public void Update_ShouldReturnValidationError_WhenPriceIsNotPositive(decimal price)
     {
         // Arrange
-        var book = Book.Create("Title", TestAuthorId, "978-0000000000", 10m, 2000, TimeProvider.System).Value;
+        var book = Book.Create("Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
 
         // Act
-        var result = book.Update("Title", TestAuthorId, "978-0000000000", price, 2000, TimeProvider.System);
+        var result = book.Update("Title", TestAuthorId, "9780000000000", price, 2000, TimeProvider.System);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -92,10 +92,10 @@ public class BookTests
     public void Update_ShouldReturnValidationError_WhenPublicationYearIsBeforePrintingPress()
     {
         // Arrange
-        var book = Book.Create("Title", TestAuthorId, "978-0000000000", 10m, 2000, TimeProvider.System).Value;
+        var book = Book.Create("Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
 
         // Act
-        var result = book.Update("Title", TestAuthorId, "978-0000000000", 10m, -1, TimeProvider.System);
+        var result = book.Update("Title", TestAuthorId, "9780000000000", 10m, -1, TimeProvider.System);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -107,11 +107,11 @@ public class BookTests
     public void Update_ShouldReturnValidationError_WhenPublicationYearIsInFuture()
     {
         // Arrange
-        var book = Book.Create("Title", TestAuthorId, "978-0000000000", 10m, 2000, TimeProvider.System).Value;
+        var book = Book.Create("Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
         var futureYear = TimeProvider.System.GetUtcNow().Year + 1;
 
         // Act
-        var result = book.Update("Title", TestAuthorId, "978-0000000000", 10m, futureYear, TimeProvider.System);
+        var result = book.Update("Title", TestAuthorId, "9780000000000", 10m, futureYear, TimeProvider.System);
 
         // Assert
         result.IsFailure.Should().BeTrue();
