@@ -10,5 +10,5 @@ services:
       - RUNNER_NAME=${RUNNER_NAME:-bookstore-runner}
       - RUNNER_LABELS=${RUNNER_LABELS:-self-hosted,linux,docker}
     volumes:
-      - ${CLAUDE_AUTH_JSON:-~/.claude.json}:/home/runner/.claude.json:ro
+      - ${CLAUDE_AUTH_JSON:-~/.claude.json}:/home/runner/.claude.json
       - ${CLAUDE_AUTH_DIR:-~/.claude}:/home/runner/.claude
