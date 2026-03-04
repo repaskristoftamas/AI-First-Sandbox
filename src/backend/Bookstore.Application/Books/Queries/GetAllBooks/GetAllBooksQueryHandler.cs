@@ -15,7 +15,7 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     private readonly IApplicationDbContext _context = context;
 
     /// <summary>
-    /// Fetches all books from the data store and maps them to DTOs.
+    /// Fetches a page of books from the data store and maps them to DTOs.
     /// </summary>
     /// <remarks>
     /// Queries without change tracking for better read performance.
@@ -27,6 +27,8 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     {
         var books = await _context.Books
             .AsNoTracking()
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<BookDto>>([.. books.Select(b => b.ToDto())]);
