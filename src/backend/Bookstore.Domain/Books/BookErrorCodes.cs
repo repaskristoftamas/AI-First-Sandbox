@@ -26,8 +26,8 @@ public static class BookErrorCodes
     /// <summary>ISBN is missing or whitespace.</summary>
     public const string IsbnRequired = "BOOK_ISBN_REQUIRED";
 
-    /// <summary>ISBN exceeds the maximum allowed length.</summary>
-    public const string IsbnTooLong = "BOOK_ISBN_TOO_LONG";
+    /// <summary>ISBN does not match the expected ISBN-13 format.</summary>
+    public const string IsbnInvalidFormat = "BOOK_ISBN_INVALID_FORMAT";
 
     /// <summary>Price is not a positive number.</summary>
     public const string PriceInvalid = "BOOK_PRICE_INVALID";

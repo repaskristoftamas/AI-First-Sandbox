@@ -30,7 +30,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     {
         // Arrange
         var author = await SeedAuthor();
-        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -45,7 +45,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     {
         // Arrange
         var author = await SeedAuthor();
-        var command = new CreateBookCommand("", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new CreateBookCommand("", author.Id.Value, "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -60,10 +60,10 @@ public class CreateBookCommandHandlerTests : IDisposable
     {
         // Arrange
         var author = await SeedAuthor();
-        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "9780132350884", 35.99m, 2008);
         await _handler.Handle(command, CancellationToken.None);
 
-        var duplicateCommand = new CreateBookCommand("Clean Code 2nd Ed", author.Id.Value, "978-0132350884", 40m, 2020);
+        var duplicateCommand = new CreateBookCommand("Clean Code 2nd Ed", author.Id.Value, "9780132350884", 40m, 2020);
 
         // Act
         var result = await _handler.Handle(duplicateCommand, CancellationToken.None);
@@ -77,7 +77,7 @@ public class CreateBookCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnNotFound_WhenAuthorDoesNotExist()
     {
         // Arrange
-        var command = new CreateBookCommand("Clean Code", Guid.NewGuid(), "978-0132350884", 35.99m, 2008);
+        var command = new CreateBookCommand("Clean Code", Guid.NewGuid(), "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -106,7 +106,7 @@ public class CreateBookCommandHandlerTests : IDisposable
         context.Authors.Add(author);
         await context.SaveChangesAsync();
 
-        var command = new CreateBookCommand("Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new CreateBookCommand("Clean Code", author.Id.Value, "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

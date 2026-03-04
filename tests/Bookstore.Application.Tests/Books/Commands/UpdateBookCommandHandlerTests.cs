@@ -31,11 +31,11 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
         var newAuthor = await SeedAuthor("David", "Thomas");
-        var book = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 
-        var command = new UpdateBookCommand(book.Id, "The Pragmatic Programmer", newAuthor.Id.Value, "978-0135957059", 45.99m, 1999);
+        var command = new UpdateBookCommand(book.Id, "The Pragmatic Programmer", newAuthor.Id.Value, "9780135957059", 45.99m, 1999);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -52,7 +52,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var command = new UpdateBookCommand(BookId.New(), "Clean Code", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new UpdateBookCommand(BookId.New(), "Clean Code", author.Id.Value, "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -67,12 +67,12 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var existingBook = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
-        var bookToUpdate = Book.Create("Refactoring", author.Id, "978-0201485677", 49.99m, 1999, TimeProvider.System).Value;
+        var existingBook = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var bookToUpdate = Book.Create("Refactoring", author.Id, "9780201485677", 49.99m, 1999, TimeProvider.System).Value;
         _context.Books.AddRange(existingBook, bookToUpdate);
         await _context.SaveChangesAsync();
 
-        var command = new UpdateBookCommand(bookToUpdate.Id, "Refactoring 2nd Ed", author.Id.Value, "978-0132350884", 49.99m, 2018);
+        var command = new UpdateBookCommand(bookToUpdate.Id, "Refactoring 2nd Ed", author.Id.Value, "9780132350884", 49.99m, 2018);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -87,7 +87,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var command = new UpdateBookCommand(BookId.New(), "", author.Id.Value, "978-0132350884", 35.99m, 2008);
+        var command = new UpdateBookCommand(BookId.New(), "", author.Id.Value, "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -102,11 +102,11 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var book = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 
-        var command = new UpdateBookCommand(book.Id, "Clean Code", Guid.NewGuid(), "978-0132350884", 35.99m, 2008);
+        var command = new UpdateBookCommand(book.Id, "Clean Code", Guid.NewGuid(), "9780132350884", 35.99m, 2008);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -135,13 +135,13 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
         context.Authors.Add(author);
 
-        var book = Book.Create("Clean Code", author.Id, "978-0132350884", 35.99m, 2008, fakeTimeProvider).Value;
+        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, fakeTimeProvider).Value;
         context.Books.Add(book);
         await context.SaveChangesAsync();
 
         fakeTimeProvider.SetUtcNow(updateTime);
 
-        var command = new UpdateBookCommand(book.Id, "The Pragmatic Programmer", author.Id.Value, "978-0135957059", 45.99m, 1999);
+        var command = new UpdateBookCommand(book.Id, "The Pragmatic Programmer", author.Id.Value, "9780135957059", 45.99m, 1999);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

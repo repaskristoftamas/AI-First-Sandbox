@@ -5,7 +5,7 @@ namespace Bookstore.WebApi.Endpoints.Books;
 /// </summary>
 /// <param name="Title">Title of the book.</param>
 /// <param name="AuthorId">Identifier of the author who wrote this book.</param>
-/// <param name="ISBN">International Standard Book Number, uniquely identifying the publication.</param>
+/// <param name="ISBN">ISBN-13 as 13 digits with no hyphens or spaces (978/979 prefix). Example: 9780132350884.</param>
 /// <param name="Price">Retail price of the book.</param>
 /// <param name="PublicationYear">Year the book was published.</param>
 public sealed record UpdateBookRequest(

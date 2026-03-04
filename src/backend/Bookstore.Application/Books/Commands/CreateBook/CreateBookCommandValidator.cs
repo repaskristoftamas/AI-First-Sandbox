@@ -20,8 +20,9 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .NotEmpty().WithErrorCode(BookErrorCodes.AuthorRequired);
 
         RuleFor(x => x.ISBN)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
-            .MaximumLength(20).WithErrorCode(BookErrorCodes.IsbnTooLong);
+            .Matches(IsbnValidation.Isbn13Regex()).WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
 
         RuleFor(x => x.Price)
             .GreaterThan(0).WithErrorCode(BookErrorCodes.PriceInvalid);
