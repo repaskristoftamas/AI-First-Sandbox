@@ -54,6 +54,14 @@ public sealed class BookEndpoints : IEndpointDefinition
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        if (page < 1 || pageSize < 1 || pageSize > 100)
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "ValidationError",
+                detail: page < 1
+                    ? "'page' must be ≥ 1."
+                    : "'pageSize' must be between 1 and 100.");
+
         var result = await sender.Send(new GetAllBooksQuery(page, pageSize), cancellationToken);
         return result.IsSuccess
             ? TypedResults.Ok(result.Value.Select(d => d.ToResponse()).ToList())

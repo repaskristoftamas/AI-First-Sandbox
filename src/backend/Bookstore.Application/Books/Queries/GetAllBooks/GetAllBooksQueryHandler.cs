@@ -27,6 +27,7 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     {
         var books = await _context.Books
             .AsNoTracking()
+            .OrderBy(b => b.Id.Value)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);

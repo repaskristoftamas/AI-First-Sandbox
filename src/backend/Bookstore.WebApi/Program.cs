@@ -28,6 +28,22 @@ var app = builder.Build();
 
 await app.Services.MigrateDatabaseAsync(app.Lifetime.ApplicationStopping);
 
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+
+        await context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "An unexpected error occurred.",
+            Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1"
+        });
+    });
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -46,22 +62,6 @@ if (app.Environment.IsDevelopment())
         </html>
         """, "text/html")).ExcludeFromDescription();
 }
-
-app.UseExceptionHandler(exceptionHandlerApp =>
-{
-    exceptionHandlerApp.Run(async context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        context.Response.ContentType = "application/problem+json";
-
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "An unexpected error occurred.",
-            Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1"
-        });
-    });
-});
 
 app.UseCors();
 app.UseHttpsRedirection();

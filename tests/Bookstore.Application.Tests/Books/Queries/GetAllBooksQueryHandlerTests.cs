@@ -2,13 +2,13 @@ using Bookstore.Application.Books.Queries.GetAllBooks;
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
-using FluentAssertions;
+using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Queries;
 
-public class GetAllBooksQueryHandlerTests : IAsyncDisposable
+public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
 {
     private readonly BookstoreDbContext _context;
     private readonly GetAllBooksQueryHandler _handler;
@@ -36,8 +36,8 @@ public class GetAllBooksQueryHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().HaveCount(3);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -53,8 +53,8 @@ public class GetAllBooksQueryHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().HaveCount(2);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -70,8 +70,8 @@ public class GetAllBooksQueryHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBeEmpty();
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public class GetAllBooksQueryHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBeEmpty();
     }
 
     /// <summary>
