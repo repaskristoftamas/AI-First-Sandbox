@@ -1,5 +1,6 @@
 using Bookstore.Application.Books.Commands.CreateBook;
 using Bookstore.Domain.Books;
+using FluentAssertions;
 using FluentValidation.TestHelper;
 using Xunit;
 
@@ -22,6 +23,23 @@ public class CreateBookCommandValidatorTests
 
         // Assert
         result.ShouldNotHaveValidationErrorFor(x => x.ISBN);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Validate_ShouldReturnOnlyIsbnRequired_WhenIsbnIsEmpty(string isbn)
+    {
+        // Arrange
+        var command = CreateCommand(isbn: isbn);
+
+        // Act
+        var result = _validator.TestValidate(command);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.ISBN)
+            .WithErrorCode(BookErrorCodes.IsbnRequired);
+        result.Errors.Should().NotContain(e => e.ErrorCode == BookErrorCodes.IsbnInvalidFormat);
     }
 
     [Theory]

@@ -20,6 +20,7 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
             .NotEmpty().WithErrorCode(BookErrorCodes.AuthorRequired);
 
         RuleFor(x => x.ISBN)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
             .Matches(IsbnValidation.Isbn13Regex()).WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
 
