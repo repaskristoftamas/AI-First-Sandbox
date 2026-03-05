@@ -25,6 +25,7 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     /// <returns>A result containing a read-only list of <see cref="BookDto"/> objects.</returns>
     public async ValueTask<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery query, CancellationToken cancellationToken)
     {
+        //TODO: order by different fields, filter by author, publication year, etc.
         var books = await _context.Books
             .AsNoTracking()
             .OrderBy(b => b.Id.Value)
