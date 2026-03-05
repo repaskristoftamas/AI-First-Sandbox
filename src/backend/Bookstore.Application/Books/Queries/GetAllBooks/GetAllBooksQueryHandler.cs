@@ -15,7 +15,7 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     private readonly IApplicationDbContext _context = context;
 
     /// <summary>
-    /// Fetches all books from the data store and maps them to DTOs.
+    /// Fetches a page of books from the data store and maps them to DTOs.
     /// </summary>
     /// <remarks>
     /// Queries without change tracking for better read performance.
@@ -25,8 +25,12 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     /// <returns>A result containing a read-only list of <see cref="BookDto"/> objects.</returns>
     public async ValueTask<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery query, CancellationToken cancellationToken)
     {
+        //TODO: order by different fields, filter by author, publication year, etc.
         var books = await _context.Books
             .AsNoTracking()
+            .OrderBy(b => b.Id.Value)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<BookDto>>([.. books.Select(b => b.ToDto())]);
