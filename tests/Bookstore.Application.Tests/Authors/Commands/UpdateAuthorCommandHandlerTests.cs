@@ -2,8 +2,8 @@ using Bookstore.Application.Authors.Commands.UpdateAuthor;
 using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Authors.Commands;
@@ -37,10 +37,10 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var updated = await _context.Authors.FindAsync(author.Id);
-        updated!.FirstName.Should().Be("Bob");
-        updated.LastName.Should().Be("Uncle");
+        updated!.FirstName.ShouldBe("Bob");
+        updated.LastName.ShouldBe("Uncle");
     }
 
     [Fact]
@@ -53,8 +53,8 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<NotFoundError>();
     }
 
     [Fact]
@@ -71,8 +71,8 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();

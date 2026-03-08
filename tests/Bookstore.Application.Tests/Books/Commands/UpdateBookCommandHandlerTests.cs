@@ -3,9 +3,9 @@ using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Commands;
@@ -41,10 +41,10 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var updated = await _context.Books.FindAsync(book.Id);
-        updated!.Title.Should().Be("The Pragmatic Programmer");
-        updated.AuthorId.Should().Be(newAuthor.Id);
+        updated!.Title.ShouldBe("The Pragmatic Programmer");
+        updated.AuthorId.ShouldBe(newAuthor.Id);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<NotFoundError>();
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ConflictError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ConflictError>();
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>();
     }
 
     [Fact]
@@ -112,9 +112,9 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>()
-            .Which.Code.Should().Be(BookErrorCodes.AuthorNotFound);
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<NotFoundError>()
+            .Code.ShouldBe(BookErrorCodes.AuthorNotFound);
     }
 
     [Fact]
@@ -147,9 +147,9 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var updated = await context.Books.FindAsync(book.Id);
-        updated!.UpdatedAt.Should().Be(updateTime);
+        updated!.UpdatedAt.ShouldBe(updateTime);
     }
 
     /// <summary>
