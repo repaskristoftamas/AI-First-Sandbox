@@ -17,6 +17,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddTransient<IEndpointDefinition, AuthorEndpoints>();
 builder.Services.AddTransient<IEndpointDefinition, BookEndpoints>();
 
+var signingKey = builder.Configuration["Jwt:SigningKey"];
+if (string.IsNullOrWhiteSpace(signingKey))
+    throw new InvalidOperationException("Jwt:SigningKey must be configured. Use environment variables or dotnet user-secrets.");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -29,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSection["Audience"],
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSection["SigningKey"]!)),
+                Encoding.UTF8.GetBytes(signingKey)),
             ValidateLifetime = true
         };
     });
@@ -39,23 +43,17 @@ var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
 
+if (allowedOrigins.Length == 0)
+    throw new InvalidOperationException("Cors:AllowedOrigins must contain at least one origin. Use environment variables or dotnet user-secrets.");
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        if (allowedOrigins.Length > 0)
-        {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-        else
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        }
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 builder.Services.AddOpenApi();
