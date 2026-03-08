@@ -25,3 +25,4 @@ user-invocable: true
 - Never use --no-verify
 - Never amend unless explicitly asked
 - If pre-commit hook fails, fix the issue and create a NEW commit
+- Never use `cd <path> && git ...` compound commands — they trigger security hooks. Run git commands directly (the working directory is already the repo root) or use `git -C <path>` if needed
