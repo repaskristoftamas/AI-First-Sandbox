@@ -3,9 +3,9 @@ using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Commands;
@@ -36,8 +36,8 @@ public class CreateBookCommandHandlerTests : IDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldNotBe(Guid.Empty);
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public class CreateBookCommandHandlerTests : IDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>();
     }
 
     [Fact]
@@ -69,8 +69,8 @@ public class CreateBookCommandHandlerTests : IDisposable
         var result = await _handler.Handle(duplicateCommand, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ConflictError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ConflictError>();
     }
 
     [Fact]
@@ -83,9 +83,9 @@ public class CreateBookCommandHandlerTests : IDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>()
-            .Which.Code.Should().Be(BookErrorCodes.AuthorNotFound);
+        result.IsFailure.ShouldBeTrue();
+        var error = result.Error.ShouldBeOfType<NotFoundError>();
+        error.Code.ShouldBe(BookErrorCodes.AuthorNotFound);
     }
 
     [Fact]
@@ -112,9 +112,9 @@ public class CreateBookCommandHandlerTests : IDisposable
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var created = await context.Books.FindAsync(new BookId(result.Value));
-        created!.CreatedAt.Should().Be(frozenTime);
+        created!.CreatedAt.ShouldBe(frozenTime);
     }
 
     /// <summary>

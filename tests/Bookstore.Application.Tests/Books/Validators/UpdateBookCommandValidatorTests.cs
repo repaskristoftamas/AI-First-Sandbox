@@ -1,7 +1,7 @@
 using Bookstore.Application.Books.Commands.UpdateBook;
 using Bookstore.Domain.Books;
-using FluentAssertions;
 using FluentValidation.TestHelper;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Validators;
@@ -39,7 +39,7 @@ public class UpdateBookCommandValidatorTests
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.ISBN)
             .WithErrorCode(BookErrorCodes.IsbnRequired);
-        result.Errors.Should().NotContain(e => e.ErrorCode == BookErrorCodes.IsbnInvalidFormat);
+        result.Errors.ShouldNotContain(e => e.ErrorCode == BookErrorCodes.IsbnInvalidFormat);
     }
 
     [Theory]

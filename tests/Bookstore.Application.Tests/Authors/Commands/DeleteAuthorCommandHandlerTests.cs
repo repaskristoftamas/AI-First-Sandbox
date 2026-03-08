@@ -2,8 +2,8 @@ using Bookstore.Application.Authors.Commands.DeleteAuthor;
 using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.Authors.Commands;
@@ -37,9 +37,9 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var deleted = await _context.Authors.FindAsync(author.Id);
-        deleted.Should().BeNull();
+        deleted.ShouldBeNull();
     }
 
     [Fact]
@@ -52,8 +52,8 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<NotFoundError>();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();

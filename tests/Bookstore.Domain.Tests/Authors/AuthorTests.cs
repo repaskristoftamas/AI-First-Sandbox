@@ -1,6 +1,6 @@
 using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions; //TODO: switch to Shouldly for consistency with other tests
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Domain.Tests.Authors;
@@ -19,11 +19,11 @@ public class AuthorTests
         var result = Author.Create(firstName, lastName, dateOfBirth);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Value.Should().NotBeEmpty();
-        result.Value.FirstName.Should().Be(firstName);
-        result.Value.LastName.Should().Be(lastName);
-        result.Value.DateOfBirth.Should().Be(dateOfBirth);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Id.Value.ShouldNotBe(Guid.Empty);
+        result.Value.FirstName.ShouldBe(firstName);
+        result.Value.LastName.ShouldBe(lastName);
+        result.Value.DateOfBirth.ShouldBe(dateOfBirth);
     }
 
     [Theory]
@@ -38,9 +38,9 @@ public class AuthorTests
         var result = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5));
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be(expectedMessage);
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe(expectedMessage);
     }
 
     [Fact]
@@ -50,8 +50,8 @@ public class AuthorTests
         var result = Author.Create("Robert", "Martin", DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>();
     }
 
     [Fact]
@@ -64,10 +64,10 @@ public class AuthorTests
         var result = author.Update("NewFirst", "NewLast", new DateOnly(1990, 6, 15));
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        author.FirstName.Should().Be("NewFirst");
-        author.LastName.Should().Be("NewLast");
-        author.DateOfBirth.Should().Be(new DateOnly(1990, 6, 15));
+        result.IsSuccess.ShouldBeTrue();
+        author.FirstName.ShouldBe("NewFirst");
+        author.LastName.ShouldBe("NewLast");
+        author.DateOfBirth.ShouldBe(new DateOnly(1990, 6, 15));
     }
 
     [Theory]
@@ -83,8 +83,8 @@ public class AuthorTests
         var result = author.Update(firstName, lastName, new DateOnly(1990, 6, 15));
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be(expectedMessage);
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe(expectedMessage);
     }
 }
