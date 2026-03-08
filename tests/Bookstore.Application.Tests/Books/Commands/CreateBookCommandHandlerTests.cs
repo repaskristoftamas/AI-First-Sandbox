@@ -84,8 +84,8 @@ public class CreateBookCommandHandlerTests : IDisposable
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        var error = result.Error.ShouldBeOfType<NotFoundError>();
-        error.Code.ShouldBe(BookErrorCodes.AuthorNotFound);
+        result.Error.ShouldBeOfType<NotFoundError>()
+            .Code.ShouldBe(BookErrorCodes.AuthorNotFound);
     }
 
     [Fact]
