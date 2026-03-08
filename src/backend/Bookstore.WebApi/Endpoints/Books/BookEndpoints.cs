@@ -43,6 +43,7 @@ public sealed class BookEndpoints : IEndpointDefinition
         group.MapDelete("/{id:guid}", DeleteBook)
             .WithName("DeleteBook")
             .RequireAuthorization();
+        //TODO: Add role-based authorization (e.g., only allow users with "Admin" role to delete books)
     }
 
     /// <summary>

@@ -34,11 +34,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(signingKey)),
-            ValidateLifetime = true
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
         };
     });
 builder.Services.AddAuthorizationBuilder();
 
+//TODO: AllowedOrigins array should only contain https:// origins in production. The config doesn't enforce this — consider validating at startup.
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
@@ -50,6 +52,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
+        //TODO consider restricting methods to what you actually use (e.g., only allow GET, POST, PUT, DELETE) to reduce attack surface
         policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
@@ -57,6 +60,8 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddOpenApi();
+
+//TODO: builder.Services.AddRateLimiter
 
 var app = builder.Build();
 
@@ -102,6 +107,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.RegisterEndpointDefinitions();
+//TODO: app.UseRateLimiter
 
 app.Run();
 
