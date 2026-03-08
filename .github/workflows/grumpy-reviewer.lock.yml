@@ -25,19 +25,13 @@
 #
 # Source: githubnext/agentics/workflows/grumpy-reviewer.md@828ac109efb43990f59475cbfce90ede5546586c
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"7a578e99f10004d857c4a81e65f54277b37bb988f11772a14949c335f6403914","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"6d166af7670a1cc003152678cfe29bb0f15cc297441589110c186de68c9aca98","compiler_version":"v0.50.4"}
 
 name: "Grumpy Code Reviewer 🔥"
 "on":
   pull_request:
     types:
     - opened
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: Pull request number to address
-        required: true
-        type: number
 
 permissions: {}
 

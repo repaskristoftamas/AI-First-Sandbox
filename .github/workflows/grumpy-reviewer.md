@@ -3,12 +3,6 @@ description: Performs critical code review with a focus on edge cases, potential
 on:
   pull_request:
     types: [opened]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull request number to address'
-        required: true
-        type: number
 permissions:
   contents: read
   pull-requests: read
