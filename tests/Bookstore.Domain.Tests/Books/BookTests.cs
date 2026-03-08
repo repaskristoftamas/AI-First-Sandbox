@@ -2,6 +2,7 @@ using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
 using FluentAssertions;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Domain.Tests.Books;
@@ -49,6 +50,64 @@ public class BookTests
         book.ISBN.Should().Be("9781111111111");
         book.Price.Should().Be(20m);
         book.PublicationYear.Should().Be(2023);
+    }
+
+    [Theory]
+    [InlineData("", "9780000000000", "Title is required.")]
+    [InlineData("   ", "9780000000000", "Title is required.")]
+    [InlineData("Title", "", "ISBN is required.")]
+    [InlineData("Title", "   ", "ISBN is required.")]
+    public void Create_ShouldReturnValidationError_WhenStringFieldIsInvalid(
+        string title, string isbn, string expectedMessage)
+    {
+        // Act
+        var result = Book.Create(title, TestAuthorId, isbn, 10m, 2000, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe(expectedMessage);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    public void Create_ShouldReturnValidationError_WhenPriceIsNotPositive(decimal price)
+    {
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", price, 2000, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Price must be greater than zero.");
+    }
+
+    [Fact]
+    public void Create_ShouldReturnValidationError_WhenPublicationYearIsBeforePrintingPress()
+    {
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", 10m, -1, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
+    }
+
+    [Fact]
+    public void Create_ShouldReturnValidationError_WhenPublicationYearIsInFuture()
+    {
+        // Arrange
+        var futureYear = TimeProvider.System.GetUtcNow().Year + 1;
+
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", 10m, futureYear, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
     }
 
     [Theory]
