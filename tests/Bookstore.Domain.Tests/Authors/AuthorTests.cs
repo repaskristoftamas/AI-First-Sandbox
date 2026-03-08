@@ -1,6 +1,6 @@
 using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
+using FluentAssertions; //TODO: switch to Shouldly for consistency with other tests
 using Xunit;
 
 namespace Bookstore.Domain.Tests.Authors;
