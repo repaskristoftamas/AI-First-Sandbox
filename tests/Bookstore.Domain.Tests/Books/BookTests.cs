@@ -1,7 +1,8 @@
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Results;
-using FluentAssertions;
+using Microsoft.Extensions.Time.Testing;
+using Shouldly;
 using Xunit;
 
 namespace Bookstore.Domain.Tests.Books;
@@ -24,12 +25,12 @@ public class BookTests
         var book = Book.Create(title, authorId, isbn, price, publicationYear, TimeProvider.System).Value;
 
         // Assert
-        book.Id.Value.Should().NotBeEmpty();
-        book.Title.Should().Be(title);
-        book.AuthorId.Should().Be(authorId);
-        book.ISBN.Should().Be(isbn);
-        book.Price.Should().Be(price);
-        book.PublicationYear.Should().Be(publicationYear);
+        book.Id.Value.ShouldNotBe(Guid.Empty);
+        book.Title.ShouldBe(title);
+        book.AuthorId.ShouldBe(authorId);
+        book.ISBN.ShouldBe(isbn);
+        book.Price.ShouldBe(price);
+        book.PublicationYear.ShouldBe(publicationYear);
     }
 
     [Fact]
@@ -43,12 +44,71 @@ public class BookTests
         var result = book.Update("New Title", newAuthorId, "9781111111111", 20m, 2023, TimeProvider.System);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        book.Title.Should().Be("New Title");
-        book.AuthorId.Should().Be(newAuthorId);
-        book.ISBN.Should().Be("9781111111111");
-        book.Price.Should().Be(20m);
-        book.PublicationYear.Should().Be(2023);
+        result.IsSuccess.ShouldBeTrue();
+        book.Title.ShouldBe("New Title");
+        book.AuthorId.ShouldBe(newAuthorId);
+        book.ISBN.ShouldBe("9781111111111");
+        book.Price.ShouldBe(20m);
+        book.PublicationYear.ShouldBe(2023);
+    }
+
+    [Theory]
+    [InlineData("", "9780000000000", "Title is required.")]
+    [InlineData("   ", "9780000000000", "Title is required.")]
+    [InlineData("Title", "", "ISBN is required.")]
+    [InlineData("Title", "   ", "ISBN is required.")]
+    public void Create_ShouldReturnValidationError_WhenStringFieldIsInvalid(
+        string title, string isbn, string expectedMessage)
+    {
+        // Act
+        var result = Book.Create(title, TestAuthorId, isbn, 10m, 2000, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe(expectedMessage);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    public void Create_ShouldReturnValidationError_WhenPriceIsNotPositive(decimal price)
+    {
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", price, 2000, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Price must be greater than zero.");
+    }
+
+    [Fact]
+    public void Create_ShouldReturnValidationError_WhenPublicationYearIsBeforePrintingPress()
+    {
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", 10m, -1, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
+    }
+
+    [Fact]
+    public void Create_ShouldReturnValidationError_WhenPublicationYearIsInFuture()
+    {
+        // Arrange
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2024, 6, 15, 0, 0, 0, TimeSpan.Zero));
+        var futureYear = 2025;
+
+        // Act
+        var result = Book.Create("Title", TestAuthorId, "9780000000000", 10m, futureYear, fakeTimeProvider);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
     }
 
     [Theory]
@@ -66,9 +126,9 @@ public class BookTests
         var result = book.Update(title, TestAuthorId, isbn, 10m, 2000, TimeProvider.System);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be(expectedMessage);
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe(expectedMessage);
     }
 
     [Theory]
@@ -83,9 +143,9 @@ public class BookTests
         var result = book.Update("Title", TestAuthorId, "9780000000000", price, 2000, TimeProvider.System);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be("Price must be greater than zero.");
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Price must be greater than zero.");
     }
 
     [Fact]
@@ -98,24 +158,25 @@ public class BookTests
         var result = book.Update("Title", TestAuthorId, "9780000000000", 10m, -1, TimeProvider.System);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be("Publication year must be a valid year.");
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
     }
 
     [Fact]
     public void Update_ShouldReturnValidationError_WhenPublicationYearIsInFuture()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2024, 6, 15, 0, 0, 0, TimeSpan.Zero));
         var book = Book.Create("Title", TestAuthorId, "9780000000000", 10m, 2000, TimeProvider.System).Value;
-        var futureYear = TimeProvider.System.GetUtcNow().Year + 1;
+        var futureYear = 2025;
 
         // Act
-        var result = book.Update("Title", TestAuthorId, "9780000000000", 10m, futureYear, TimeProvider.System);
+        var result = book.Update("Title", TestAuthorId, "9780000000000", 10m, futureYear, fakeTimeProvider);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>()
-            .Which.Description.Should().Be("Publication year must be a valid year.");
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ValidationError>()
+            .Description.ShouldBe("Publication year must be a valid year.");
     }
 }
