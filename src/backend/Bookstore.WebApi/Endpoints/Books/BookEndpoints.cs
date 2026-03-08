@@ -25,19 +25,25 @@ public sealed class BookEndpoints : IEndpointDefinition
         var group = app.MapGroup("/api/books").WithTags("Books");
 
         group.MapGet("/", GetAllBooks)
-            .WithName("GetAllBooks");
+            .WithName("GetAllBooks")
+            .AllowAnonymous();
 
         group.MapGet("/{id:guid}", GetBookById)
-            .WithName("GetBookById");
+            .WithName("GetBookById")
+            .AllowAnonymous();
 
         group.MapPost("/", CreateBook)
-            .WithName("CreateBook");
+            .WithName("CreateBook")
+            .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateBook)
-            .WithName("UpdateBook");
+            .WithName("UpdateBook")
+            .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteBook)
-            .WithName("DeleteBook");
+            .WithName("DeleteBook")
+            .RequireAuthorization();
+        //TODO: Add role-based authorization (e.g., only allow users with "Admin" role to delete books)
     }
 
     /// <summary>

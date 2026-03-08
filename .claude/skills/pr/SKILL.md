@@ -34,3 +34,4 @@ user-invocable: true
 ## Rules
 - Never create PRs to branches other than main unless asked
 - Include the full commit range in your analysis, not just the tip
+- Never use `cd <path> && git ...` compound commands — they trigger security hooks. Run git/gh commands directly (the working directory is already the repo root) or use `git -C <path>` if needed

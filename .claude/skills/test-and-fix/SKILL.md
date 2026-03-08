@@ -25,3 +25,4 @@ user-invocable: true
 - Never weaken assertions to make tests pass
 - If a test is genuinely obsolete, explain why before removing it
 - Always run the full suite at the end, not just the previously failing tests
+- Never use `cd <path> && dotnet ...` compound commands — they trigger security hooks. Run dotnet commands directly (the working directory is already the repo root) or pass the solution/project path as an argument if needed

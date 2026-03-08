@@ -25,19 +25,24 @@ public sealed class AuthorEndpoints : IEndpointDefinition
         var group = app.MapGroup("/api/authors").WithTags("Authors");
 
         group.MapGet("/", GetAllAuthors)
-            .WithName("GetAllAuthors");
+            .WithName("GetAllAuthors")
+            .AllowAnonymous();
 
         group.MapGet("/{id:guid}", GetAuthorById)
-            .WithName("GetAuthorById");
+            .WithName("GetAuthorById")
+            .AllowAnonymous();
 
         group.MapPost("/", CreateAuthor)
-            .WithName("CreateAuthor");
+            .WithName("CreateAuthor")
+            .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateAuthor)
-            .WithName("UpdateAuthor");
+            .WithName("UpdateAuthor")
+            .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteAuthor)
-            .WithName("DeleteAuthor");
+            .WithName("DeleteAuthor")
+            .RequireAuthorization();
     }
 
     /// <summary>
