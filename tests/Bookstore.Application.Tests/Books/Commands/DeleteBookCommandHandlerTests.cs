@@ -1,5 +1,5 @@
 using Bookstore.Application.Books.Commands.DeleteBook;
-using Bookstore.Domain.Authors;
+using Bookstore.Application.Tests.Helpers;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
@@ -28,7 +28,7 @@ public sealed class DeleteBookCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldDeleteBook_WhenBookExists()
     {
         // Arrange
-        var author = await SeedAuthor();
+        var author = await TestDataSeeder.SeedAuthorAsync(_context);
         var book = Book.Create("Clean Code", author.Id, "9780132350884", 29.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
@@ -56,17 +56,6 @@ public sealed class DeleteBookCommandHandlerTests : IAsyncDisposable
         // Assert
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBeOfType<NotFoundError>();
-    }
-
-    /// <summary>
-    /// Creates and persists an author to satisfy the foreign key requirement.
-    /// </summary>
-    private async Task<Author> SeedAuthor()
-    {
-        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
-        _context.Authors.Add(author);
-        await _context.SaveChangesAsync();
-        return author;
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
