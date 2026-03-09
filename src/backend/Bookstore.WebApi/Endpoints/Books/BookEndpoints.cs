@@ -36,14 +36,14 @@ public sealed class BookEndpoints : IEndpointDefinition
 
         group.MapPost("/", CreateBook)
             .WithName("CreateBook")
-            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateBook)
             .WithName("UpdateBook")
-            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireAuthorization();

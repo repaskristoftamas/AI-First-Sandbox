@@ -35,12 +35,12 @@ public sealed class AuthorEndpoints : IEndpointDefinition
 
         group.MapPost("/", CreateAuthor)
             .WithName("CreateAuthor")
-            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateAuthor)
             .WithName("UpdateAuthor")
-            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .RequireAuthorization();
 
