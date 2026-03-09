@@ -16,10 +16,12 @@ namespace Bookstore.Application.Authors.Commands.UpdateAuthor;
 /// </remarks>
 internal sealed class UpdateAuthorCommandHandler(
     IApplicationDbContext context,
-    IValidator<UpdateAuthorCommand> validator) : ICommandHandler<UpdateAuthorCommand, Result>
+    IValidator<UpdateAuthorCommand> validator,
+    TimeProvider timeProvider) : ICommandHandler<UpdateAuthorCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
     private readonly IValidator<UpdateAuthorCommand> _validator = validator;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
     /// Applies the updated properties to an existing author.
@@ -39,7 +41,7 @@ internal sealed class UpdateAuthorCommandHandler(
         if (author is null)
             return Result.Failure(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
-        var updateResult = author.Update(command.FirstName, command.LastName, command.DateOfBirth);
+        var updateResult = author.Update(command.FirstName, command.LastName, command.DateOfBirth, _timeProvider);
 
         if (updateResult.IsFailure)
             return updateResult;

@@ -20,14 +20,14 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options, TimeProvider.System);
-        _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator());
+        _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator(TimeProvider.System), TimeProvider.System);
     }
 
     [Fact]
     public async Task Handle_ShouldUpdateAuthor_WhenAuthorExists()
     {
         // Arrange
-        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 
@@ -61,7 +61,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnValidationFailure_WhenFirstNameIsEmpty()
     {
         // Arrange
-        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 

@@ -132,7 +132,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         await using var context = new BookstoreDbContext(options, fakeTimeProvider);
         var handler = new UpdateBookCommandHandler(context, new UpdateBookCommandValidator(fakeTimeProvider), fakeTimeProvider);
 
-        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         context.Authors.Add(author);
 
         var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, fakeTimeProvider).Value;
@@ -157,7 +157,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     /// </summary>
     private async Task<Author> SeedAuthor(string firstName, string lastName)
     {
-        var author = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
         return author;

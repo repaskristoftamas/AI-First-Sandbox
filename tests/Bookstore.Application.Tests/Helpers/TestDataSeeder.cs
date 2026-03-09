@@ -19,7 +19,7 @@ internal static class TestDataSeeder
         int birthMonth = 12,
         int birthDay = 5)
     {
-        var author = Author.Create(firstName, lastName, new DateOnly(birthYear, birthMonth, birthDay)).Value;
+        var author = Author.Create(firstName, lastName, new DateOnly(birthYear, birthMonth, birthDay), TimeProvider.System).Value;
         context.Authors.Add(author);
         await context.SaveChangesAsync();
         return author;

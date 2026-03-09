@@ -1,5 +1,6 @@
 using Bookstore.Domain.Authors;
 using Bookstore.SharedKernel.Results;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -7,6 +8,8 @@ namespace Bookstore.Domain.Tests.Authors;
 
 public class AuthorTests
 {
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
+
     [Fact]
     public void Create_ShouldReturnAuthorWithCorrectProperties()
     {
@@ -16,7 +19,7 @@ public class AuthorTests
         var dateOfBirth = new DateOnly(1952, 12, 5);
 
         // Act
-        var result = Author.Create(firstName, lastName, dateOfBirth);
+        var result = Author.Create(firstName, lastName, dateOfBirth, _timeProvider);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -35,7 +38,7 @@ public class AuthorTests
         string firstName, string lastName, string expectedMessage)
     {
         // Act
-        var result = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5));
+        var result = Author.Create(firstName, lastName, new DateOnly(1952, 12, 5), _timeProvider);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -46,8 +49,11 @@ public class AuthorTests
     [Fact]
     public void Create_ShouldReturnValidationError_WhenDateOfBirthIsInTheFuture()
     {
+        // Arrange
+        var futureDate = DateOnly.FromDateTime(_timeProvider.GetUtcNow().DateTime.AddDays(1));
+
         // Act
-        var result = Author.Create("Robert", "Martin", DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var result = Author.Create("Robert", "Martin", futureDate, _timeProvider);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -58,10 +64,10 @@ public class AuthorTests
     public void Update_ShouldModifyAuthorProperties()
     {
         // Arrange
-        var author = Author.Create("OldFirst", "OldLast", new DateOnly(1980, 1, 1)).Value;
+        var author = Author.Create("OldFirst", "OldLast", new DateOnly(1980, 1, 1), _timeProvider).Value;
 
         // Act
-        var result = author.Update("NewFirst", "NewLast", new DateOnly(1990, 6, 15));
+        var result = author.Update("NewFirst", "NewLast", new DateOnly(1990, 6, 15), _timeProvider);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -77,10 +83,10 @@ public class AuthorTests
         string firstName, string lastName, string expectedMessage)
     {
         // Arrange
-        var author = Author.Create("OldFirst", "OldLast", new DateOnly(1980, 1, 1)).Value;
+        var author = Author.Create("OldFirst", "OldLast", new DateOnly(1980, 1, 1), _timeProvider).Value;
 
         // Act
-        var result = author.Update(firstName, lastName, new DateOnly(1990, 6, 15));
+        var result = author.Update(firstName, lastName, new DateOnly(1990, 6, 15), _timeProvider);
 
         // Assert
         result.IsFailure.ShouldBeTrue();

@@ -12,10 +12,12 @@ namespace Bookstore.Application.Authors.Commands.CreateAuthor;
 /// </summary>
 internal sealed class CreateAuthorCommandHandler(
     IApplicationDbContext context,
-    IValidator<CreateAuthorCommand> validator) : ICommandHandler<CreateAuthorCommand, Result<Guid>>
+    IValidator<CreateAuthorCommand> validator,
+    TimeProvider timeProvider) : ICommandHandler<CreateAuthorCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context = context;
     private readonly IValidator<CreateAuthorCommand> _validator = validator;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
     /// Creates a new author and returns its identifier.
@@ -30,7 +32,7 @@ internal sealed class CreateAuthorCommandHandler(
             return validationResult.ToFailureResult<Guid>();
 
         //TODO when there are more properties, switch to parameter object
-        var createResult = Author.Create(command.FirstName, command.LastName, command.DateOfBirth);
+        var createResult = Author.Create(command.FirstName, command.LastName, command.DateOfBirth, _timeProvider);
 
         if (createResult.IsFailure)
             return Result.Failure<Guid>(createResult.Error);

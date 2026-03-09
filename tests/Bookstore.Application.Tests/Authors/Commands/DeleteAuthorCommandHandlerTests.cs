@@ -27,7 +27,7 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldDeleteAuthor_WhenAuthorExists()
     {
         // Arrange
-        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 

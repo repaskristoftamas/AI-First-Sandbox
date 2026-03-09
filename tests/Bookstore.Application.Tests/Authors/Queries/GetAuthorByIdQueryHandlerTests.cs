@@ -27,7 +27,7 @@ public sealed class GetAuthorByIdQueryHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnAuthorDto_WhenAuthorExists()
     {
         // Arrange
-        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 

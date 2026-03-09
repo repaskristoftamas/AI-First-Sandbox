@@ -9,7 +9,8 @@ namespace Bookstore.Application.Authors.Commands.UpdateAuthor;
 public sealed class UpdateAuthorCommandValidator : AbstractValidator<UpdateAuthorCommand>
 {
     /// <summary>Initializes the validation rules.</summary>
-    public UpdateAuthorCommandValidator()
+    /// <param name="timeProvider">Provides the current date for date-of-birth validation.</param>
+    public UpdateAuthorCommandValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.FirstName)
             .NotEmpty().WithErrorCode(AuthorErrorCodes.FirstNameRequired)
@@ -20,7 +21,7 @@ public sealed class UpdateAuthorCommandValidator : AbstractValidator<UpdateAutho
             .MaximumLength(100).WithErrorCode(AuthorErrorCodes.LastNameTooLong);
 
         RuleFor(x => x.DateOfBirth)
-            .LessThan(DateOnly.FromDateTime(DateTime.Today))
+            .LessThan(DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime))
             .WithMessage("Date of birth must be in the past.")
             .WithErrorCode(AuthorErrorCodes.DobInFuture);
     }
