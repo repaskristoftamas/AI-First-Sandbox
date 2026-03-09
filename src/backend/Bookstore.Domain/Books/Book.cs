@@ -101,9 +101,11 @@ public sealed class Book : AuditableEntity<BookId>
 
     /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.
+    /// </summary>
+    /// <remarks>
     /// Primary validation is handled by FluentValidation at the application boundary.
     /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
-    /// </summary>
+    /// </remarks>
     private static Result Validate(string title, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(title))
