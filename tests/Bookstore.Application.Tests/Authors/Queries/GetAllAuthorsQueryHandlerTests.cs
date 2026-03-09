@@ -91,7 +91,7 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
     {
         for (var i = 0; i < count; i++)
         {
-            var author = Author.Create($"First{i}", $"Last{i}", new DateOnly(1950 + i, 1, 1)).Value;
+            var author = Author.Create($"First{i}", $"Last{i}", new DateOnly(1950 + i, 1, 1), TimeProvider.System).Value;
             _context.Authors.Add(author);
         }
 

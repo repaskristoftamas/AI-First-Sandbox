@@ -37,10 +37,11 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <param name="firstName">First name of the author.</param>
     /// <param name="lastName">Last name of the author.</param>
     /// <param name="dateOfBirth">Date of birth of the author.</param>
+    /// <param name="timeProvider">Provides the current date for date-of-birth validation.</param>
     /// <returns>A successful result containing the new <see cref="Author"/>, or a validation error.</returns>
-    public static Result<Author> Create(string firstName, string lastName, DateOnly dateOfBirth)
+    public static Result<Author> Create(string firstName, string lastName, DateOnly dateOfBirth, TimeProvider timeProvider)
     {
-        var validation = Validate(firstName, lastName, dateOfBirth);
+        var validation = Validate(firstName, lastName, dateOfBirth, timeProvider);
         if (validation.IsFailure)
             return Result.Failure<Author>(validation.Error);
 
@@ -59,10 +60,11 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <param name="firstName">First name of the author.</param>
     /// <param name="lastName">Last name of the author.</param>
     /// <param name="dateOfBirth">Date of birth of the author.</param>
+    /// <param name="timeProvider">Provides the current date for date-of-birth validation.</param>
     /// <returns>A success result, or a validation error if any value is invalid.</returns>
-    public Result Update(string firstName, string lastName, DateOnly dateOfBirth)
+    public Result Update(string firstName, string lastName, DateOnly dateOfBirth, TimeProvider timeProvider)
     {
-        var validation = Validate(firstName, lastName, dateOfBirth);
+        var validation = Validate(firstName, lastName, dateOfBirth, timeProvider);
         if (validation.IsFailure)
             return validation;
 
@@ -77,7 +79,7 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// Validates the author fields and returns a failure result if any value is invalid.
     /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
     /// </summary>
-    private static Result Validate(string firstName, string lastName, DateOnly dateOfBirth)
+    private static Result Validate(string firstName, string lastName, DateOnly dateOfBirth, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(FirstName), AuthorErrorCodes.FirstNameRequired, "First name is required.")]));
@@ -85,7 +87,7 @@ public sealed class Author : AuditableEntity<AuthorId>
         if (string.IsNullOrWhiteSpace(lastName))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(LastName), AuthorErrorCodes.LastNameRequired, "Last name is required.")]));
 
-        if (dateOfBirth >= DateOnly.FromDateTime(DateTime.Today))
+        if (dateOfBirth >= DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(DateOfBirth), AuthorErrorCodes.DobInFuture, "Date of birth must be in the past.")]));
 
         return Result.Success();

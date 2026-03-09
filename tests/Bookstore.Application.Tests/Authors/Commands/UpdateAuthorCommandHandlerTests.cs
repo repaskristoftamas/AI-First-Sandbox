@@ -3,6 +3,7 @@ using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -12,6 +13,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
 {
     private readonly BookstoreDbContext _context;
     private readonly UpdateAuthorCommandHandler _handler;
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
 
     public UpdateAuthorCommandHandlerTests()
     {
@@ -19,15 +21,15 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, TimeProvider.System);
-        _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator());
+        _context = new BookstoreDbContext(options, _timeProvider);
+        _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator(_timeProvider), _timeProvider);
     }
 
     [Fact]
     public async Task Handle_ShouldUpdateAuthor_WhenAuthorExists()
     {
         // Arrange
-        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 
@@ -61,7 +63,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
     public async Task Handle_ShouldReturnValidationFailure_WhenFirstNameIsEmpty()
     {
         // Arrange
-        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5)).Value;
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider).Value;
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
 

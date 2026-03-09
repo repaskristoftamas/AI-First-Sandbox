@@ -1,6 +1,7 @@
 using Bookstore.Application.Authors.Commands.CreateAuthor;
 using Bookstore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -10,6 +11,7 @@ public class CreateAuthorCommandHandlerTests : IAsyncDisposable
 {
     private readonly BookstoreDbContext _context;
     private readonly CreateAuthorCommandHandler _handler;
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
 
     public CreateAuthorCommandHandlerTests()
     {
@@ -17,8 +19,8 @@ public class CreateAuthorCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, TimeProvider.System);
-        _handler = new CreateAuthorCommandHandler(_context, new CreateAuthorCommandValidator());
+        _context = new BookstoreDbContext(options, _timeProvider);
+        _handler = new CreateAuthorCommandHandler(_context, new CreateAuthorCommandValidator(_timeProvider), _timeProvider);
     }
 
     [Fact]

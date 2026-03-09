@@ -13,13 +13,14 @@ internal static class TestDataSeeder
     /// </summary>
     internal static async Task<Author> SeedAuthorAsync( //TODO: check where to use this method over current references
         BookstoreDbContext context,
+        TimeProvider? timeProvider = null,
         string firstName = "Robert",
         string lastName = "Martin",
         int birthYear = 1952,
         int birthMonth = 12,
         int birthDay = 5)
     {
-        var author = Author.Create(firstName, lastName, new DateOnly(birthYear, birthMonth, birthDay)).Value;
+        var author = Author.Create(firstName, lastName, new DateOnly(birthYear, birthMonth, birthDay), timeProvider ?? TimeProvider.System).Value;
         context.Authors.Add(author);
         await context.SaveChangesAsync();
         return author;
