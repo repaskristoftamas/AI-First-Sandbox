@@ -100,7 +100,8 @@ public sealed class Book : AuditableEntity<BookId>
     }
 
     /// <summary>
-    /// Validates the book fields and returns a failure result if any value is invalid.
+    /// Last-resort invariant guard that protects structural integrity regardless of entry point.
+    /// Primary validation is handled by FluentValidation at the application boundary.
     /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
     /// </summary>
     private static Result Validate(string title, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)

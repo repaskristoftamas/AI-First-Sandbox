@@ -20,6 +20,9 @@ tests/
 - **CQRS** via [Mediator](https://github.com/martinothamar/Mediator) (`ICommand<T>` / `IQuery<T>`)
 - **Result pattern** (`SharedKernel.Results`) over exceptions for expected failures (validation, not found, conflict)
 - **FluentValidation** — one `IValidator<TCommand>` injected and called explicitly per handler (no pipeline behavior)
+- **Two-layer validation boundary**:
+  - *Domain `Validate` methods* — last-resort invariant guards (non-empty required fields, value range constraints). These protect structural integrity regardless of entry point (e.g., direct `Entity.Create` calls in tests or future code paths that bypass FluentValidation).
+  - *FluentValidation validators* — the primary validation layer at the application boundary. Handles input shaping (max lengths, format checks), user-facing error messages, and aggregation of multiple errors. Every rule enforced by a domain `Validate` method must also be covered by the corresponding FluentValidation validator.
 - **DDD** — entities have private setters and factory methods; IDs are strongly-typed value objects
 
 ## Tools & Stack
