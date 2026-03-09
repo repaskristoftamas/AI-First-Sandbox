@@ -26,22 +26,31 @@ public sealed class BookEndpoints : IEndpointDefinition
 
         group.MapGet("/", GetAllBooks)
             .WithName("GetAllBooks")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .AllowAnonymous();
 
         group.MapGet("/{id:guid}", GetBookById)
             .WithName("GetBookById")
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .AllowAnonymous();
 
         group.MapPost("/", CreateBook)
             .WithName("CreateBook")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateBook)
             .WithName("UpdateBook")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteBook)
             .WithName("DeleteBook")
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .RequireAuthorization();
         //TODO: Add role-based authorization (e.g., only allow users with "Admin" role to delete books)
     }
