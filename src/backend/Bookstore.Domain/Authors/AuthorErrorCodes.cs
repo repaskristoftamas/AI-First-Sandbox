@@ -22,4 +22,7 @@ public static class AuthorErrorCodes
 
     /// <summary>Date of birth is today or in the future.</summary>
     public const string DobInFuture = "AUTHOR_DOB_IN_FUTURE";
+
+    /// <summary>The author still has books associated with them.</summary>
+    public const string HasAssociatedBooks = "AUTHOR_HAS_ASSOCIATED_BOOKS";
 }

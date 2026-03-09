@@ -1,5 +1,6 @@
 using Bookstore.Application.Authors.Commands.DeleteAuthor;
 using Bookstore.Domain.Authors;
+using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,32 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
         // Assert
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBeOfType<NotFoundError>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnConflict_WhenAuthorHasAssociatedBooks()
+    {
+        // Arrange
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
+        _context.Authors.Add(author);
+
+        var book = Book.Create("Clean Code", author.Id, "978-0132350884", 29.99m, 2008, TimeProvider.System).Value;
+        _context.Books.Add(book);
+
+        await _context.SaveChangesAsync();
+
+        var command = new DeleteAuthorCommand(author.Id);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBeOfType<ConflictError>();
+        result.Error.Code.ShouldBe(AuthorErrorCodes.HasAssociatedBooks);
+
+        var authorStillExists = await _context.Authors.AnyAsync(a => a.Id == author.Id);
+        authorStillExists.ShouldBeTrue();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
