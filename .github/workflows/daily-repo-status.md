@@ -28,7 +28,9 @@ safe-outputs:
     title-prefix: "[repo-status] "
     labels: [report, daily-status]
 source: githubnext/agentics/workflows/daily-repo-status.md@828ac109efb43990f59475cbfce90ede5546586c
-engine: claude
+engine:
+  id: copilot
+  model: claude-sonnet-4-6
 ---
 
 # Daily Repo Status

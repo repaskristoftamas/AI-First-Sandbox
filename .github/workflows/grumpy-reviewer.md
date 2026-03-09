@@ -6,7 +6,9 @@ on:
 permissions:
   contents: read
   pull-requests: read
-engine: claude
+engine:
+  id: copilot
+  model: claude-opus-4-6
 tools:
   cache-memory: true
   github:

@@ -23,7 +23,9 @@ safe-outputs:
     title-prefix: "[weekly-status] "
     labels: [report, weekly-status]
 
-engine: claude
+engine:
+  id: copilot
+  model: claude-sonnet-4-6
 ---
 
 # Weekly Project Status

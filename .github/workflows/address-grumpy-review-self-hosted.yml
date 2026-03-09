@@ -61,6 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           claude --print --permission-mode bypassPermissions \
+            --model claude-opus-4-6 \
             "/address-review-ci ${{ steps.pr.outputs.number }}"
 
       - name: Push fixes

@@ -34,7 +34,9 @@ safe-outputs:
     required-category: "Ideas"
 timeout-minutes: 10
 source: githubnext/agentics/workflows/plan.md@afb00b92a9514fee9a14c583f059a03d05738f70
-engine: claude
+engine:
+  id: copilot
+  model: claude-sonnet-4-6
 ---
 
 # Planning Assistant
