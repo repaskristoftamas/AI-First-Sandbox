@@ -128,5 +128,5 @@ public sealed class CreateBookCommandHandlerTests : IAsyncDisposable
         return author;
     }
 
-    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
+    public ValueTask DisposeAsync() => _context.DisposeAsync();
 }
