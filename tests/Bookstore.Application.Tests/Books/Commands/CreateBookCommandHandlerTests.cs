@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Bookstore.Application.Tests.Books.Commands;
 
-public class CreateBookCommandHandlerTests : IDisposable
+public sealed class CreateBookCommandHandlerTests : IAsyncDisposable
 {
     private readonly BookstoreDbContext _context;
     private readonly CreateBookCommandHandler _handler;
@@ -128,5 +128,5 @@ public class CreateBookCommandHandlerTests : IDisposable
         return author;
     }
 
-    public void Dispose() => _context.Dispose();
+    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
 }
