@@ -78,6 +78,9 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBeOfType<ConflictError>();
         result.Error.Code.ShouldBe(AuthorErrorCodes.HasAssociatedBooks);
+
+        var authorStillExists = await _context.Authors.AnyAsync(a => a.Id == author.Id);
+        authorStillExists.ShouldBeTrue();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
