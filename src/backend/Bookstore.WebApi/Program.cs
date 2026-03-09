@@ -108,7 +108,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.RegisterEndpointDefinitions();
 //TODO: app.UseRateLimiter
-//TOD: Logger, Serilog or ILogger
+//TODO: Logger, Serilog or ILogger
 
 app.Run();
 
