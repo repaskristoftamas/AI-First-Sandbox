@@ -21,7 +21,7 @@ public sealed class CreateAuthorCommandValidator : AbstractValidator<CreateAutho
             .MaximumLength(100).WithErrorCode(AuthorErrorCodes.LastNameTooLong);
 
         RuleFor(x => x.DateOfBirth)
-            .LessThan(DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime))
+            .LessThan(DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
             .WithMessage("Date of birth must be in the past.")
             .WithErrorCode(AuthorErrorCodes.DobInFuture);
     }

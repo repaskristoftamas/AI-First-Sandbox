@@ -50,7 +50,7 @@ public class AuthorTests
     public void Create_ShouldReturnValidationError_WhenDateOfBirthIsInTheFuture()
     {
         // Arrange
-        var futureDate = DateOnly.FromDateTime(_timeProvider.GetUtcNow().DateTime.AddDays(1));
+        var futureDate = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime.AddDays(1));
 
         // Act
         var result = Author.Create("Robert", "Martin", futureDate, _timeProvider);

@@ -87,7 +87,7 @@ public sealed class Author : AuditableEntity<AuthorId>
         if (string.IsNullOrWhiteSpace(lastName))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(LastName), AuthorErrorCodes.LastNameRequired, "Last name is required.")]));
 
-        if (dateOfBirth >= DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime))
+        if (dateOfBirth >= DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(DateOfBirth), AuthorErrorCodes.DobInFuture, "Date of birth must be in the past.")]));
 
         return Result.Success();
