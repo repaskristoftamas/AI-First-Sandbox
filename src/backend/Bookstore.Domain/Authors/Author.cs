@@ -76,9 +76,12 @@ public sealed class Author : AuditableEntity<AuthorId>
     }
 
     /// <summary>
-    /// Validates the author fields and returns a failure result if any value is invalid.
-    /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
+    /// Last-resort invariant guard that protects structural integrity regardless of entry point.
     /// </summary>
+    /// <remarks>
+    /// Primary validation is handled by FluentValidation at the application boundary.
+    /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
+    /// </remarks>
     private static Result Validate(string firstName, string lastName, DateOnly dateOfBirth, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(firstName))
