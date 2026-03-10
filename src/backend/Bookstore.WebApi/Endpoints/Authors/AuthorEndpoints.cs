@@ -30,18 +30,24 @@ public sealed class AuthorEndpoints : IEndpointDefinition
 
         group.MapGet("/{id:guid}", GetAuthorById)
             .WithName("GetAuthorById")
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .AllowAnonymous();
 
         group.MapPost("/", CreateAuthor)
             .WithName("CreateAuthor")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateAuthor)
             .WithName("UpdateAuthor")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteAuthor)
             .WithName("DeleteAuthor")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireAuthorization();
     }
 
