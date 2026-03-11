@@ -1,7 +1,6 @@
 # Bookstore API — Project Roadmap
 
 > A living reference for what this project aims to explore, what's already in place, and what comes next.
-> Based on [goal.md](goal.md) and the current state of the codebase as of March 2026.
 
 ---
 
