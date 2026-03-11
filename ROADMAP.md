@@ -243,26 +243,92 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 
 ---
 
-### 11. AI Functionality
+### 11. AI & Generative UI
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| AI integration | Not started | Goal: generate diagrams from DB data based on user prompts |
+| AI integration | Not started | Goal: generative UI — AI composes the interface from user prompts |
+| LLM provider abstraction | Not started | Switchable between local (Ollama) and cloud (Claude API) |
+| Generative UI protocol stack | Not started | AG-UI (transport) + json-render component catalog (payload) |
+| MCP tool layer | Not started | MCP server wrapping .NET API endpoints as AI-callable tools |
 
-**Possible features:**
+**Core concept — Generative UI:**
 
-1. **Data visualization from prompts** — User asks "Show me books published per year" → AI generates a chart/diagram
-2. **Book recommendations** — "Suggest books similar to X" using embeddings
-3. **Natural language search** — "Find books about medieval history under $20"
-4. **Auto-categorization** — Classify books into genres based on title/description using an LLM
+Instead of a traditional static frontend with predefined pages, the React UI uses a **generative canvas** where an AI agent composes the interface at runtime based on user prompts (text or voice). The AI selects from a predefined React component catalog and streams layout instructions to the frontend via AG-UI events.
+
+> *"Show me all fantasy books sorted by rating as cards"* → card grid
+> *"Which genre has the most books? Show a chart"* → pie chart
+> *"Compare prices between genres as a bar chart"* → bar chart
+> *"List authors who have more than 3 books"* → filtered author list
+
+The user gets infinite views over the same data — no static pages to navigate, no features to discover through menus.
+
+**4-layer architecture:**
+
+```
+Layer 4: UI Payload       →  json-render component catalog (React)
+                              AI returns JSON matching the catalog schema;
+                              frontend renders progressively as AI streams
+
+Layer 3: Agent ↔ UI       →  AG-UI protocol over SSE/WebSocket
+                              16 event types for real-time bidirectional
+                              communication between AI agent and frontend
+
+Layer 2: Tools & Context  →  MCP server wrapping .NET API
+                              Tools: query_books, get_book, query_authors,
+                              get_author, get_stats, search_catalog
+
+Layer 1: Agent ↔ Agent    →  Not needed initially (single agent)
+                              Later: Catalog Agent ↔ Recommendation Agent
+```
+
+**Switchable LLM provider:**
+
+The AI agent layer abstracts the LLM behind a provider interface, allowing runtime switching between local and cloud inference:
+
+| Provider | Engine | Models | Use Case |
+|----------|--------|--------|----------|
+| Local | Ollama (Docker container) | Llama 3.3 70B, Mistral Large, Qwen 2.5 72B | Privacy, offline, development, no API costs |
+| Cloud | Claude API | Claude Opus, Sonnet | Maximum capability, complex reasoning, production |
+
+- Provider selection via configuration (`LlmProvider` setting: `ollama` or `claude`)
+- Both providers implement the same interface (accept MCP tool definitions, return structured JSON tool calls + UI payloads)
+- Ollama runs as a Docker Compose service alongside SQL Server and RabbitMQ; GPU passthrough via `nvidia-container-toolkit` when available
+- Smaller models (Llama 3.1 8B, Phi-3) for fast development iteration; larger models for production quality
+
+**Component catalog (AI can compose from these):**
+
+| Component | Purpose |
+|-----------|---------|
+| `BookCard` | Cover, title, author, price, rating |
+| `BookDetail` | Full book page with all metadata |
+| `AuthorProfile` | Author info + their books |
+| `DataTable` | Sortable, filterable table of any entity |
+| `BarChart` | Recharts wrapper |
+| `PieChart` | Recharts wrapper |
+| `LineChart` | Recharts wrapper |
+| `TimelineView` | Events/orders over time |
+| `KanbanBoard` | Grouped cards (e.g., orders by status) |
+| `SearchResults` | Book list with facets |
+| `StatCard` | Single metric (total books, avg price) |
+| `GridLayout` | Arrange N child components in a grid |
+| `EmptyState` | No results or onboarding prompt |
+
+**AI-powered features (built on top of generative UI):**
+
+1. **Data visualization from prompts** — User asks "Show me books published per year" → AI queries data via MCP tools, selects a `BarChart` component, streams it to the canvas
+2. **Natural language search** — "Find books about medieval history under $20" → AI calls `search_catalog` tool, renders `SearchResults`
+3. **Book recommendations** — "Suggest books similar to X" using embeddings → AI renders `BookCard` grid
+4. **Auto-categorization** — Classify books into genres based on title/description
 5. **Summary generation** — Generate book descriptions from metadata
+6. **Voice control** — Web Speech API or Whisper (local via Ollama) for speech-to-text input; same prompt pipeline as typed text
 
 **Technical approach:**
-- Create an AI Service (separate microservice)
-- Use Claude API for natural language understanding and diagram spec generation
-- Use a charting library (e.g., Mermaid, Chart.js via server-side rendering) to produce the actual diagrams
-- Expose endpoints: `POST /api/ai/visualize` (prompt → diagram), `POST /api/ai/recommend` (bookId → suggestions)
-- Queue AI requests via RabbitMQ to handle latency without blocking
+- Create an AI Service (separate microservice) that hosts the LLM provider abstraction and MCP tool server
+- AG-UI event stream (SSE) from AI Service → React frontend for progressive UI rendering
+- json-render (Vercel Labs) for guardrailed component rendering — AI can only request components from the predefined catalog
+- Queue long-running AI requests via RabbitMQ to handle latency without blocking
+- MCP server exposes .NET API endpoints as tools the AI agent can call to fetch/mutate data
 
 ---
 
@@ -295,23 +361,62 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 
 ---
 
-### 13. React Web UI
+### 13. React Generative UI Frontend
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| Frontend | Not started | Goal: React web UI |
+| Frontend framework | Not started | React + TypeScript + Vite |
+| Static shell | Not started | Sidebar, top bar (prompt input + voice), auth screens |
+| Generative canvas | Not started | json-render powered area where AI composes the UI |
+| Component catalog | Not started | ~13 components the AI can request (see section 11) |
+| AG-UI integration | Not started | SSE event stream from AI Service → React |
+| Voice input | Not started | Web Speech API (browser) or Whisper (local via Ollama) |
+| Typed API client | Not started | Generated from OpenAPI spec for static shell data needs |
+
+**Architecture:**
+
+```
+┌──────────────────────────────────────────────────┐
+│  Static Shell (always rendered, not AI-controlled) │
+│  ┌────────────┐  ┌─────────────────────────────┐ │
+│  │  Sidebar    │  │  TopBar                     │ │
+│  │  - nav      │  │  - text prompt input        │ │
+│  │  - account  │  │  - voice button (mic)       │ │
+│  │  - settings │  │  - user menu                │ │
+│  │  - pinned   │  │  - LLM provider toggle      │ │
+│  │    views    │  │    (local / cloud)           │ │
+│  └────────────┘  └─────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────┐ │
+│  │  Generative Canvas                            │ │
+│  │  - json-render renderer                       │ │
+│  │  - AG-UI event listener (SSE)                 │ │
+│  │  - progressive rendering as AI streams        │ │
+│  │  - user can pin layouts they like → saved     │ │
+│  │    as static views in the sidebar             │ │
+│  └──────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────┐ │
+│  │  Auth screens (Login / Register)              │ │
+│  │  - static, standard form-based UI             │ │
+│  └──────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────┘
+```
 
 **Prerequisites from the backend side:**
 - CORS is already configured (currently allows `localhost:3000`)
-- OpenAPI spec can be used to generate a typed API client
+- OpenAPI spec for typed API client generation (static shell data needs)
 - OAuth 2.0 Authorization Code flow for user authentication
-- WebSocket or SSE support for real-time features (e.g., AI diagram generation progress)
+- SSE endpoint for AG-UI event streaming from AI Service
+- MCP server exposing .NET API endpoints as AI-callable tools
 
-**When ready to start:**
-- Generate a typed TypeScript client from the OpenAPI spec (Kiota or openapi-typescript)
-- Use React + TypeScript + Vite
-- Implement pages: Book catalog (with search/filter), Book detail, Author detail, Admin dashboard, Login/Register
-- Use the AI endpoints for interactive data visualization
+**Interaction flow:**
+
+1. User types or speaks a prompt in the `TopBar`
+2. Prompt is sent to the AI Service via SSE (AG-UI protocol)
+3. AI agent calls MCP tools to fetch data from the .NET API
+4. AI composes a UI layout as JSON matching the component catalog schema
+5. json-render progressively renders components in the `GenerativeCanvas` as the AI streams
+6. User can interact with rendered components (click, sort, filter) — interactions feed back to the AI as context
+7. User can pin a generated layout to the sidebar for quick reuse
 
 ---
 
@@ -358,11 +463,32 @@ Build out the full auth story.
 - [ ] Database-per-service migration
 - [ ] Add Order Service as a new bounded context
 
-### Phase 6 — AI Integration
-- [ ] Create AI Service microservice
-- [ ] Implement "visualize data from prompt" endpoint
-- [ ] Queue AI requests via RabbitMQ
-- [ ] Add book recommendation feature
+### Phase 6 — AI & Generative UI Frontend
+Build the AI agent layer and the React generative UI as a unified effort.
+
+**6a — AI Service & LLM Provider Abstraction:**
+- [ ] Create AI Service microservice with switchable LLM provider (`ollama` / `claude`)
+- [ ] Add Ollama to `docker-compose.yml` (local LLM inference with GPU passthrough)
+- [ ] Implement LLM provider interface (tool calling + structured JSON output)
+- [ ] Build MCP server wrapping .NET API endpoints as AI-callable tools (`query_books`, `get_book`, `query_authors`, `get_author`, `get_stats`, `search_catalog`)
+- [ ] Implement AG-UI event stream (SSE) from AI Service for real-time frontend communication
+- [ ] Queue long-running AI requests via RabbitMQ
+
+**6b — React Generative UI:**
+- [ ] Scaffold React + TypeScript + Vite project
+- [ ] Generate typed API client from OpenAPI (for static shell data needs)
+- [ ] Build static shell (sidebar, top bar with prompt input + voice button, auth screens)
+- [ ] Build component catalog (~13 React components: `BookCard`, `DataTable`, `PieChart`, `BarChart`, `LineChart`, `KanbanBoard`, `TimelineView`, `SearchResults`, `StatCard`, `GridLayout`, etc.)
+- [ ] Integrate json-render for guardrailed progressive rendering from AI-generated JSON
+- [ ] Wire AG-UI SSE event listener in the `GenerativeCanvas`
+- [ ] Add voice input (Web Speech API for browser; Whisper via Ollama as local alternative)
+- [ ] Implement pinnable layouts (user saves generated views for quick reuse)
+
+**6c — AI-Powered Features:**
+- [ ] Data visualization from prompts (AI queries data via MCP tools → selects chart component)
+- [ ] Natural language search ("Find fantasy books under $15")
+- [ ] Book recommendations ("Suggest books similar to X")
+- [ ] Auto-categorization and summary generation
 
 ### Phase 7 — Deployment & Scalability
 - [ ] CI/CD: Docker image build + push to ghcr.io
@@ -370,13 +496,6 @@ Build out the full auth story.
 - [ ] Staging + production deployment pipelines
 - [ ] Horizontal scaling with load balancer + HPA
 - [ ] Read replica configuration for CQRS query side
-
-### Phase 8 — React Frontend
-- [ ] Generate typed API client from OpenAPI
-- [ ] Scaffold React + TypeScript + Vite project
-- [ ] Implement core pages (catalog, detail, auth)
-- [ ] Integrate AI visualization features
-- [ ] SSE/WebSocket for real-time AI responses
 
 ---
 
@@ -394,8 +513,13 @@ Build out the full auth story.
 | Event Streaming | Kafka (if needed) | High-throughput analytics only |
 | Identity | Keycloak (Docker) or ASP.NET Identity | OAuth 2.0 support |
 | API Gateway | YARP | .NET-native, high performance |
-| AI | Claude API | Natural language + diagram generation |
+| AI (local) | Ollama + Llama 3.3 / Mistral / Qwen | Privacy, offline, no API costs |
+| AI (cloud) | Claude API (Opus, Sonnet) | Maximum capability, complex reasoning |
+| AI tool layer | MCP (Model Context Protocol) | Standard protocol for AI-callable tools |
+| Agent ↔ UI transport | AG-UI protocol (SSE) | Industry standard for agent-frontend streaming |
+| Generative UI rendering | json-render (Vercel Labs) | Guardrailed component rendering from AI JSON |
+| Voice input | Web Speech API / Whisper (Ollama) | Browser-native or local speech-to-text |
 | Search | Meilisearch or Elasticsearch | Full-text search for books |
 | Containerization | Docker + Kubernetes | Already using Docker |
 | CI/CD | GitHub Actions | Already in use |
-| Frontend | React + TypeScript + Vite | Goal requirement |
+| Frontend | React + TypeScript + Vite | Goal requirement, json-render ecosystem |
