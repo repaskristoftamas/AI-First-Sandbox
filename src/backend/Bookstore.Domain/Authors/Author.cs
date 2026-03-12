@@ -37,7 +37,7 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// <summary>
     /// Books written by this author.
     /// </summary>
-    public IReadOnlyCollection<Book> Books => _books.AsReadOnly();
+    public IReadOnlyCollection<Book> Books => _books;
 
     /// <summary>
     /// Factory method that creates a new author with a generated identifier.
