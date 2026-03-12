@@ -29,6 +29,17 @@ public class AuthorTests
         result.Value.DateOfBirth.ShouldBe(dateOfBirth);
     }
 
+    [Fact]
+    public void Create_ShouldInitializeBooksAsEmptyCollection()
+    {
+        // Act
+        var result = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Books.ShouldBeEmpty();
+    }
+
     [Theory]
     [InlineData("", "Martin", "First name is required.")]
     [InlineData("   ", "Martin", "First name is required.")]

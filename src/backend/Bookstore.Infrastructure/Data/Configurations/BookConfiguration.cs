@@ -56,7 +56,7 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .IsRequired();
 
         builder.HasOne<Author>()
-            .WithMany()
+            .WithMany(a => a.Books)
             .HasForeignKey(b => b.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
