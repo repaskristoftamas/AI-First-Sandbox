@@ -24,6 +24,10 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
+      branch: ${{ steps.pr.outputs.branch }}
+      author: ${{ steps.pr.outputs.author }}
 
     steps:
       - name: Resolve PR metadata
@@ -67,7 +71,37 @@ jobs:
       - name: Push fixes
         run: git push origin ${{ steps.pr.outputs.branch }}
 
+  review-back:
+    needs: address
+    if: needs.address.result == 'success'
+    runs-on: self-hosted
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.address.outputs.branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+
+      - name: Review back on addressed comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          claude --print --permission-mode bypassPermissions \
+            --model claude-opus-4-6 \
+            "/review-back-ci ${{ needs.address.outputs.number }} ${{ needs.address.outputs.author }}"
+
       - name: Request human review
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr edit ${{ steps.pr.outputs.number }} --add-reviewer ${{ steps.pr.outputs.author }}
+        run: |
+          gh pr edit ${{ needs.address.outputs.number }} \
+            --add-reviewer ${{ needs.address.outputs.author }}
