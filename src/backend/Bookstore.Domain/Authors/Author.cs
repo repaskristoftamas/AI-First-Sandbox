@@ -1,3 +1,4 @@
+using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Abstractions;
 using Bookstore.SharedKernel.Results;
 
@@ -16,6 +17,8 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// </remarks>
     private Author() { }
 
+    private readonly List<Book> _books = [];
+
     /// <summary>
     /// First name of the author.
     /// </summary>
@@ -30,6 +33,11 @@ public sealed class Author : AuditableEntity<AuthorId>
     /// Date of birth of the author.
     /// </summary>
     public DateOnly DateOfBirth { get; private set; }
+
+    /// <summary>
+    /// Books written by this author.
+    /// </summary>
+    public IReadOnlyCollection<Book> Books => _books.AsReadOnly();
 
     /// <summary>
     /// Factory method that creates a new author with a generated identifier.

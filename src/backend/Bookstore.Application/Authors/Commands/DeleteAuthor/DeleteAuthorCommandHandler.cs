@@ -29,25 +29,13 @@ internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context) 
     public async ValueTask<Result> Handle(DeleteAuthorCommand command, CancellationToken cancellationToken)
     {
         var author = await _context.Authors
-            //TODO: .Include(a => a.Books)
-            /*
-            Two round-trips to the database. You already fetched the author — you could've included books in the same query with a projection
-            or checked author.Books.Any() if the navigation property is loaded. Now you're hitting the DB twice for what could be one query.
-            Fine for a bookstore with 12 customers, less fine at scale. Consider:
-            var author = await _context.Authors
             .Include(a => a.Books)
-            .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);
-            Then author.Books.Count > 0. One trip. Done.
-            Author currently has no Books navigation property.
-            */
             .FirstOrDefaultAsync(a => a.Id == command.Id, cancellationToken);
 
         if (author is null)
             return Result.Failure(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
-        var hasBooks = await _context.Books.AnyAsync(b => b.AuthorId == command.Id, cancellationToken);
-
-        if (hasBooks)
+        if (author.Books.Count > 0)
             return Result.Failure(new ConflictError(AuthorErrorCodes.HasAssociatedBooks, "Cannot delete the author because they have associated books."));
 
         _context.Authors.Remove(author);
