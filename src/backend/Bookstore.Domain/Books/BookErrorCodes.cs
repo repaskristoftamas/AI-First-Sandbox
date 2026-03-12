@@ -29,6 +29,9 @@ public static class BookErrorCodes
     /// <summary>ISBN does not match the expected ISBN-13 format.</summary>
     public const string IsbnInvalidFormat = "BOOK_ISBN_INVALID_FORMAT";
 
+    /// <summary>ISBN check digit is incorrect.</summary>
+    public const string IsbnInvalidCheckDigit = "BOOK_ISBN_INVALID_CHECK_DIGIT";
+
     /// <summary>Price is not a positive number.</summary>
     public const string PriceInvalid = "BOOK_PRICE_INVALID";
 

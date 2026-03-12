@@ -34,4 +34,11 @@ internal static partial class BookMapper
     /// <param name="id">The strongly-typed author identifier.</param>
     /// <returns>The underlying <see cref="Guid"/> value.</returns>
     private static Guid MapAuthorId(AuthorId id) => id.Value;
+
+    /// <summary>
+    /// Extracts the underlying string from an <see cref="Isbn"/> value object for DTO mapping.
+    /// </summary>
+    /// <param name="isbn">The ISBN value object.</param>
+    /// <returns>The raw 13-digit ISBN string.</returns>
+    private static string MapIsbn(Isbn isbn) => isbn.Value;
 }

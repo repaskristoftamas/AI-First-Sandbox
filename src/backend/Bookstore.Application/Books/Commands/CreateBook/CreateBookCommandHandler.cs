@@ -47,8 +47,10 @@ internal sealed class CreateBookCommandHandler(
         if (!authorExists)
             return Result.Failure<Guid>(new NotFoundError(BookErrorCodes.AuthorNotFound, "The author with the specified identifier was not found."));
 
+        var isbn = Isbn.Create(command.ISBN).Value;
+
         bool isbnExists = await _context.Books
-            .AnyAsync(b => b.ISBN == command.ISBN, cancellationToken);
+            .AnyAsync(b => b.ISBN == isbn, cancellationToken);
 
         if (isbnExists)
             return Result.Failure<Guid>(new ConflictError(BookErrorCodes.IsbnConflict, $"A book with ISBN '{command.ISBN}' already exists."));
@@ -56,7 +58,7 @@ internal sealed class CreateBookCommandHandler(
         var createResult = Book.Create(
             command.Title,
             authorId,
-            command.ISBN,
+            isbn,
             command.Price,
             command.PublicationYear,
             _timeProvider);

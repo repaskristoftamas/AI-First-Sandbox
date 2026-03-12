@@ -106,11 +106,29 @@ public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
     {
         for (var i = 0; i < count; i++)
         {
-            var book = Book.Create($"Book {i}", author.Id, $"978013235088{i}", 10m + i, 2000 + i, TimeProvider.System).Value;
+            var isbn = GenerateTestIsbn(i);
+            var book = Book.Create($"Book {i}", author.Id, isbn, 10m + i, 2000 + i, TimeProvider.System).Value;
             _context.Books.Add(book);
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Generates a valid ISBN-13 with a correct check digit for the given index.
+    /// </summary>
+    private static Isbn GenerateTestIsbn(int index)
+    {
+        var prefix = $"97800000{index:D4}";
+        var sum = 0;
+        for (var i = 0; i < 12; i++)
+        {
+            var digit = prefix[i] - '0';
+            sum += i % 2 == 0 ? digit : digit * 3;
+        }
+
+        var check = (10 - sum % 10) % 10;
+        return Isbn.Create($"{prefix}{check}").Value;
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();

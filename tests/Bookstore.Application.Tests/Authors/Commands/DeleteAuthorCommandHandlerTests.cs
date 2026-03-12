@@ -64,7 +64,7 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
         var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         _context.Authors.Add(author);
 
-        var book = Book.Create("Clean Code", author.Id, "978-0132350884", 29.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 29.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
 
         await _context.SaveChangesAsync();

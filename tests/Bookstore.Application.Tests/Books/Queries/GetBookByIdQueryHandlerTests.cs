@@ -29,7 +29,7 @@ public sealed class GetBookByIdQueryHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await TestDataSeeder.SeedAuthorAsync(_context);
-        var book = Book.Create("Clean Architecture", author.Id, "9780134494166", 39.99m, 2017, TimeProvider.System).Value;
+        var book = Book.Create("Clean Architecture", author.Id, Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 

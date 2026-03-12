@@ -29,7 +29,7 @@ public sealed class DeleteBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await TestDataSeeder.SeedAuthorAsync(_context);
-        var book = Book.Create("Clean Code", author.Id, "9780132350884", 29.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 29.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 

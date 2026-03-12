@@ -60,7 +60,17 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .HasForeignKey(b => b.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        var isbnConverter = new ValueConverter<Isbn, string>(
+            isbn => isbn.Value,
+            value => Isbn.Create(value).Value);
+
+        var isbnComparer = new ValueComparer<Isbn>(
+            (a, b) => a.Value == b.Value,
+            isbn => isbn.Value.GetHashCode(),
+            isbn => Isbn.Create(isbn.Value).Value);
+
         builder.Property(b => b.ISBN)
+            .HasConversion(isbnConverter, isbnComparer)
             .IsRequired()
             .HasMaxLength(13);
 

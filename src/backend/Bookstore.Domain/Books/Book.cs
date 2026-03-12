@@ -30,7 +30,7 @@ public sealed class Book : AuditableEntity<BookId>
     /// <summary>
     /// International Standard Book Number, uniquely identifying the publication.
     /// </summary>
-    public string ISBN { get; private set; } = string.Empty;
+    public Isbn ISBN { get; private set; }
 
     /// <summary>
     /// Retail price of the book.
@@ -47,7 +47,7 @@ public sealed class Book : AuditableEntity<BookId>
     /// </summary>
     /// <param name="title">Title of the book.</param>
     /// <param name="authorId">Identifier of the author who wrote this book.</param>
-    /// <param name="isbn">International Standard Book Number.</param>
+    /// <param name="isbn">Validated ISBN value object.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
     /// <param name="timeProvider">Provides the current date for publication year validation.</param>
@@ -55,7 +55,7 @@ public sealed class Book : AuditableEntity<BookId>
     /// A <see cref="Result{Book}"/> containing the new <see cref="Book"/> instance on success,
     /// or a <see cref="ValidationError"/> if any argument is invalid.
     /// </returns>
-    public static Result<Book> Create(string title, AuthorId authorId, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    public static Result<Book> Create(string title, AuthorId authorId, Isbn isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         var validation = Validate(title, isbn, price, publicationYear, timeProvider);
         if (validation.IsFailure)
@@ -77,14 +77,14 @@ public sealed class Book : AuditableEntity<BookId>
     /// </summary>
     /// <param name="title">Title of the book.</param>
     /// <param name="authorId">Identifier of the author who wrote this book.</param>
-    /// <param name="isbn">International Standard Book Number.</param>
+    /// <param name="isbn">Validated ISBN value object.</param>
     /// <param name="price">Retail price of the book.</param>
     /// <param name="publicationYear">Year the book was published.</param>
     /// <param name="timeProvider">Provides the current date for publication year validation.</param>
     /// <returns>
     /// A success <see cref="Result"/> if all values are valid, or a <see cref="ValidationError"/> otherwise.
     /// </returns>
-    public Result Update(string title, AuthorId authorId, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    public Result Update(string title, AuthorId authorId, Isbn isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         var validation = Validate(title, isbn, price, publicationYear, timeProvider);
         if (validation.IsFailure)
@@ -106,12 +106,12 @@ public sealed class Book : AuditableEntity<BookId>
     /// Primary validation is handled by FluentValidation at the application boundary.
     /// Shared by <see cref="Create"/> and <see cref="Update"/> to eliminate duplication.
     /// </remarks>
-    private static Result Validate(string title, string isbn, decimal price, int publicationYear, TimeProvider timeProvider)
+    private static Result Validate(string title, Isbn isbn, decimal price, int publicationYear, TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(title))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Title), BookErrorCodes.TitleRequired, "Title is required.")]));
 
-        if (string.IsNullOrWhiteSpace(isbn))
+        if (isbn == default)
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(ISBN), BookErrorCodes.IsbnRequired, "ISBN is required.")]));
 
         if (price <= 0)
