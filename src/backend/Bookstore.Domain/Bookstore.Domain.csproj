@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Bookstore.Infrastructure" />
+    <InternalsVisibleTo Include="Bookstore.Domain.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Bookstore.SharedKernel\Bookstore.SharedKernel.csproj" />
   </ItemGroup>
 </Project>

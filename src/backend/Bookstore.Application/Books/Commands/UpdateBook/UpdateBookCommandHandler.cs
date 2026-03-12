@@ -53,7 +53,11 @@ internal sealed class UpdateBookCommandHandler(
         if (!authorExists)
             return Result.Failure(new NotFoundError(BookErrorCodes.AuthorNotFound, "The author with the specified identifier was not found."));
 
-        var isbn = Isbn.Create(command.ISBN).Value;
+        var isbnResult = Isbn.Create(command.ISBN);
+        if (isbnResult.IsFailure)
+            return Result.Failure(isbnResult.Error);
+
+        var isbn = isbnResult.Value;
 
         bool isbnConflict = await _context.Books
             .AnyAsync(b => b.ISBN == isbn && b.Id != command.Id, cancellationToken);

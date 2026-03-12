@@ -113,13 +113,16 @@ public class IsbnTests
         isbn1.ShouldNotBe(isbn2);
     }
 
-    [Fact]
-    public void Default_ShouldHaveNullValue()
+    [Theory]
+    [InlineData("978")]
+    [InlineData("")]
+    [InlineData("12345")]
+    public void HasValidCheckDigit_ShortString_ShouldReturnFalse(string value)
     {
         // Act
-        var isbn = default(Isbn);
+        var result = Isbn.HasValidCheckDigit(value);
 
         // Assert
-        isbn.Value.ShouldBeNull();
+        result.ShouldBeFalse();
     }
 }

@@ -52,6 +52,9 @@ public readonly partial record struct Isbn
     /// <returns><c>true</c> if the check digit is correct; otherwise <c>false</c>.</returns>
     public static bool HasValidCheckDigit(string value)
     {
+        if (value is not { Length: 13 })
+            return false;
+
         var sum = 0;
         for (var i = 0; i < 12; i++)
         {
@@ -62,6 +65,13 @@ public readonly partial record struct Isbn
         var checkDigit = (10 - sum % 10) % 10;
         return value[12] - '0' == checkDigit;
     }
+
+    /// <summary>
+    /// Reconstitutes an <see cref="Isbn"/> from a trusted persistence store without re-validation.
+    /// </summary>
+    /// <param name="value">The raw ISBN string from the database.</param>
+    /// <returns>An <see cref="Isbn"/> instance wrapping the stored value.</returns>
+    internal static Isbn FromDatabase(string value) => new(value);
 
     /// <inheritdoc/>
     public override string ToString() => Value;
