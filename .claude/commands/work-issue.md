@@ -1,5 +1,7 @@
 # Implement GitHub issue #$ARGUMENTS
 
+Execute ALL steps of the workflow below.
+
 ## Workflow
 
 1. **Resolve the repository** — Determine the GitHub owner/repo from the current git remote origin (`git remote get-url origin`). Parse out the `owner/repo` pair. All subsequent GitHub operations must use this resolved owner and repo.
@@ -9,6 +11,7 @@
 3. **Explore the codebase** — Before writing any code, use the Explore subagent or Glob/Grep/Read tools to understand the current state of the files you'll be modifying. Identify all files that need changes.
 
 4. **Update project board** — Move the issue to "In Progress":
+
    ```bash
    ITEM_ID=$(gh project item-list 2 --owner repaskristoftamas --format json \
      --jq '.items[] | select(.content.number == $ARGUMENTS) | .id')
