@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
@@ -17,15 +18,15 @@ internal sealed class AuthorizationSecurityTransformer : IOpenApiOperationTransf
     {
         var metadata = context.Description.ActionDescriptor.EndpointMetadata;
 
-        if (metadata.OfType<IAllowAnonymous>().Any())
+        if (metadata.Any(m => m is IAllowAnonymous))
             return Task.CompletedTask;
 
-        if (metadata.OfType<IAuthorizeData>().Any())
+        if (metadata.Any(m => m is IAuthorizeData))
         {
             operation.Security ??= [];
             operation.Security.Add(new OpenApiSecurityRequirement
             {
-                [new OpenApiSecuritySchemeReference("Bearer")] = []
+                [new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme)] = []
             });
         }
 
