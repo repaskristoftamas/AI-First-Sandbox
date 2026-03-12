@@ -5,6 +5,7 @@ using Bookstore.WebApi.Endpoints;
 using Bookstore.WebApi.Endpoints.Authors;
 using Bookstore.WebApi.Endpoints.Books;
 using Bookstore.WebApi.Extensions;
+using Bookstore.WebApi.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -59,7 +60,11 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<AuthorizationSecurityTransformer>();
+});
 
 //TODO: builder.Services.AddRateLimiter
 
