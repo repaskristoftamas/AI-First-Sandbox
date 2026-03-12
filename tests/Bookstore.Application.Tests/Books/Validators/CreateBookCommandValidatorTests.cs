@@ -12,7 +12,7 @@ public class CreateBookCommandValidatorTests
 
     [Theory]
     [InlineData("9780132350884")]
-    [InlineData("9790000000000")]
+    [InlineData("9790000000001")]
     public void Validate_ShouldPass_WhenIsbnIsValidIsbn13(string isbn)
     {
         // Arrange
@@ -60,6 +60,23 @@ public class CreateBookCommandValidatorTests
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.ISBN)
             .WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
+    }
+
+    [Theory]
+    [InlineData("9780000000000")]
+    [InlineData("9780132350880")]
+    public void Validate_ShouldFail_WhenIsbnCheckDigitIsInvalid(string isbn)
+    {
+        // Arrange
+        var command = CreateCommand(isbn: isbn);
+
+        // Act
+        var result = _validator.TestValidate(command);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.ISBN)
+            .WithErrorCode(BookErrorCodes.IsbnInvalidCheckDigit);
+        result.Errors.ShouldNotContain(e => e.ErrorCode == BookErrorCodes.IsbnInvalidFormat);
     }
 
     /// <summary>

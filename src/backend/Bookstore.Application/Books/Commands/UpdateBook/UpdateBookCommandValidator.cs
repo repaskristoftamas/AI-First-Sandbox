@@ -22,7 +22,8 @@ public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCom
         RuleFor(x => x.ISBN)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithErrorCode(BookErrorCodes.IsbnRequired)
-            .Matches(IsbnValidation.Isbn13Regex()).WithErrorCode(BookErrorCodes.IsbnInvalidFormat);
+            .Must(Isbn.IsValidFormat).WithErrorCode(BookErrorCodes.IsbnInvalidFormat)
+            .Must(Isbn.HasValidCheckDigit).WithErrorCode(BookErrorCodes.IsbnInvalidCheckDigit);
 
         RuleFor(x => x.Price)
             .GreaterThan(0).WithErrorCode(BookErrorCodes.PriceInvalid);

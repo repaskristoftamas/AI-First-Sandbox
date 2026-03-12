@@ -31,7 +31,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
         var newAuthor = await SeedAuthor("David", "Thomas");
-        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 
@@ -67,8 +67,8 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var existingBook = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
-        var bookToUpdate = Book.Create("Refactoring", author.Id, "9780201485677", 49.99m, 1999, TimeProvider.System).Value;
+        var existingBook = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 35.99m, 2008, TimeProvider.System).Value;
+        var bookToUpdate = Book.Create("Refactoring", author.Id, Isbn.Create("9780201485677").Value, 49.99m, 1999, TimeProvider.System).Value;
         _context.Books.AddRange(existingBook, bookToUpdate);
         await _context.SaveChangesAsync();
 
@@ -102,7 +102,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
     {
         // Arrange
         var author = await SeedAuthor("Robert", "Martin");
-        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, TimeProvider.System).Value;
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 35.99m, 2008, TimeProvider.System).Value;
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
 
@@ -135,7 +135,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
         var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
         context.Authors.Add(author);
 
-        var book = Book.Create("Clean Code", author.Id, "9780132350884", 35.99m, 2008, fakeTimeProvider).Value;
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 35.99m, 2008, fakeTimeProvider).Value;
         context.Books.Add(book);
         await context.SaveChangesAsync();
 
