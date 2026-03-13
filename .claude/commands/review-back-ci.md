@@ -68,16 +68,34 @@ PR number and PR author login, space-separated.
     > @author The fix in `<SHA>` addresses this concern. The change looks correct.
 
     **Fixed + incomplete:**
-    > @author The fix in `<SHA>` partially addresses this, but [specific gap]. Worth a closer look.
+    Post the evaluation as a **new top-level issue comment** (not an inline reply) so it triggers the `/address` workflow:
+    ```bash
+    gh api repos/<OWNER>/<REPO>/issues/<NUMBER>/comments \
+      -X POST -f body="/address [Concise description of the specific gap that remains after <SHA>]"
+    ```
+    Also reply inline to the thread for visibility:
+    > @author The fix in `<SHA>` partially addresses this, but [specific gap]. Triggered a follow-up `/address` to resolve the remaining concern.
 
     **Fixed + incorrect:**
-    > @author The fix in `<SHA>` doesn't fully resolve this. [Explanation of what's still wrong]. Needs attention.
+    Post the evaluation as a **new top-level issue comment** to trigger the `/address` workflow:
+    ```bash
+    gh api repos/<OWNER>/<REPO>/issues/<NUMBER>/comments \
+      -X POST -f body="/address [Concise description of what's still wrong after <SHA>]"
+    ```
+    Also reply inline to the thread for visibility:
+    > @author The fix in `<SHA>` doesn't fully resolve this. [Explanation]. Triggered a follow-up `/address` to fix the remaining issue.
 
     **Discussed + agree-with-addresser:**
     > @author The addresser's reasoning holds here. [Brief supporting rationale].
 
     **Discussed + agree-with-reviewer:**
-    > @author The original reviewer has a point on this one. [Brief explanation]. Consider addressing it.
+    Post as a **new top-level issue comment** to trigger the `/address` workflow:
+    ```bash
+    gh api repos/<OWNER>/<REPO>/issues/<NUMBER>/comments \
+      -X POST -f body="/address [Concise description of the reviewer's valid concern]"
+    ```
+    Also reply inline:
+    > @author The original reviewer has a point on this one. [Brief explanation]. Triggered a follow-up `/address`.
 
     **Discussed/Skipped + needs-human-judgment:**
     > @author This is a judgment call — both sides have valid points. [Summarize the trade-off]. Your call.
@@ -87,9 +105,10 @@ PR number and PR author login, space-separated.
 - NEVER resolve any conversation thread.
 - NEVER approve or dismiss the review.
 - NEVER make code changes or push commits.
-- NEVER post new top-level review comments — only reply to existing threads.
 - Always tag the PR author with `@<author>` at the start of every reply.
 - Be concise and neutral — this is an objective arbiter, not a grumpy personality.
 - When evaluating fixes, look at the actual code diff, not just the commit message.
-- The `COMMENT_ID` for replies should be the last comment in the thread (the addresser's reply).
+- The `COMMENT_ID` for inline replies should be the last comment in the thread (the addresser's reply).
 - If a conversation has no addresser reply, skip it silently.
+- **Loop prevention**: Before posting a `/address` comment, check existing issue comments for prior `/address` comments on the same concern. If a `/address` has already been posted for the same thread/topic and the addresser has already attempted a fix for it, do NOT post another `/address`. Instead, reply inline tagging the author: `@author This concern has been addressed twice but remains unresolved. Needs manual attention.`
+- The `/address` comment body must be a self-contained description of the concern — the addresser will use only this text to scope its work, so include enough context (file, concept, what's wrong) without being verbose.

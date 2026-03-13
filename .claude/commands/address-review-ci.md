@@ -4,7 +4,7 @@ Autonomous variant of address-review for use in CI. No user confirmation steps.
 
 ## Input
 
-PR number to address.
+PR number to address, optionally followed by `--focus <description>` to scope work to a specific concern raised by the review-back bot.
 
 > $ARGUMENTS
 
@@ -12,17 +12,28 @@ PR number to address.
 
 ### Phase 1: Resolve context
 
-1. Parse PR number from `$ARGUMENTS`.
+1. Parse `$ARGUMENTS`:
+   - First token: PR number.
+   - If `--focus` is present, everything after it is the **focus description** — a specific concern to address. Enter **focused mode**.
+   - If `--focus` is absent, enter **full scan mode** (original behavior).
 2. Determine owner/repo: `git remote get-url origin`.
-3. Fetch all review comments:
+3. **Full scan mode** — Fetch all review comments:
    ```bash
    gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/reviews \
      --jq '.[] | {id, state, body, user: .user.login}'
    gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments \
      --jq '.[] | {id, path, line, body, user: .user.login}'
    ```
-4. Fetch the PR diff for context: `gh pr diff <NUMBER>`
-5. Read each file referenced in the comments.
+4. **Focused mode** — Fetch all review comments and issue comments to find the thread related to the focus description:
+   ```bash
+   gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments \
+     --paginate --jq '.[] | {id, path, line, body, user: .user.login, in_reply_to_id}'
+   gh api repos/<OWNER>/<REPO>/issues/<NUMBER>/comments \
+     --jq '.[] | {id, body, user: .user.login}'
+   ```
+   Match the focus description against comment threads to identify which conversation(s) to address. Only process those — ignore all other threads.
+5. Fetch the PR diff for context: `gh pr diff <NUMBER>`
+6. Read each file referenced in the matched comments.
 
 ### Phase 2: Evaluate
 
