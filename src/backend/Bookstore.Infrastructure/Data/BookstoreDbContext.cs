@@ -76,7 +76,7 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
 
         foreach (var domainEvent in domainEvents)
         {
-            await publisher.Publish(domainEvent, cancellationToken);
+            await publisher.Publish(new DomainEventNotification(domainEvent), cancellationToken);
         }
 
         return result;
