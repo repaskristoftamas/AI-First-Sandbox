@@ -19,6 +19,7 @@ internal static partial class AuthorMapper
     /// <param name="author">The domain entity to convert.</param>
     /// <returns>An <see cref="AuthorDto"/> containing the mapped values.</returns>
     [MapperIgnoreSource(nameof(Author.Books))]
+    [MapperIgnoreSource(nameof(Author.DomainEvents))]
     public static partial AuthorDto ToDto(this Author author);
 
     /// <summary>
