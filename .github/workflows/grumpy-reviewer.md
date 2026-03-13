@@ -1,8 +1,10 @@
 ---
 description: Performs critical code review with a focus on edge cases, potential bugs, and code quality issues
 on:
-  pull_request:
-    types: [opened]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
   pull-requests: read

@@ -25,36 +25,39 @@
 #
 # Source: githubnext/agentics/workflows/grumpy-reviewer.md@828ac109efb43990f59475cbfce90ede5546586c
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"8fb2bac3c2871b891619c8b62e67f31da455fb831f649e46ebc50935745119e0","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"9690678de79f4e7375da2e9c30774220debbb640036bf83d9e4fcd2756a5fd70","compiler_version":"v0.50.4"}
 
 name: "Grumpy Code Reviewer 🔥"
 "on":
-  pull_request:
+  workflow_run:
+    # zizmor: ignore[dangerous-triggers] - workflow_run trigger is secured with role and fork validation
+    branches:
+    - main
     types:
-    - opened
+    - completed
+    workflows:
+    - CI
 
 permissions: {}
 
 concurrency:
-  group: "gh-aw-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
-  cancel-in-progress: true
+  group: "gh-aw-${{ github.workflow }}"
 
 run-name: "Grumpy Code Reviewer 🔥"
 
 jobs:
   activation:
     needs: pre_activation
+    # zizmor: ignore[dangerous-triggers] - workflow_run trigger is secured with role and fork validation
     if: >
-      (needs.pre_activation.outputs.activated == 'true') && ((github.event_name != 'pull_request') || (github.event.pull_request.head.repo.id == github.repository_id))
+      (needs.pre_activation.outputs.activated == 'true') && ((github.event_name != 'workflow_run') || ((github.event.workflow_run.repository.id == github.repository_id) &&
+      (!(github.event.workflow_run.repository.fork))))
     runs-on: ubuntu-slim
     permissions:
       contents: read
     outputs:
-      body: ${{ steps.sanitized.outputs.body }}
       comment_id: ""
       comment_repo: ""
-      text: ${{ steps.sanitized.outputs.text }}
-      title: ${{ steps.sanitized.outputs.title }}
     steps:
       - name: Setup Scripts
         uses: github/gh-aw/actions/setup@90ebf8057e8e005103b8d123732d2c64c30e9b27 # v0.50.4
@@ -85,15 +88,6 @@ jobs:
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io);
             const { main } = require('/opt/gh-aw/actions/check_workflow_timestamp_api.cjs');
-            await main();
-      - name: Compute current body text
-        id: sanitized
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
-            setupGlobals(core, github, context, exec, io);
-            const { main } = require('/opt/gh-aw/actions/compute_text.cjs');
             await main();
       - name: Create prompt with built-in context
         env:
@@ -233,6 +227,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    concurrency:
+      group: "gh-aw-copilot-${{ github.workflow }}"
     env:
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       GH_AW_ASSETS_ALLOWED_EXTS: ""
@@ -1119,7 +1115,6 @@ jobs:
             await main();
 
   pre_activation:
-    if: (github.event_name != 'pull_request') || (github.event.pull_request.head.repo.id == github.repository_id)
     runs-on: ubuntu-slim
     outputs:
       activated: ${{ steps.check_membership.outputs.is_team_member == 'true' }}
