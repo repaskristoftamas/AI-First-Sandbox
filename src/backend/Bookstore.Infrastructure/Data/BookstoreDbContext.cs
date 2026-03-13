@@ -2,6 +2,7 @@ using Bookstore.Application.Abstractions;
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Abstractions;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Infrastructure.Data;
@@ -12,7 +13,7 @@ namespace Bookstore.Infrastructure.Data;
 /// <remarks>
 /// Implements automatic audit timestamp tracking for entities that implement <see cref="IAuditable"/>.
 /// </remarks>
-public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider) : DbContext(options), IApplicationDbContext
+public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider, IPublisher publisher) : DbContext(options), IApplicationDbContext
 {
     /// <summary>
     /// Queryable set of authors persisted in the data store.
@@ -35,10 +36,12 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     }
 
     /// <summary>
-    /// Persists all pending changes to the data store.
+    /// Persists all pending changes to the data store and dispatches domain events.
     /// </summary>
     /// <remarks>
     /// Automatically stamps audit timestamps on added and modified entities before saving.
+    /// Domain events are collected before save and dispatched after successful persistence
+    /// to ensure events only fire when data is committed.
     /// </remarks>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The number of state entries written to the data store.</returns>
@@ -58,6 +61,24 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
             }
         }
 
-        return await base.SaveChangesAsync(cancellationToken);
+        var entries = ChangeTracker.Entries<IHasDomainEvents>().ToList();
+
+        var domainEvents = entries
+            .SelectMany(e => e.Entity.DomainEvents)
+            .ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        foreach (var entry in entries)
+        {
+            entry.Entity.ClearDomainEvents();
+        }
+
+        foreach (var domainEvent in domainEvents)
+        {
+            await publisher.Publish(new DomainEventNotification(domainEvent), cancellationToken);
+        }
+
+        return result;
     }
 }

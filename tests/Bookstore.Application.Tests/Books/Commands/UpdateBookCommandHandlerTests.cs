@@ -3,8 +3,10 @@ using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -21,7 +23,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, TimeProvider.System);
+        _context = new BookstoreDbContext(options, TimeProvider.System, new Mock<IPublisher>().Object);
         _handler = new UpdateBookCommandHandler(_context, new UpdateBookCommandValidator(TimeProvider.System), TimeProvider.System);
     }
 
@@ -129,7 +131,7 @@ public class UpdateBookCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        await using var context = new BookstoreDbContext(options, fakeTimeProvider);
+        await using var context = new BookstoreDbContext(options, fakeTimeProvider, new Mock<IPublisher>().Object);
         var handler = new UpdateBookCommandHandler(context, new UpdateBookCommandValidator(fakeTimeProvider), fakeTimeProvider);
 
         var author = Author.Create("Robert", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;

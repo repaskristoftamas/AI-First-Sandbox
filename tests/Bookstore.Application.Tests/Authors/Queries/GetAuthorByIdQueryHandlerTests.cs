@@ -2,7 +2,9 @@ using Bookstore.Application.Authors.Queries.GetAuthorById;
 using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -19,7 +21,7 @@ public sealed class GetAuthorByIdQueryHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, TimeProvider.System);
+        _context = new BookstoreDbContext(options, TimeProvider.System, new Mock<IPublisher>().Object);
         _handler = new GetAuthorByIdQueryHandler(_context);
     }
 
