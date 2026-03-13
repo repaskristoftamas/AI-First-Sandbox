@@ -12,7 +12,7 @@ public class BookDomainEventsTests
     public void Create_ShouldRaiseBookCreatedEvent()
     {
         // Act
-        var book = Book.Create("Clean Architecture", AuthorId.New(), "9780134494166", 39.99m, 2017, TimeProvider.System).Value;
+        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
 
         // Assert
         book.DomainEvents.ShouldHaveSingleItem()
@@ -24,7 +24,7 @@ public class BookDomainEventsTests
     public void Create_ShouldNotRaiseEvent_WhenValidationFails()
     {
         // Act
-        var result = Book.Create("", AuthorId.New(), "9780134494166", 39.99m, 2017, TimeProvider.System);
+        var result = Book.Create("", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
@@ -34,7 +34,7 @@ public class BookDomainEventsTests
     public void ClearDomainEvents_ShouldRemoveAllEvents()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), "9780134494166", 39.99m, 2017, TimeProvider.System).Value;
+        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
         book.DomainEvents.ShouldNotBeEmpty();
 
         // Act
