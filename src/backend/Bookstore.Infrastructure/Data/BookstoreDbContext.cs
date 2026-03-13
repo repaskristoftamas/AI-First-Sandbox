@@ -61,16 +61,18 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
             }
         }
 
-        var domainEvents = ChangeTracker.Entries<IHasDomainEvents>()
+        var entries = ChangeTracker.Entries<IHasDomainEvents>().ToList();
+
+        var domainEvents = entries
             .SelectMany(e => e.Entity.DomainEvents)
             .ToList();
 
-        foreach (var entity in ChangeTracker.Entries<IHasDomainEvents>())
-        {
-            entity.Entity.ClearDomainEvents();
-        }
-
         var result = await base.SaveChangesAsync(cancellationToken);
+
+        foreach (var entry in entries)
+        {
+            entry.Entity.ClearDomainEvents();
+        }
 
         foreach (var domainEvent in domainEvents)
         {

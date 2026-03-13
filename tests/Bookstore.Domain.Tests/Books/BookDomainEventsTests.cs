@@ -28,6 +28,9 @@ public class BookDomainEventsTests
 
         // Assert
         result.IsFailure.ShouldBeTrue();
+        // No Book entity is created on failure, so no domain events can exist.
+        // Accessing Value on a failed result throws, confirming no entity was instantiated.
+        Should.Throw<InvalidOperationException>(() => _ = result.Value);
     }
 
     [Fact]
