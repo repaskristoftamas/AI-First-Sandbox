@@ -10,5 +10,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Bookstore.Application.Tests/Bookstore.Application.Tests.csproj" />
     <Project Path="tests/Bookstore.Domain.Tests/Bookstore.Domain.Tests.csproj" />
+    <Project Path="tests/Bookstore.WebApi.Tests/Bookstore.WebApi.Tests.csproj" />
   </Folder>
 </Solution>
