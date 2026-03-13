@@ -1,4 +1,5 @@
 using Bookstore.Domain.Authors;
+using Bookstore.Domain.Books.Events;
 using Bookstore.SharedKernel.Abstractions;
 using Bookstore.SharedKernel.Results;
 
@@ -61,7 +62,7 @@ public sealed class Book : AuditableEntity<BookId>
         if (validation.IsFailure)
             return Result.Failure<Book>(validation.Error);
 
-        return Result.Success(new Book
+        var book = new Book
         {
             Id = BookId.New(),
             Title = title,
@@ -69,7 +70,11 @@ public sealed class Book : AuditableEntity<BookId>
             ISBN = isbn,
             Price = price,
             PublicationYear = publicationYear
-        });
+        };
+
+        book.AddDomainEvent(new BookCreatedEvent(book.Id));
+
+        return Result.Success(book);
     }
 
     /// <summary>

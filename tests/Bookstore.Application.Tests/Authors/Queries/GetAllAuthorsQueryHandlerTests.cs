@@ -1,7 +1,9 @@
 using Bookstore.Application.Authors.Queries.GetAllAuthors;
 using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -18,7 +20,7 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, TimeProvider.System);
+        _context = new BookstoreDbContext(options, TimeProvider.System, new Mock<IPublisher>().Object);
         _handler = new GetAllAuthorsQueryHandler(_context);
     }
 

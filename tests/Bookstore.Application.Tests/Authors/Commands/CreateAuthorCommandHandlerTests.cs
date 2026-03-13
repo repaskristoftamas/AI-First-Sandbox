@@ -1,7 +1,9 @@
 using Bookstore.Application.Authors.Commands.CreateAuthor;
 using Bookstore.Infrastructure.Data;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -19,7 +21,7 @@ public class CreateAuthorCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, _timeProvider);
+        _context = new BookstoreDbContext(options, _timeProvider, new Mock<IPublisher>().Object);
         _handler = new CreateAuthorCommandHandler(_context, new CreateAuthorCommandValidator(_timeProvider), _timeProvider);
     }
 
