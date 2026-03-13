@@ -40,10 +40,14 @@ PR number to address.
 9. Test: `dotnet test --nologo -v q`
    - If tests fail, fix them. If a fix introduced new behavior with no coverage, add tests.
 10. Use the `/commit` skill to commit. Message: `fix: address PR review feedback`
+11. Push commits so the SHA is live on remote before posting replies (ensures GitHub renders SHAs as hyperlinks):
+    ```bash
+    git push
+    ```
 
 ### Phase 4: Respond
 
-11. Reply to every comment via the GitHub API:
+12. Reply to every comment via the GitHub API:
     ```bash
     gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments/<COMMENT_ID>/replies \
       -X POST -f body="<response>"
@@ -54,7 +58,7 @@ PR number to address.
 
 ### Phase 5: Update project board
 
-12. Move the linked issue to "Ready for Review":
+13. Move the linked issue to "Ready for Review":
     ```bash
     ITEM_ID=$(gh project item-list 2 --owner repaskristoftamas --format json \
       --jq '.items[] | select(.content.number == <NUMBER>) | .id')
@@ -70,4 +74,4 @@ PR number to address.
 - Never make changes beyond what review comments ask for.
 - Never blindly apply all suggestions — evaluate correctness first.
 - Build and tests must pass before committing.
-- Do not push — the CI workflow handles the push step.
+- Push before posting replies so the SHA is linkable. The CI workflow also has a push step as a safety net.
