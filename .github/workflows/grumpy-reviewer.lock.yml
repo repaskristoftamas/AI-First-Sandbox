@@ -25,13 +25,13 @@
 #
 # Source: githubnext/agentics/workflows/grumpy-reviewer.md@828ac109efb43990f59475cbfce90ede5546586c
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"9690678de79f4e7375da2e9c30774220debbb640036bf83d9e4fcd2756a5fd70","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"65fb115bdf4b0c66ebed3603194f993f94c8b7eb4f6af9c00b66b968effd6907","compiler_version":"v0.50.4"}
 
 name: "Grumpy Code Reviewer 🔥"
 "on":
   workflow_run:
     # zizmor: ignore[dangerous-triggers] - workflow_run trigger is secured with role and fork validation
-    branches:
+    branches-ignore:
     - main
     types:
     - completed
