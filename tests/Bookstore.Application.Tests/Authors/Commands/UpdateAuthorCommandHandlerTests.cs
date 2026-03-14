@@ -2,8 +2,10 @@ using Bookstore.Application.Authors.Commands.UpdateAuthor;
 using Bookstore.Domain.Authors;
 using Bookstore.Infrastructure.Data;
 using Bookstore.SharedKernel.Results;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -21,7 +23,7 @@ public class UpdateAuthorCommandHandlerTests : IAsyncDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new BookstoreDbContext(options, _timeProvider);
+        _context = new BookstoreDbContext(options, _timeProvider, new Mock<IPublisher>().Object);
         _handler = new UpdateAuthorCommandHandler(_context, new UpdateAuthorCommandValidator(_timeProvider), _timeProvider);
     }
 

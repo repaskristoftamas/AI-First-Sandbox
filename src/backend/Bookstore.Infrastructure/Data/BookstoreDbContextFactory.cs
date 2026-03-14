@@ -1,3 +1,4 @@
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -23,6 +24,21 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
             .UseSqlServer(connectionString)
             .Options;
 
-        return new BookstoreDbContext(options, TimeProvider.System);
+        return new BookstoreDbContext(options, TimeProvider.System, new DesignTimePublisher());
+    }
+
+    /// <summary>
+    /// No-op publisher used only during design-time EF Core tooling (migrations).
+    /// </summary>
+    private sealed class DesignTimePublisher : IPublisher
+    {
+        /// <inheritdoc />
+        public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+            where TNotification : INotification
+            => ValueTask.CompletedTask;
+
+        /// <inheritdoc />
+        public ValueTask Publish(object notification, CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
     }
 }
