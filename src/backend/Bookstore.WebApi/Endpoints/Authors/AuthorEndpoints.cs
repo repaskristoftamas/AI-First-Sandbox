@@ -46,9 +46,10 @@ public sealed class AuthorEndpoints : IEndpointDefinition
 
         group.MapDelete("/{id:guid}", DeleteAuthor)
             .WithName("DeleteAuthor")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
     }
 
     /// <summary>

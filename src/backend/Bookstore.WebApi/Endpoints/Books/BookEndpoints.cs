@@ -50,9 +50,9 @@ public sealed class BookEndpoints : IEndpointDefinition
 
         group.MapDelete("/{id:guid}", DeleteBook)
             .WithName("DeleteBook")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .RequireAuthorization();
-        //TODO: Add role-based authorization (e.g., only allow users with "Admin" role to delete books)
+            .RequireAuthorization("AdminOnly");
     }
 
     /// <summary>
