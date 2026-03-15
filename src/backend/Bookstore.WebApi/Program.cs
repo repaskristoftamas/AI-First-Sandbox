@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Bookstore.Application;
 using Bookstore.Infrastructure;
 using Bookstore.WebApi.Endpoints;
@@ -112,9 +113,7 @@ builder.Services.AddRateLimiter(options =>
                 ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
         }
 
-        response.ContentType = "application/problem+json";
-        await JsonSerializer.SerializeAsync(
-            response.Body,
+        await response.WriteAsJsonAsync(
             new ProblemDetails
             {
                 Status = StatusCodes.Status429TooManyRequests,
@@ -122,7 +121,9 @@ builder.Services.AddRateLimiter(options =>
                 Detail = "Rate limit exceeded. Please try again later.",
                 Type = "https://tools.ietf.org/html/rfc6585#section-4"
             },
-            cancellationToken: cancellationToken);
+            (JsonSerializerOptions?)null,
+            "application/problem+json",
+            cancellationToken);
     };
 });
 
@@ -165,6 +166,10 @@ if (app.Environment.IsDevelopment())
         """, "text/html")).ExcludeFromDescription();
 }
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();

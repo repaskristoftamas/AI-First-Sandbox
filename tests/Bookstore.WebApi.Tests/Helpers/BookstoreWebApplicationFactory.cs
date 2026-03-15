@@ -19,17 +19,16 @@ public sealed class BookstoreWebApplicationFactory : WebApplicationFactory<Progr
 
         builder.ConfigureServices(services =>
         {
-            var descriptorsToRemove = services
-                .Where(d => d.ServiceType == typeof(DbContextOptions<BookstoreDbContext>)
-                         || d.ServiceType == typeof(DbContextOptions)
-                         || d.ServiceType.FullName?.Contains("EntityFrameworkCore") == true)
-                .ToList();
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<BookstoreDbContext>));
 
-            foreach (var descriptor in descriptorsToRemove)
+            if (descriptor is not null)
                 services.Remove(descriptor);
 
-            services.AddDbContext<BookstoreDbContext>(options =>
-                options.UseInMemoryDatabase($"BookstoreTest-{Guid.NewGuid()}"));
+            services.AddSingleton<DbContextOptions<BookstoreDbContext>>(_ =>
+                new DbContextOptionsBuilder<BookstoreDbContext>()
+                    .UseInMemoryDatabase($"BookstoreTest-{Guid.NewGuid()}")
+                    .Options);
         });
     }
 }

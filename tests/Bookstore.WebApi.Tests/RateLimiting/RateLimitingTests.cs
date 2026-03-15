@@ -9,8 +9,10 @@ namespace Bookstore.WebApi.Tests.RateLimiting;
 /// Integration tests verifying rate limiting behavior for the API.
 /// Uses appsettings.Testing.json with a permit limit of 3 for anonymous requests.
 /// </summary>
-public sealed class RateLimitingTests : IDisposable
+public sealed class RateLimitingTests : IAsyncDisposable
 {
+    private const int AnonymousPermitLimit = 3;
+
     private readonly BookstoreWebApplicationFactory _factory = new();
     private readonly HttpClient _client;
 
@@ -30,8 +32,7 @@ public sealed class RateLimitingTests : IDisposable
     [Fact]
     public async Task AnonymousRequest_ExceedingLimit_ShouldReturn429()
     {
-        for (var i = 0; i < 3; i++)
-            await _client.GetAsync("/api/authors");
+        await ExhaustRateLimitAsync();
 
         var response = await _client.GetAsync("/api/authors");
 
@@ -41,8 +42,7 @@ public sealed class RateLimitingTests : IDisposable
     [Fact]
     public async Task AnonymousRequest_ExceedingLimit_ShouldIncludeRetryAfterHeader()
     {
-        for (var i = 0; i < 3; i++)
-            await _client.GetAsync("/api/authors");
+        await ExhaustRateLimitAsync();
 
         var response = await _client.GetAsync("/api/authors");
 
@@ -52,8 +52,7 @@ public sealed class RateLimitingTests : IDisposable
     [Fact]
     public async Task AnonymousRequest_ExceedingLimit_ShouldReturnProblemDetails()
     {
-        for (var i = 0; i < 3; i++)
-            await _client.GetAsync("/api/authors");
+        await ExhaustRateLimitAsync();
 
         var response = await _client.GetAsync("/api/authors");
         var content = await response.Content.ReadAsStringAsync();
@@ -62,9 +61,19 @@ public sealed class RateLimitingTests : IDisposable
         content.ShouldContain("Too Many Requests");
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Sends enough requests to exhaust the anonymous rate limit.
+    /// </summary>
+    private async Task ExhaustRateLimitAsync()
+    {
+        for (var i = 0; i < AnonymousPermitLimit; i++)
+            await _client.GetAsync("/api/authors");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
-        _factory.Dispose();
+        await _factory.DisposeAsync();
     }
 }
