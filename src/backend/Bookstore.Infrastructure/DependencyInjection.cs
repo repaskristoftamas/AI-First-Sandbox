@@ -41,6 +41,10 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BookstoreDbContext>();
-        await dbContext.Database.MigrateAsync(cancellationToken);
+
+        if (dbContext.Database.IsRelational())
+            await dbContext.Database.MigrateAsync(cancellationToken);
+        else
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
     }
 }

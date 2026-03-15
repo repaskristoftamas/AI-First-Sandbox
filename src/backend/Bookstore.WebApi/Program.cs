@@ -1,4 +1,7 @@
 using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Bookstore.Application;
 using Bookstore.Infrastructure;
 using Bookstore.WebApi.Endpoints;
@@ -64,9 +67,65 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<AuthorizationSecurityTransformer>();
+    options.AddOperationTransformer<RateLimitResponseTransformer>();
 });
 
-//TODO: builder.Services.AddRateLimiter
+var rateLimitingConfig = builder.Configuration.GetSection("RateLimiting");
+var anonymousPermitLimit = rateLimitingConfig.GetValue("Anonymous:PermitLimit", 10);
+var anonymousWindowSeconds = rateLimitingConfig.GetValue("Anonymous:WindowInSeconds", 60);
+var authenticatedPermitLimit = rateLimitingConfig.GetValue("Authenticated:PermitLimit", 100);
+var authenticatedWindowSeconds = rateLimitingConfig.GetValue("Authenticated:WindowInSeconds", 60);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var isAuthenticated = context.User.Identity?.IsAuthenticated ?? false;
+
+        return isAuthenticated
+            ? RateLimitPartition.GetFixedWindowLimiter(
+                $"authenticated:{ipAddress}",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = authenticatedPermitLimit,
+                    Window = TimeSpan.FromSeconds(authenticatedWindowSeconds),
+                    QueueLimit = 0
+                })
+            : RateLimitPartition.GetFixedWindowLimiter(
+                $"anonymous:{ipAddress}",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = anonymousPermitLimit,
+                    Window = TimeSpan.FromSeconds(anonymousWindowSeconds),
+                    QueueLimit = 0
+                });
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var response = context.HttpContext.Response;
+        response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            response.Headers.RetryAfter =
+                ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+        }
+
+        await response.WriteAsJsonAsync(
+            new ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "Too Many Requests",
+                Detail = "Rate limit exceeded. Please try again later.",
+                Type = "https://tools.ietf.org/html/rfc6585#section-4"
+            },
+            (JsonSerializerOptions?)null,
+            "application/problem+json",
+            cancellationToken);
+    };
+});
 
 var app = builder.Build();
 
@@ -107,12 +166,16 @@ if (app.Environment.IsDevelopment())
         """, "text/html")).ExcludeFromDescription();
 }
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.RegisterEndpointDefinitions();
-//TODO: app.UseRateLimiter
 //TODO: Logger, Serilog or ILogger
 
 app.Run();
