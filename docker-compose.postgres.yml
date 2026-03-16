@@ -2,6 +2,28 @@ services:
   bookstore-api:
     environment:
       - DatabaseProvider=PostgreSQL
+      - ConnectionStrings__PostgreSQL=Host=postgresql;Port=5432;Database=BookstoreDb;Username=bookstore;Password=passWORD123
     depends_on:
       postgresql:
         condition: service_healthy
+
+  postgresql:
+    container_name: bookstore-postgresql
+    image: postgres:17
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=bookstore
+      - POSTGRES_PASSWORD=passWORD123
+      - POSTGRES_DB=BookstoreDb
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U bookstore -d BookstoreDb
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  postgresql-data:

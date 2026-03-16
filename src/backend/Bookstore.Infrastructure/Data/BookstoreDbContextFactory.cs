@@ -16,23 +16,11 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
     /// <returns>A configured <see cref="BookstoreDbContext"/> instance.</returns>
     public BookstoreDbContext CreateDbContext(string[] args)
     {
-        var provider = Environment.GetEnvironmentVariable("DatabaseProvider") ?? "SqlServer";
+        var provider = Environment.GetEnvironmentVariable("DatabaseProvider") ?? DatabaseProviderMap.SqlServer;
         var connectionString = GetConnectionString(provider);
 
         var optionsBuilder = new DbContextOptionsBuilder<BookstoreDbContext>();
-
-        switch (provider)
-        {
-            case "SqlServer":
-                optionsBuilder.UseSqlServer(connectionString);
-                break;
-            case "PostgreSQL":
-                optionsBuilder.UseNpgsql(connectionString);
-                break;
-            default:
-                throw new InvalidOperationException(
-                    $"Unsupported database provider: '{provider}'. Use 'SqlServer' or 'PostgreSQL'.");
-        }
+        DatabaseProviderMap.Configure(optionsBuilder, provider, connectionString);
 
         return new BookstoreDbContext(optionsBuilder.Options, TimeProvider.System, new DesignTimePublisher());
     }
@@ -42,13 +30,8 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
     /// </summary>
     private static string GetConnectionString(string provider)
     {
-        var envVarName = provider switch
-        {
-            "SqlServer" => "ConnectionStrings__DefaultConnection",
-            "PostgreSQL" => "ConnectionStrings__PostgreSQL",
-            _ => throw new InvalidOperationException(
-                $"Unsupported database provider: '{provider}'. Use 'SqlServer' or 'PostgreSQL'.")
-        };
+        var key = DatabaseProviderMap.GetConnectionStringKey(provider);
+        var envVarName = $"ConnectionStrings__{key}";
 
         return Environment.GetEnvironmentVariable(envVarName)
             ?? throw new InvalidOperationException(

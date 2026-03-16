@@ -21,10 +21,11 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var provider = configuration["DatabaseProvider"] ?? "SqlServer";
+        var provider = configuration["DatabaseProvider"] ?? DatabaseProviderMap.SqlServer;
+        var connectionString = configuration.GetConnectionString(DatabaseProviderMap.GetConnectionStringKey(provider));
 
         services.AddDbContext<BookstoreDbContext>(options =>
-            ConfigureProvider(options, provider, configuration));
+            DatabaseProviderMap.Configure(options, provider, connectionString!));
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<BookstoreDbContext>());
@@ -50,28 +51,4 @@ public static class DependencyInjection
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Configures the EF Core database provider based on the specified provider name.
-    /// </summary>
-    /// <param name="options">The options builder to configure.</param>
-    /// <param name="provider">The provider name (<c>SqlServer</c> or <c>PostgreSQL</c>).</param>
-    /// <param name="configuration">Application configuration for reading connection strings.</param>
-    internal static void ConfigureProvider(
-        DbContextOptionsBuilder options,
-        string provider,
-        IConfiguration configuration)
-    {
-        switch (provider)
-        {
-            case "SqlServer":
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-                break;
-            case "PostgreSQL":
-                options.UseNpgsql(configuration.GetConnectionString("PostgreSQL"));
-                break;
-            default:
-                throw new InvalidOperationException(
-                    $"Unsupported database provider: '{provider}'. Use 'SqlServer' or 'PostgreSQL'.");
-        }
-    }
 }
