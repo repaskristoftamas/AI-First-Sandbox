@@ -4,6 +4,7 @@ using Bookstore.Application.Books.Commands.UpdateBook;
 using Bookstore.Application.Books.Queries.GetAllBooks;
 using Bookstore.Application.Books.Queries.GetBookById;
 using Bookstore.Domain.Books;
+using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -52,7 +53,7 @@ public sealed class BookEndpoints : IEndpointDefinition
             .WithName("DeleteBook")
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .RequireAuthorization("AdminOnly");
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly);
     }
 
     /// <summary>

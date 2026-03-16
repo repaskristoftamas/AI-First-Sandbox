@@ -1,19 +1,20 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Bookstore.WebApi.Tests.Helpers;
 
 /// <summary>
 /// Generates JWT tokens for integration testing with configurable claims and roles.
-/// Uses the same signing key and issuer/audience as appsettings.Testing.json.
+/// Reads signing key, issuer, and audience from appsettings.Testing.json to stay in sync with the application.
 /// </summary>
 internal static class JwtTokenHelper
 {
-    private const string SigningKey = "test-signing-key-that-is-at-least-32-characters-long-for-hmac-sha256";
-    private const string Issuer = "bookstore-api";
-    private const string Audience = "bookstore-api-clients";
+    private static readonly IConfiguration Configuration = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.Testing.json")
+        .Build();
 
     /// <summary>
     /// Creates a valid JWT token with the specified roles.
@@ -22,6 +23,11 @@ internal static class JwtTokenHelper
     /// <returns>A signed JWT token string.</returns>
     internal static string CreateToken(params string[] roles)
     {
+        var jwtSection = Configuration.GetSection("Jwt");
+        var signingKey = jwtSection["SigningKey"]!;
+        var issuer = jwtSection["Issuer"];
+        var audience = jwtSection["Audience"];
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
@@ -31,12 +37,12 @@ internal static class JwtTokenHelper
         foreach (var role in roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: Issuer,
-            audience: Audience,
+            issuer: issuer,
+            audience: audience,
             claims: claims,
             expires: TimeProvider.System.GetUtcNow().AddHours(1).UtcDateTime,
             signingCredentials: credentials);

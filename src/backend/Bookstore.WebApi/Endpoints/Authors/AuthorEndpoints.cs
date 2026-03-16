@@ -4,6 +4,7 @@ using Bookstore.Application.Authors.Commands.UpdateAuthor;
 using Bookstore.Application.Authors.Queries.GetAllAuthors;
 using Bookstore.Application.Authors.Queries.GetAuthorById;
 using Bookstore.Domain.Authors;
+using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -49,7 +50,7 @@ public sealed class AuthorEndpoints : IEndpointDefinition
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .RequireAuthorization("AdminOnly");
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly);
     }
 
     /// <summary>

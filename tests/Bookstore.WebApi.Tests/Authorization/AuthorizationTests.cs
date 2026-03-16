@@ -10,15 +10,10 @@ namespace Bookstore.WebApi.Tests.Authorization;
 /// Integration tests verifying authorization behavior for endpoints protected by role-based policies.
 /// DELETE endpoints require the AdminOnly policy (Admin role); other write endpoints require authentication only.
 /// </summary>
-public sealed class AuthorizationTests : IAsyncDisposable
+public sealed class AuthorizationTests(AuthorizationTestFactory factory)
+    : IClassFixture<AuthorizationTestFactory>, IDisposable
 {
-    private readonly BookstoreWebApplicationFactory _factory = new();
-    private readonly HttpClient _client;
-
-    public AuthorizationTests()
-    {
-        _client = _factory.CreateClient();
-    }
+    private readonly HttpClient _client = factory.CreateClient();
 
     [Theory]
     [InlineData("/api/books")]
@@ -45,14 +40,13 @@ public sealed class AuthorizationTests : IAsyncDisposable
     [Theory]
     [InlineData("/api/books")]
     [InlineData("/api/authors")]
-    public async Task DeleteEndpoint_WithAdminRole_ShouldNotReturn401Or403(string baseUrl)
+    public async Task DeleteEndpoint_WithAdminRole_ShouldReturn404ForNonExistentResource(string baseUrl)
     {
         SetBearerToken("Admin");
 
         var response = await _client.DeleteAsync($"{baseUrl}/{Guid.NewGuid()}");
 
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Theory]
@@ -78,7 +72,7 @@ public sealed class AuthorizationTests : IAsyncDisposable
     [InlineData("PUT", "/api/books")]
     [InlineData("POST", "/api/authors")]
     [InlineData("PUT", "/api/authors")]
-    public async Task WriteEndpoint_WithTokenButNoAdminRole_ShouldNotReturn403(string method, string baseUrl)
+    public async Task WriteEndpoint_WithTokenButNoAdminRole_ShouldReturn400(string method, string baseUrl)
     {
         SetBearerToken();
 
@@ -90,19 +84,17 @@ public sealed class AuthorizationTests : IAsyncDisposable
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Theory]
     [InlineData("/api/books")]
     [InlineData("/api/authors")]
-    public async Task GetEndpoint_WithoutToken_ShouldNotReturn401Or403(string baseUrl)
+    public async Task GetEndpoint_WithoutToken_ShouldReturn200(string baseUrl)
     {
         var response = await _client.GetAsync(baseUrl);
 
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
-        response.StatusCode.ShouldNotBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     /// <summary>
@@ -115,9 +107,8 @@ public sealed class AuthorizationTests : IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         _client.Dispose();
-        await _factory.DisposeAsync();
     }
 }

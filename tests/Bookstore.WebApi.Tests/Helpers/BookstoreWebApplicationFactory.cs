@@ -10,7 +10,7 @@ namespace Bookstore.WebApi.Tests.Helpers;
 /// Custom <see cref="WebApplicationFactory{TEntryPoint}"/> that replaces SQL Server with an in-memory database
 /// and uses the Testing environment for test-specific configuration.
 /// </summary>
-public sealed class BookstoreWebApplicationFactory : WebApplicationFactory<Program>
+public class BookstoreWebApplicationFactory : WebApplicationFactory<Program>
 {
     /// <inheritdoc />
     protected override void ConfigureWebHost(IWebHostBuilder builder)

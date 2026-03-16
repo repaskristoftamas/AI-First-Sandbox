@@ -24,4 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\backend\Bookstore.WebApi\Bookstore.WebApi.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\src\backend\Bookstore.WebApi\appsettings.Testing.json" CopyToOutputDirectory="PreserveNewest" LinkBase="" />
+  </ItemGroup>
 </Project>
