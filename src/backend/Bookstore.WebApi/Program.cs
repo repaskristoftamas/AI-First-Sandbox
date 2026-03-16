@@ -182,4 +182,5 @@ app.RegisterEndpointDefinitions();
 
 app.Run();
 
+/// <summary>Integration test anchor for WebApplicationFactory.</summary>
 public partial class Program { }
