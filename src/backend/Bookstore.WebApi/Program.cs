@@ -182,6 +182,5 @@ app.RegisterEndpointDefinitions();
 
 app.Run();
 
-#pragma warning disable CS1591 // Integration test anchor — no meaningful doc to add
+/// <summary>Integration test anchor for WebApplicationFactory.</summary>
 public partial class Program { }
-#pragma warning restore CS1591

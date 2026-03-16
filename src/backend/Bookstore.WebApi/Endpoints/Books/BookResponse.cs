@@ -6,7 +6,7 @@ namespace Bookstore.WebApi.Endpoints.Books;
 /// <param name="Id" example="b2c3d4e5-f6a7-8901-bcde-f12345678901">Unique identifier of the book.</param>
 /// <param name="Title" example="To Kill a Mockingbird">Title of the book.</param>
 /// <param name="AuthorId" example="a1b2c3d4-e5f6-7890-abcd-ef1234567890">Identifier of the author who wrote this book.</param>
-/// <param name="ISBN" example="9780316769488">International Standard Book Number, uniquely identifying the publication.</param>
+/// <param name="ISBN" example="9780061120084">International Standard Book Number, uniquely identifying the publication.</param>
 /// <param name="Price" example="19.99">Retail price of the book.</param>
 /// <param name="PublicationYear" example="1960">Year the book was published.</param>
 /// <param name="CreatedAt" example="2024-01-15T10:30:00+00:00">Timestamp when the book was added to the catalog.</param>
