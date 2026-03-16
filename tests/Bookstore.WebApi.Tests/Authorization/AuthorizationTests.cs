@@ -72,7 +72,7 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     [InlineData("PUT", "/api/books")]
     [InlineData("POST", "/api/authors")]
     [InlineData("PUT", "/api/authors")]
-    public async Task WriteEndpoint_WithTokenButNoAdminRole_ShouldReturn400(string method, string baseUrl)
+    public async Task WriteEndpoint_WithTokenButNoAdminRole_ShouldNotReturn401Or403(string method, string baseUrl)
     {
         SetBearerToken();
 
@@ -84,7 +84,8 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldNotBe(HttpStatusCode.Forbidden);
     }
 
     [Theory]

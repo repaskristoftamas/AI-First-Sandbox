@@ -12,10 +12,6 @@ namespace Bookstore.WebApi.Tests.Helpers;
 /// </summary>
 internal static class JwtTokenHelper
 {
-    private static readonly IConfiguration Configuration = new ConfigurationBuilder()
-        .AddJsonFile("appsettings.Testing.json")
-        .Build();
-
     /// <summary>
     /// Creates a valid JWT token with the specified roles.
     /// </summary>
@@ -23,8 +19,13 @@ internal static class JwtTokenHelper
     /// <returns>A signed JWT token string.</returns>
     internal static string CreateToken(params string[] roles)
     {
-        var jwtSection = Configuration.GetSection("Jwt");
-        var signingKey = jwtSection["SigningKey"]!;
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Testing.json")
+            .Build();
+
+        var jwtSection = configuration.GetSection("Jwt");
+        var signingKey = jwtSection["SigningKey"]
+            ?? throw new InvalidOperationException("Jwt:SigningKey is missing from appsettings.Testing.json.");
         var issuer = jwtSection["Issuer"];
         var audience = jwtSection["Audience"];
 
