@@ -15,14 +15,17 @@ public static class DependencyInjection
     /// Adds the EF Core database context and its abstraction to the service collection.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
-    /// <param name="configuration">Application configuration used to read connection strings.</param>
+    /// <param name="configuration">Application configuration used to read connection strings and provider settings.</param>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var provider = configuration["DatabaseProvider"] ?? DatabaseProviderMap.SqlServer;
+        var connectionString = configuration.GetConnectionString(DatabaseProviderMap.GetConnectionStringKey(provider));
+
         services.AddDbContext<BookstoreDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            DatabaseProviderMap.Configure(options, provider, connectionString!));
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<BookstoreDbContext>());
@@ -47,4 +50,5 @@ public static class DependencyInjection
         else
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
     }
+
 }

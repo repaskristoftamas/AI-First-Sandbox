@@ -16,15 +16,26 @@ internal sealed class BookstoreDbContextFactory : IDesignTimeDbContextFactory<Bo
     /// <returns>A configured <see cref="BookstoreDbContext"/> instance.</returns>
     public BookstoreDbContext CreateDbContext(string[] args)
     {
-        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+        var provider = Environment.GetEnvironmentVariable("DatabaseProvider") ?? DatabaseProviderMap.SqlServer;
+        var connectionString = GetConnectionString(provider);
+
+        var optionsBuilder = new DbContextOptionsBuilder<BookstoreDbContext>();
+        DatabaseProviderMap.Configure(optionsBuilder, provider, connectionString);
+
+        return new BookstoreDbContext(optionsBuilder.Options, TimeProvider.System, new DesignTimePublisher());
+    }
+
+    /// <summary>
+    /// Reads the connection string from the environment variable matching the given provider.
+    /// </summary>
+    private static string GetConnectionString(string provider)
+    {
+        var key = DatabaseProviderMap.GetConnectionStringKey(provider);
+        var envVarName = $"ConnectionStrings__{key}";
+
+        return Environment.GetEnvironmentVariable(envVarName)
             ?? throw new InvalidOperationException(
-                "Set the 'ConnectionStrings__DefaultConnection' environment variable before running EF tooling.");
-
-        var options = new DbContextOptionsBuilder<BookstoreDbContext>()
-            .UseSqlServer(connectionString)
-            .Options;
-
-        return new BookstoreDbContext(options, TimeProvider.System, new DesignTimePublisher());
+                $"Set the '{envVarName}' environment variable before running EF tooling.");
     }
 
     /// <summary>

@@ -1,5 +1,57 @@
 # Bookstore-API
 
+## Database Provider
+
+The API supports both **SQL Server** and **PostgreSQL**. The active provider is controlled by the `DatabaseProvider` configuration setting.
+
+| Value        | Provider   | Connection String Key |
+|--------------|------------|-----------------------|
+| `SqlServer`  | SQL Server | `DefaultConnection`   |
+| `PostgreSQL` | PostgreSQL | `PostgreSQL`          |
+
+### Switching Providers
+
+Set the `DatabaseProvider` value in `appsettings.json`, an environment variable, or user-secrets:
+
+```bash
+# Via environment variable
+export DatabaseProvider=PostgreSQL
+
+# Via dotnet user-secrets
+dotnet user-secrets set "DatabaseProvider" "PostgreSQL"
+```
+
+### Running with Docker Compose
+
+**SQL Server (default):**
+
+```bash
+docker compose up
+```
+
+**PostgreSQL:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up
+```
+
+### EF Core Migrations
+
+Migrations are provider-specific. Set the `DatabaseProvider` environment variable before running EF tooling:
+
+```bash
+# SQL Server migrations (default)
+export ConnectionStrings__DefaultConnection="Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=passWORD123;TrustServerCertificate=True"
+dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
+
+# PostgreSQL migrations
+export DatabaseProvider=PostgreSQL
+export ConnectionStrings__PostgreSQL="Host=localhost;Port=5433;Database=BookstoreDb;Username=bookstore;Password=passWORD123"
+dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
+```
+
+> **Note:** The existing migrations were generated for SQL Server. If the schemas diverge between providers, consider separate migration assemblies per provider.
+
 ## AI-Assisted Development Workflow
 
 This project uses [Claude Code](https://claude.ai/claude-code) commands and [GitHub Agentic Workflows](https://github.github.com/gh-aw/) to automate the issue-to-PR lifecycle. Below is a step-by-step walkthrough of how a feature goes from idea to reviewed pull request.
