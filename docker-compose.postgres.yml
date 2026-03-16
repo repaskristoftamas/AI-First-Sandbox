@@ -1,0 +1,7 @@
+services:
+  bookstore-api:
+    environment:
+      - DatabaseProvider=PostgreSQL
+    depends_on:
+      postgresql:
+        condition: service_healthy

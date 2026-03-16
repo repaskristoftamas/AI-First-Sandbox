@@ -15,14 +15,16 @@ public static class DependencyInjection
     /// Adds the EF Core database context and its abstraction to the service collection.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
-    /// <param name="configuration">Application configuration used to read connection strings.</param>
+    /// <param name="configuration">Application configuration used to read connection strings and provider settings.</param>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var provider = configuration["DatabaseProvider"] ?? "SqlServer";
+
         services.AddDbContext<BookstoreDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            ConfigureProvider(options, provider, configuration));
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<BookstoreDbContext>());
@@ -46,5 +48,30 @@ public static class DependencyInjection
             await dbContext.Database.MigrateAsync(cancellationToken);
         else
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Configures the EF Core database provider based on the specified provider name.
+    /// </summary>
+    /// <param name="options">The options builder to configure.</param>
+    /// <param name="provider">The provider name (<c>SqlServer</c> or <c>PostgreSQL</c>).</param>
+    /// <param name="configuration">Application configuration for reading connection strings.</param>
+    internal static void ConfigureProvider(
+        DbContextOptionsBuilder options,
+        string provider,
+        IConfiguration configuration)
+    {
+        switch (provider)
+        {
+            case "SqlServer":
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+                break;
+            case "PostgreSQL":
+                options.UseNpgsql(configuration.GetConnectionString("PostgreSQL"));
+                break;
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported database provider: '{provider}'. Use 'SqlServer' or 'PostgreSQL'.");
+        }
     }
 }
