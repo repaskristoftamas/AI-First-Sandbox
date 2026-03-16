@@ -4,6 +4,7 @@ using Bookstore.Application.Books.Commands.UpdateBook;
 using Bookstore.Application.Books.Queries.GetAllBooks;
 using Bookstore.Application.Books.Queries.GetBookById;
 using Bookstore.Domain.Books;
+using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -50,9 +51,9 @@ public sealed class BookEndpoints : IEndpointDefinition
 
         group.MapDelete("/{id:guid}", DeleteBook)
             .WithName("DeleteBook")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .RequireAuthorization();
-        //TODO: Add role-based authorization (e.g., only allow users with "Admin" role to delete books)
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly);
     }
 
     /// <summary>

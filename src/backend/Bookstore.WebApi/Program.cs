@@ -7,6 +7,7 @@ using Bookstore.Infrastructure;
 using Bookstore.WebApi.Endpoints;
 using Bookstore.WebApi.Endpoints.Authors;
 using Bookstore.WebApi.Endpoints.Books;
+using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Bookstore.WebApi.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -42,7 +43,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-builder.Services.AddAuthorizationBuilder();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthorizationPolicies.AdminOnly, policy => policy.RequireRole("Admin"));
 
 //TODO: AllowedOrigins array should only contain https:// origins in production. The config doesn't enforce this — consider validating at startup.
 var allowedOrigins = builder.Configuration
