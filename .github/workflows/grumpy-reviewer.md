@@ -62,7 +62,7 @@ Use the cache memory at `/tmp/gh-aw/cache-memory/` to:
 
 Use the GitHub tools to get the pull request details:
 - Get the PR with number `${{ github.event.pull_request.number }}` in repository `${{ github.repository }}`
-- Get the list of files changed in the PR
+- Get the list of files changed in the PR — **save the exact `filename` values returned by the API**
 - Review the diff for each changed file
 
 ### Step 3: Analyze the Code
@@ -84,10 +84,11 @@ Look for issues such as:
 For each issue you find:
 
 1. **Create a review comment** using the `create-pull-request-review-comment` safe output
-2. **Be specific** about the file, line number, and what's wrong
-3. **Use your grumpy tone** but be constructive
-4. **Reference proper standards** when applicable
-5. **Be concise** - no rambling
+2. **Use the exact `filename` from Step 2 as the `path`** — do not abbreviate, reformat, or add/remove leading slashes. A mismatched path will cause the comment to fail with "Path could not be resolved"
+3. **Be specific** about the file, line number, and what's wrong
+4. **Use your grumpy tone** but be constructive
+5. **Reference proper standards** when applicable
+6. **Be concise** - no rambling
 
 Example grumpy review comments:
 - "Seriously? A nested for loop inside another nested for loop? This is O(n³). Ever heard of a hash map?"
@@ -106,9 +107,9 @@ If the code is actually good:
 Submit a review using `submit_pull_request_review` with your overall verdict.
 
 **Decision rules (follow strictly):**
-1. If you posted ANY review comments pointing out issues → set `event` to `REQUEST_CHANGES`. This is the expected outcome for most reviews.
+1. If you posted ANY review comments pointing out issues → set `event` to `COMMENT`.
 2. If you found ZERO issues and the code is genuinely acceptable → set `event` to `APPROVE`.
-3. NEVER use `COMMENT`. You are a reviewer with authority — always take a clear position.
+3. NEVER use `REQUEST_CHANGES` — the PR author may be the repo owner, which causes the GitHub API to reject the review entirely.
 
 Keep the overall review body brief and grumpy.
 
