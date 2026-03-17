@@ -16,8 +16,8 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     private readonly HttpClient _client = factory.CreateClient();
 
     [Theory]
-    [InlineData("/api/books")]
-    [InlineData("/api/authors")]
+    [InlineData("/api/v1/books")]
+    [InlineData("/api/v1/authors")]
     public async Task DeleteEndpoint_WithoutToken_ShouldReturn401(string baseUrl)
     {
         var response = await _client.DeleteAsync($"{baseUrl}/{Guid.NewGuid()}");
@@ -26,8 +26,8 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     }
 
     [Theory]
-    [InlineData("/api/books")]
-    [InlineData("/api/authors")]
+    [InlineData("/api/v1/books")]
+    [InlineData("/api/v1/authors")]
     public async Task DeleteEndpoint_WithTokenButNoAdminRole_ShouldReturn403(string baseUrl)
     {
         SetBearerToken();
@@ -38,8 +38,8 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     }
 
     [Theory]
-    [InlineData("/api/books")]
-    [InlineData("/api/authors")]
+    [InlineData("/api/v1/books")]
+    [InlineData("/api/v1/authors")]
     public async Task DeleteEndpoint_WithAdminRole_ShouldReturn404ForNonExistentResource(string baseUrl)
     {
         SetBearerToken("Admin");
@@ -50,10 +50,10 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     }
 
     [Theory]
-    [InlineData("POST", "/api/books")]
-    [InlineData("PUT", "/api/books")]
-    [InlineData("POST", "/api/authors")]
-    [InlineData("PUT", "/api/authors")]
+    [InlineData("POST", "/api/v1/books")]
+    [InlineData("PUT", "/api/v1/books")]
+    [InlineData("POST", "/api/v1/authors")]
+    [InlineData("PUT", "/api/v1/authors")]
     public async Task WriteEndpoint_WithoutToken_ShouldReturn401(string method, string baseUrl)
     {
         var url = method == "PUT" ? $"{baseUrl}/{Guid.NewGuid()}" : baseUrl;
@@ -68,10 +68,10 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     }
 
     [Theory]
-    [InlineData("POST", "/api/books")]
-    [InlineData("PUT", "/api/books")]
-    [InlineData("POST", "/api/authors")]
-    [InlineData("PUT", "/api/authors")]
+    [InlineData("POST", "/api/v1/books")]
+    [InlineData("PUT", "/api/v1/books")]
+    [InlineData("POST", "/api/v1/authors")]
+    [InlineData("PUT", "/api/v1/authors")]
     public async Task WriteEndpoint_WithTokenButNoAdminRole_ShouldNotReturn401Or403(string method, string baseUrl)
     {
         SetBearerToken();
@@ -89,8 +89,8 @@ public sealed class AuthorizationTests(AuthorizationTestFactory factory)
     }
 
     [Theory]
-    [InlineData("/api/books")]
-    [InlineData("/api/authors")]
+    [InlineData("/api/v1/books")]
+    [InlineData("/api/v1/authors")]
     public async Task GetEndpoint_WithoutToken_ShouldReturn200(string baseUrl)
     {
         var response = await _client.GetAsync(baseUrl);

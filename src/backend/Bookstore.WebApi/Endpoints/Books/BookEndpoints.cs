@@ -18,12 +18,12 @@ namespace Bookstore.WebApi.Endpoints.Books;
 public sealed class BookEndpoints : IEndpointDefinition
 {
     /// <summary>
-    /// Registers all book-related routes under the /api/books group.
+    /// Registers all book-related routes under the /api/v{version}/books group.
     /// </summary>
-    /// <param name="app">The endpoint route builder to register routes on.</param>
-    public void RegisterEndpoints(IEndpointRouteBuilder app)
+    /// <param name="routes">The endpoint route builder to register routes on.</param>
+    public void RegisterEndpoints(IEndpointRouteBuilder routes)
     {
-        var group = app.MapGroup("/api/books").WithTags("Books");
+        var group = routes.MapGroup("/books").WithTags("Books");
 
         group.MapGet("/", GetAllBooks)
             .WithName("GetAllBooks")
