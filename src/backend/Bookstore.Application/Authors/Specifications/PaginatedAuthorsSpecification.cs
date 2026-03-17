@@ -15,7 +15,7 @@ internal sealed class PaginatedAuthorsSpecification : Specification<Author>
     /// <param name="pageSize">Number of authors per page.</param>
     public PaginatedAuthorsSpecification(int page, int pageSize)
     {
-        ApplyOrderBy(a => a.Id.Value);
+        ApplyOrderBy(a => a.CreatedAt);
         ApplyPaging(page, pageSize);
     }
 }

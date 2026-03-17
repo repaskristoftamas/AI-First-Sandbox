@@ -23,9 +23,6 @@ public abstract class Specification<T> : ISpecification<T> where T : class
     /// <inheritdoc />
     public int? Take { get; private set; }
 
-    /// <inheritdoc />
-    public bool IsPagingEnabled { get; private set; }
-
     /// <summary>
     /// Sets the filter predicate for this specification.
     /// </summary>
@@ -51,8 +48,10 @@ public abstract class Specification<T> : ISpecification<T> where T : class
     /// <param name="pageSize">Number of records per page.</param>
     protected void ApplyPaging(int page, int pageSize)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(page, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+
         Skip = (page - 1) * pageSize;
         Take = pageSize;
-        IsPagingEnabled = true;
     }
 }

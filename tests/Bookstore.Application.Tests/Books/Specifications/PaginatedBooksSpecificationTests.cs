@@ -52,18 +52,23 @@ public sealed class PaginatedBooksSpecificationTests
     }
 
     [Fact]
-    public void Apply_ShouldOrderBooksById()
+    public void Apply_ShouldOrderBooksByCreatedAt()
     {
         // Arrange
         var books = CreateBooks(3);
+        var baseTime = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        books[0].CreatedAt = baseTime.AddDays(2);
+        books[1].CreatedAt = baseTime;
+        books[2].CreatedAt = baseTime.AddDays(1);
         var specification = new PaginatedBooksSpecification(page: 1, pageSize: 10);
 
         // Act
         var result = SpecificationEvaluator.Apply(books.AsQueryable(), specification).ToList();
 
         // Assert
-        var ids = result.Select(b => b.Id.Value).ToList();
-        ids.ShouldBe(ids.OrderBy(id => id).ToList());
+        result[0].ShouldBe(books[1]);
+        result[1].ShouldBe(books[2]);
+        result[2].ShouldBe(books[0]);
     }
 
     /// <summary>

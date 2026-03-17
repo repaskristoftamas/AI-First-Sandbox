@@ -15,7 +15,7 @@ internal sealed class PaginatedBooksSpecification : Specification<Book>
     /// <param name="pageSize">Number of books per page.</param>
     public PaginatedBooksSpecification(int page, int pageSize)
     {
-        ApplyOrderBy(b => b.Id.Value);
+        ApplyOrderBy(b => b.CreatedAt);
         ApplyPaging(page, pageSize);
     }
 }

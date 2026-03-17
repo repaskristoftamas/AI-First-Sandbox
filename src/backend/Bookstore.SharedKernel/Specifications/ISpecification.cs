@@ -32,9 +32,4 @@ public interface ISpecification<T> where T : class
     /// Number of records to take for pagination.
     /// </summary>
     int? Take { get; }
-
-    /// <summary>
-    /// Whether pagination is enabled for this specification.
-    /// </summary>
-    bool IsPagingEnabled { get; }
 }

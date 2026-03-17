@@ -51,18 +51,23 @@ public sealed class PaginatedAuthorsSpecificationTests
     }
 
     [Fact]
-    public void Apply_ShouldOrderAuthorsById()
+    public void Apply_ShouldOrderAuthorsByCreatedAt()
     {
         // Arrange
         var authors = CreateAuthors(3);
+        var baseTime = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        authors[0].CreatedAt = baseTime.AddDays(2);
+        authors[1].CreatedAt = baseTime;
+        authors[2].CreatedAt = baseTime.AddDays(1);
         var specification = new PaginatedAuthorsSpecification(page: 1, pageSize: 10);
 
         // Act
         var result = SpecificationEvaluator.Apply(authors.AsQueryable(), specification).ToList();
 
         // Assert
-        var ids = result.Select(a => a.Id.Value).ToList();
-        ids.ShouldBe(ids.OrderBy(id => id).ToList());
+        result[0].ShouldBe(authors[1]);
+        result[1].ShouldBe(authors[2]);
+        result[2].ShouldBe(authors[0]);
     }
 
     /// <summary>

@@ -31,17 +31,14 @@ public static class SpecificationEvaluator
             query = query.OrderByDescending(specification.OrderByDescending);
         }
 
-        if (specification.IsPagingEnabled)
+        if (specification.Skip.HasValue)
         {
-            if (specification.Skip.HasValue)
-            {
-                query = query.Skip(specification.Skip.Value);
-            }
+            query = query.Skip(specification.Skip.Value);
+        }
 
-            if (specification.Take.HasValue)
-            {
-                query = query.Take(specification.Take.Value);
-            }
+        if (specification.Take.HasValue)
+        {
+            query = query.Take(specification.Take.Value);
         }
 
         return query;
