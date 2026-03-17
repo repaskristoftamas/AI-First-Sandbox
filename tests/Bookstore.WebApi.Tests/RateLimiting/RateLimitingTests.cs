@@ -24,7 +24,7 @@ public sealed class RateLimitingTests : IAsyncDisposable
     [Fact]
     public async Task AnonymousRequest_UnderLimit_ShouldReturnSuccess()
     {
-        var response = await _client.GetAsync("/api/authors");
+        var response = await _client.GetAsync("/api/v1/authors");
 
         response.StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
     }
@@ -34,7 +34,7 @@ public sealed class RateLimitingTests : IAsyncDisposable
     {
         await ExhaustRateLimitAsync();
 
-        var response = await _client.GetAsync("/api/authors");
+        var response = await _client.GetAsync("/api/v1/authors");
 
         response.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
     }
@@ -44,7 +44,7 @@ public sealed class RateLimitingTests : IAsyncDisposable
     {
         await ExhaustRateLimitAsync();
 
-        var response = await _client.GetAsync("/api/authors");
+        var response = await _client.GetAsync("/api/v1/authors");
 
         response.Headers.RetryAfter.ShouldNotBeNull();
     }
@@ -54,7 +54,7 @@ public sealed class RateLimitingTests : IAsyncDisposable
     {
         await ExhaustRateLimitAsync();
 
-        var response = await _client.GetAsync("/api/authors");
+        var response = await _client.GetAsync("/api/v1/authors");
         var content = await response.Content.ReadAsStringAsync();
 
         response.Content.Headers.ContentType?.MediaType.ShouldBe("application/problem+json");
@@ -67,7 +67,7 @@ public sealed class RateLimitingTests : IAsyncDisposable
     private async Task ExhaustRateLimitAsync()
     {
         for (var i = 0; i < AnonymousPermitLimit; i++)
-            await _client.GetAsync("/api/authors");
+            await _client.GetAsync("/api/v1/authors");
     }
 
     /// <inheritdoc />
