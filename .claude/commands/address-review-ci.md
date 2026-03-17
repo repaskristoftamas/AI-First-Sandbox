@@ -51,33 +51,8 @@ PR number to address, optionally followed by `--focus <description>` to scope wo
 9. Test: `dotnet test --nologo -v q`
    - If tests fail, fix them. If a fix introduced new behavior with no coverage, add tests.
 10. Use the `/commit` skill to commit. Message: `fix: address PR review feedback`
-11. Push commits so the SHA is live on remote before posting replies (ensures GitHub renders SHAs as hyperlinks):
-    ```bash
-    git push
-    ```
 
-### Phase 4: Respond
-
-12. Reply to every comment via the GitHub API:
-    ```bash
-    gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments/<COMMENT_ID>/replies \
-      -X POST -f body="<response>"
-    ```
-    - `fix`: "Fixed in <SHA> — <one-line explanation>"
-    - `discuss`: Explain reasoning without making a code change.
-    - `skip`: Explain why (factual correction or project convention reference).
-
-### Phase 5: Update project board
-
-13. Move the linked issue to "Ready for Review":
-    ```bash
-    ITEM_ID=$(gh project item-list 2 --owner repaskristoftamas --format json \
-      --jq '.items[] | select(.content.number == <NUMBER>) | .id')
-    gh project item-edit --id "$ITEM_ID" --project-id PVT_kwHOApxqws4BP2Z2 \
-      --field-id PVTSSF_lAHOApxqws4BP2Z2zg-I7Tg \
-      --single-select-option-id d9d9aaf5
-    ```
-    Skip if no linked issue exists.
+Reply posting and project board updates are handled by a separate `/address-respond-ci` invocation in the CI workflow. Do NOT post replies or update the project board here.
 
 ## Rules
 
@@ -85,4 +60,4 @@ PR number to address, optionally followed by `--focus <description>` to scope wo
 - Never make changes beyond what review comments ask for.
 - Never blindly apply all suggestions — evaluate correctness first.
 - Build and tests must pass before committing.
-- Push before posting replies so the SHA is linkable. The CI workflow also has a push step as a safety net.
+- Do NOT post reply comments to review threads — that is handled by `/address-respond-ci`.

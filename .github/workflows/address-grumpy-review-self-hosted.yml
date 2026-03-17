@@ -84,6 +84,22 @@ jobs:
       - name: Push fixes
         run: git push origin ${{ steps.pr.outputs.branch }}
 
+      - name: Post reply comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FOCUS_COMMENT: ${{ github.event_name == 'issue_comment' && github.event.comment.body || '' }}
+        run: |
+          if [ -n "$FOCUS_COMMENT" ]; then
+            FOCUS_ARG=$(echo "$FOCUS_COMMENT" | sed 's|^/address ||')
+            claude --print --permission-mode bypassPermissions \
+              --model claude-opus-4-6 \
+              "/address-respond-ci ${{ steps.pr.outputs.number }} --focus $FOCUS_ARG"
+          else
+            claude --print --permission-mode bypassPermissions \
+              --model claude-opus-4-6 \
+              "/address-respond-ci ${{ steps.pr.outputs.number }}"
+          fi
+
   review-back:
     needs: address
     if: needs.address.result == 'success'
