@@ -6,8 +6,8 @@ namespace Bookstore.WebApi.Endpoints;
 public interface IEndpointDefinition
 {
     /// <summary>
-    /// Maps the endpoint routes onto the application's route builder.
+    /// Maps the endpoint routes onto the given route builder.
     /// </summary>
-    /// <param name="app">The endpoint route builder to register routes on.</param>
-    void RegisterEndpoints(IEndpointRouteBuilder app);
+    /// <param name="routes">The endpoint route builder to register routes on.</param>
+    void RegisterEndpoints(IEndpointRouteBuilder routes);
 }

@@ -24,7 +24,6 @@ builder.Services.AddTransient<IEndpointDefinition, AuthorEndpoints>();
 builder.Services.AddTransient<IEndpointDefinition, BookEndpoints>();
 builder.Services.AddApiVersioning(options =>
 {
-    options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = false;
     options.ReportApiVersions = true;
 });

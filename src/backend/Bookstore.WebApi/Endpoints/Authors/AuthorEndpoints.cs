@@ -20,10 +20,10 @@ public sealed class AuthorEndpoints : IEndpointDefinition
     /// <summary>
     /// Registers all author-related routes under the /api/v{version}/authors group.
     /// </summary>
-    /// <param name="app">The endpoint route builder to register routes on.</param>
-    public void RegisterEndpoints(IEndpointRouteBuilder app)
+    /// <param name="routes">The endpoint route builder to register routes on.</param>
+    public void RegisterEndpoints(IEndpointRouteBuilder routes)
     {
-        var group = app.MapGroup("/authors").WithTags("Authors");
+        var group = routes.MapGroup("/authors").WithTags("Authors");
 
         group.MapGet("/", GetAllAuthors)
             .WithName("GetAllAuthors")
