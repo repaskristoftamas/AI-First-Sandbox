@@ -1,7 +1,9 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Application.Books.DTOs;
 using Bookstore.Application.Books.Mappers;
+using Bookstore.Application.Books.Specifications;
 using Bookstore.SharedKernel.Results;
+using Bookstore.SharedKernel.Specifications;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,12 +27,10 @@ internal sealed class GetAllBooksQueryHandler(IApplicationDbContext context) : I
     /// <returns>A result containing a read-only list of <see cref="BookDto"/> objects.</returns>
     public async ValueTask<Result<IReadOnlyList<BookDto>>> Handle(GetAllBooksQuery query, CancellationToken cancellationToken)
     {
-        //TODO: order by different fields, filter by author, publication year, etc.
-        var books = await _context.Books
-            .AsNoTracking()
-            .OrderBy(b => b.Id.Value)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
+        var specification = new PaginatedBooksSpecification(query.Page, query.PageSize);
+
+        var books = await SpecificationEvaluator
+            .Apply(_context.Books.AsNoTracking(), specification)
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<BookDto>>([.. books.Select(b => b.ToDto())]);
