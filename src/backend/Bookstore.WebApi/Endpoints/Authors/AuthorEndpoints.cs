@@ -6,6 +6,7 @@ using Bookstore.Application.Authors.Queries.GetAuthorById;
 using Bookstore.Domain.Authors;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
+using Bookstore.WebApi.Filters;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,7 @@ public sealed class AuthorEndpoints : IEndpointDefinition
 
         group.MapGet("/{id:guid}", GetAuthorById)
             .WithName("GetAuthorById")
+            .AddEndpointFilter<ETagEndpointFilter>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AllowAnonymous();
 

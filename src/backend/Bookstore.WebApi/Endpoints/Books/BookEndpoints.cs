@@ -6,6 +6,7 @@ using Bookstore.Application.Books.Queries.GetBookById;
 using Bookstore.Domain.Books;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
+using Bookstore.WebApi.Filters;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,7 @@ public sealed class BookEndpoints : IEndpointDefinition
 
         group.MapGet("/{id:guid}", GetBookById)
             .WithName("GetBookById")
+            .AddEndpointFilter<ETagEndpointFilter>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AllowAnonymous();
 
