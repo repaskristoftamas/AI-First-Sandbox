@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+using System.IO.Hashing;
 using System.Text.Json;
 using Microsoft.Net.Http.Headers;
 
@@ -20,8 +20,8 @@ public sealed class ETagEndpointFilter : IEndpointFilter
 
         var innerResult = result is INestedHttpResult nested ? nested.Result : result;
 
-        if (innerResult is not IValueHttpResult { Value: not null } valueResult ||
-            innerResult is not IStatusCodeHttpResult { StatusCode: StatusCodes.Status200OK })
+        if (innerResult is not (IValueHttpResult { Value: not null } valueResult
+            and IStatusCodeHttpResult { StatusCode: StatusCodes.Status200OK }))
         {
             return result;
         }
@@ -33,7 +33,7 @@ public sealed class ETagEndpointFilter : IEndpointFilter
         httpContext.Response.Headers.CacheControl = "no-cache";
 
         var ifNoneMatch = httpContext.Request.GetTypedHeaders().IfNoneMatch;
-        if (ifNoneMatch.Count > 0 && ifNoneMatch.Any(e => e.Compare(etag, useStrongComparison: false)))
+        if (ifNoneMatch.Any(e => e.Compare(etag, useStrongComparison: false)))
         {
             return TypedResults.StatusCode(StatusCodes.Status304NotModified);
         }
@@ -42,12 +42,12 @@ public sealed class ETagEndpointFilter : IEndpointFilter
     }
 
     /// <summary>
-    /// Generates a weak ETag by computing a SHA256 hash of the JSON-serialized response value.
+    /// Generates a weak ETag by computing an XxHash3 fingerprint of the JSON-serialized response value.
     /// </summary>
     private static EntityTagHeaderValue GenerateETag(object value)
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(value, value.GetType());
-        var hash = SHA256.HashData(bytes);
+        var hash = XxHash3.Hash(bytes);
         return new EntityTagHeaderValue($"\"{Convert.ToHexString(hash)}\"", isWeak: true);
     }
 }

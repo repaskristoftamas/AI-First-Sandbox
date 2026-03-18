@@ -50,28 +50,20 @@ public sealed class ETagTests : IAsyncDisposable
     public async Task GetAuthorById_WithMatchingIfNoneMatch_ShouldReturn304()
     {
         var authorId = await CreateAuthorAsync();
-        var firstResponse = await _client.GetAsync($"/api/v1/authors/{authorId}");
-        var etag = firstResponse.Headers.ETag!.ToString();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/authors/{authorId}");
-        request.Headers.IfNoneMatch.Add(EntityTagHeaderValue.Parse(etag));
-        var secondResponse = await _client.SendAsync(request);
+        var (response, _) = await SendConditionalGetAsync($"/api/v1/authors/{authorId}");
 
-        secondResponse.StatusCode.ShouldBe(HttpStatusCode.NotModified);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotModified);
     }
 
     [Fact]
     public async Task GetAuthorById_WithMatchingIfNoneMatch_ShouldReturnEmptyBody()
     {
         var authorId = await CreateAuthorAsync();
-        var firstResponse = await _client.GetAsync($"/api/v1/authors/{authorId}");
-        var etag = firstResponse.Headers.ETag!.ToString();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/authors/{authorId}");
-        request.Headers.IfNoneMatch.Add(EntityTagHeaderValue.Parse(etag));
-        var secondResponse = await _client.SendAsync(request);
+        var (response, _) = await SendConditionalGetAsync($"/api/v1/authors/{authorId}");
 
-        var body = await secondResponse.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadAsStringAsync();
         body.ShouldBeEmpty();
     }
 
@@ -79,14 +71,10 @@ public sealed class ETagTests : IAsyncDisposable
     public async Task GetAuthorById_WithMatchingIfNoneMatch_ShouldIncludeETagInResponse()
     {
         var authorId = await CreateAuthorAsync();
-        var firstResponse = await _client.GetAsync($"/api/v1/authors/{authorId}");
-        var etag = firstResponse.Headers.ETag!;
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/authors/{authorId}");
-        request.Headers.IfNoneMatch.Add(etag);
-        var secondResponse = await _client.SendAsync(request);
+        var (response, etag) = await SendConditionalGetAsync($"/api/v1/authors/{authorId}");
 
-        secondResponse.Headers.ETag.ShouldBe(etag);
+        response.Headers.ETag.ShouldBe(etag);
     }
 
     [Fact]
@@ -179,6 +167,31 @@ public sealed class ETagTests : IAsyncDisposable
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         response.Headers.ETag.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetBookById_NotFound_ShouldNotIncludeETag()
+    {
+        var response = await _client.GetAsync($"/api/v1/books/{Guid.NewGuid()}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.Headers.ETag.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// Performs an initial GET to obtain the ETag, then sends a conditional GET with
+    /// <c>If-None-Match</c> set to the received ETag, returning the conditional response and the ETag.
+    /// </summary>
+    private async Task<(HttpResponseMessage Response, EntityTagHeaderValue ETag)> SendConditionalGetAsync(string url)
+    {
+        var firstResponse = await _client.GetAsync(url);
+        var etag = firstResponse.Headers.ETag!;
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.IfNoneMatch.Add(etag);
+        var response = await _client.SendAsync(request);
+
+        return (response, etag);
     }
 
     /// <summary>
