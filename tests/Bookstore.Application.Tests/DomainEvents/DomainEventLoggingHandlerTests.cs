@@ -7,7 +7,6 @@ using Bookstore.Domain.Books.Events;
 using Bookstore.SharedKernel.Abstractions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Shouldly;
 using Xunit;
 
 namespace Bookstore.Application.Tests.DomainEvents;
@@ -22,86 +21,32 @@ public class DomainEventLoggingHandlerTests
         _handler = new DomainEventLoggingHandler(_loggerMock.Object);
     }
 
-    [Fact]
-    public async Task Handle_AuthorCreatedEvent_LogsInformation()
+    public static TheoryData<IDomainEvent, string> DomainEvents => new()
+    {
+        { new AuthorCreatedEvent(AuthorId.New()), nameof(AuthorCreatedEvent) },
+        { new AuthorUpdatedEvent(AuthorId.New()), nameof(AuthorUpdatedEvent) },
+        { new AuthorDeletedEvent(AuthorId.New()), nameof(AuthorDeletedEvent) },
+        { new BookCreatedEvent(BookId.New()), nameof(BookCreatedEvent) },
+        { new BookUpdatedEvent(BookId.New()), nameof(BookUpdatedEvent) },
+        { new BookDeletedEvent(BookId.New()), nameof(BookDeletedEvent) },
+    };
+
+    [Theory]
+    [MemberData(nameof(DomainEvents))]
+    public async Task Handle_DomainEvent_LogsInformationWithEventType(IDomainEvent domainEvent, string expectedEventType)
     {
         // Arrange
-        var notification = new DomainEventNotification(new AuthorCreatedEvent(AuthorId.New()));
+        var notification = new DomainEventNotification(domainEvent);
 
         // Act
         await _handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        VerifyLogWasCalled(LogLevel.Information);
+        VerifyLogWasCalled(LogLevel.Information, expectedEventType);
     }
 
     [Fact]
-    public async Task Handle_AuthorUpdatedEvent_LogsInformation()
-    {
-        // Arrange
-        var notification = new DomainEventNotification(new AuthorUpdatedEvent(AuthorId.New()));
-
-        // Act
-        await _handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        VerifyLogWasCalled(LogLevel.Information);
-    }
-
-    [Fact]
-    public async Task Handle_AuthorDeletedEvent_LogsInformation()
-    {
-        // Arrange
-        var notification = new DomainEventNotification(new AuthorDeletedEvent(AuthorId.New()));
-
-        // Act
-        await _handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        VerifyLogWasCalled(LogLevel.Information);
-    }
-
-    [Fact]
-    public async Task Handle_BookCreatedEvent_LogsInformation()
-    {
-        // Arrange
-        var notification = new DomainEventNotification(new BookCreatedEvent(BookId.New()));
-
-        // Act
-        await _handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        VerifyLogWasCalled(LogLevel.Information);
-    }
-
-    [Fact]
-    public async Task Handle_BookUpdatedEvent_LogsInformation()
-    {
-        // Arrange
-        var notification = new DomainEventNotification(new BookUpdatedEvent(BookId.New()));
-
-        // Act
-        await _handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        VerifyLogWasCalled(LogLevel.Information);
-    }
-
-    [Fact]
-    public async Task Handle_BookDeletedEvent_LogsInformation()
-    {
-        // Arrange
-        var notification = new DomainEventNotification(new BookDeletedEvent(BookId.New()));
-
-        // Act
-        await _handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        VerifyLogWasCalled(LogLevel.Information);
-    }
-
-    [Fact]
-    public async Task Handle_UnknownDomainEvent_LogsWarning()
+    public async Task Handle_UnknownDomainEvent_LogsInformationWithEventType()
     {
         // Arrange
         var notification = new DomainEventNotification(new UnknownTestEvent());
@@ -110,19 +55,20 @@ public class DomainEventLoggingHandlerTests
         await _handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        VerifyLogWasCalled(LogLevel.Warning);
+        VerifyLogWasCalled(LogLevel.Information, nameof(UnknownTestEvent));
     }
 
     /// <summary>
-    /// Verifies that the logger was called exactly once at the specified log level.
+    /// Verifies that the logger was called exactly once at the specified log level
+    /// with a message containing the expected event type name.
     /// </summary>
-    private void VerifyLogWasCalled(LogLevel level)
+    private void VerifyLogWasCalled(LogLevel level, string expectedEventType)
     {
         _loggerMock.Verify(
             x => x.Log(
                 level,
                 It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains(expectedEventType)),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
