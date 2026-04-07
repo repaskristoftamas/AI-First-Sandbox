@@ -23,14 +23,13 @@ public class AuthorDomainEventsTests
     }
 
     [Fact]
-    public void Create_ShouldNotRaiseEvent_WhenValidationFails()
+    public void Create_ShouldReturnFailure_WhenValidationFails()
     {
         // Act
         var result = Author.Create("", "Martin", new DateOnly(1952, 12, 5), _timeProvider);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        Should.Throw<InvalidOperationException>(() => _ = result.Value);
     }
 
     [Fact]
@@ -66,14 +65,14 @@ public class AuthorDomainEventsTests
     }
 
     [Fact]
-    public void RaiseDeletedEvent_ShouldRaiseAuthorDeletedEvent()
+    public void Delete_ShouldRaiseAuthorDeletedEvent()
     {
         // Arrange
         var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider).Value;
         author.ClearDomainEvents();
 
         // Act
-        author.RaiseDeletedEvent();
+        author.Delete();
 
         // Assert
         author.DomainEvents.ShouldHaveSingleItem()

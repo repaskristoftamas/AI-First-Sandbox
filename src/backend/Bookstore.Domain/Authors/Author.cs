@@ -91,9 +91,9 @@ public sealed class Author : AuditableEntity<AuthorId>
     }
 
     /// <summary>
-    /// Raises the <see cref="AuthorDeletedEvent"/> so subscribers are notified before the entity is removed.
+    /// Marks this author for deletion and raises the <see cref="AuthorDeletedEvent"/>.
     /// </summary>
-    public void RaiseDeletedEvent() => AddDomainEvent(new AuthorDeletedEvent(Id));
+    public void Delete() => AddDomainEvent(new AuthorDeletedEvent(Id));
 
     /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.
