@@ -30,6 +30,7 @@ internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : 
         if (book is null)
             return Result.Failure(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
+        book.Delete();
         _context.Books.Remove(book);
         await _context.SaveChangesAsync(cancellationToken);
 
