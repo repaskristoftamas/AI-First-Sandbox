@@ -17,6 +17,6 @@ public interface IPasswordHasher
     /// </summary>
     /// <param name="password">The plaintext password to verify.</param>
     /// <param name="passwordHash">The stored password hash to compare against.</param>
-    /// <returns><c>true</c> if the password matches the hash; otherwise, <c>false</c>.</returns>
-    bool Verify(string password, string passwordHash);
+    /// <returns>The outcome of the verification, including whether a rehash is needed.</returns>
+    PasswordVerificationOutcome Verify(string password, string passwordHash);
 }

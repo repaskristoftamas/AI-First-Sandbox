@@ -27,6 +27,17 @@ public class UserTests
     }
 
     [Fact]
+    public void Create_ShouldNormalizeEmailToLowercase()
+    {
+        // Act
+        var result = User.Create("John@Example.COM", "hashed-password", [Role.User]);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Email.ShouldBe("john@example.com");
+    }
+
+    [Fact]
     public void Create_ShouldAssignMultipleRoles()
     {
         // Arrange
@@ -97,6 +108,20 @@ public class UserTests
         result.IsSuccess.ShouldBeTrue();
         user.Email.ShouldBe("new@example.com");
         user.Roles.ShouldHaveSingleItem().ShouldBe(Role.Admin);
+    }
+
+    [Fact]
+    public void Update_ShouldNormalizeEmailToLowercase()
+    {
+        // Arrange
+        var user = User.Create("old@example.com", "hashed", [Role.User]).Value;
+
+        // Act
+        var result = user.Update("New@Example.COM", [Role.Admin]);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        user.Email.ShouldBe("new@example.com");
     }
 
     [Theory]

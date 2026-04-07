@@ -50,7 +50,7 @@ public sealed class User : AuditableEntity<UserId>
         var user = new User
         {
             Id = UserId.New(),
-            Email = email,
+            Email = NormalizeEmail(email),
             PasswordHash = passwordHash
         };
 
@@ -69,11 +69,11 @@ public sealed class User : AuditableEntity<UserId>
     /// <returns>A success result, or a validation error if any value is invalid.</returns>
     public Result Update(string email, IReadOnlyCollection<Role> roles)
     {
-        var validation = Validate(email, PasswordHash, roles);
+        var validation = ValidateEmailAndRoles(email, roles);
         if (validation.IsFailure)
             return validation;
 
-        Email = email;
+        Email = NormalizeEmail(email);
         _roles.Clear();
         _roles.AddRange(roles);
 
@@ -105,6 +105,11 @@ public sealed class User : AuditableEntity<UserId>
     public void Delete() => AddDomainEvent(new UserDeletedEvent(Id));
 
     /// <summary>
+    /// Normalizes an email address to lowercase for case-insensitive storage and comparison.
+    /// </summary>
+    private static string NormalizeEmail(string email) => email.ToLowerInvariant();
+
+    /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.
     /// </summary>
     /// <remarks>
@@ -112,11 +117,23 @@ public sealed class User : AuditableEntity<UserId>
     /// </remarks>
     private static Result Validate(string email, string passwordHash, IReadOnlyCollection<Role> roles)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Email), UserErrorCodes.EmailRequired, "Email is required.")]));
+        var validation = ValidateEmailAndRoles(email, roles);
+        if (validation.IsFailure)
+            return validation;
 
         if (string.IsNullOrWhiteSpace(passwordHash))
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(PasswordHash), UserErrorCodes.PasswordHashRequired, "Password hash is required.")]));
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Validates email and roles fields shared by both <see cref="Create"/> and <see cref="Update"/>.
+    /// </summary>
+    private static Result ValidateEmailAndRoles(string email, IReadOnlyCollection<Role> roles)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Email), UserErrorCodes.EmailRequired, "Email is required.")]));
 
         if (roles.Count == 0)
             return Result.Failure(new ValidationError([new FieldValidationFailure(nameof(Roles), UserErrorCodes.RolesRequired, "At least one role is required.")]));

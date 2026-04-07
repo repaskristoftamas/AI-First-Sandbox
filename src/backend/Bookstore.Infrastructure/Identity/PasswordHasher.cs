@@ -14,6 +14,11 @@ internal sealed class PasswordHasher : IPasswordHasher
     public string Hash(string password) => _inner.HashPassword(null!, password);
 
     /// <inheritdoc />
-    public bool Verify(string password, string passwordHash) =>
-        _inner.VerifyHashedPassword(null!, passwordHash, password) != PasswordVerificationResult.Failed;
+    public PasswordVerificationOutcome Verify(string password, string passwordHash) =>
+        _inner.VerifyHashedPassword(null!, passwordHash, password) switch
+        {
+            PasswordVerificationResult.Success => PasswordVerificationOutcome.Success,
+            PasswordVerificationResult.SuccessRehashNeeded => PasswordVerificationOutcome.SuccessRehashNeeded,
+            _ => PasswordVerificationOutcome.Failed
+        };
 }
