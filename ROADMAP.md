@@ -30,16 +30,13 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | Entities with private setters + factory methods | Done | Author, Book |
 | Strongly-typed IDs | Done | AuthorId, BookId as record structs |
 | Domain validation (invariant guards) | Done | `Validate` methods on entities |
-| Aggregate roots | Partial | Author and Book exist but Book references Author by ID only — no navigation property on Author |
-| Domain events | Not started | No event dispatching; needed for cross-aggregate communication and eventual consistency |
-| Value objects beyond IDs | Not started | Candidates: ISBN (currently a raw string), Money (Price + Currency), DateRange |
+| Aggregate roots | Done | Author has `Books` navigation property; Book references Author by ID |
+| Domain events | Done | Full lifecycle events (Created, Updated, Deleted) on both Author and Book; dispatched post-persistence via Mediator in `SaveChangesAsync` |
+| Value objects beyond IDs | Partial | ISBN is a validated `readonly record struct` with ISBN-13 format + check digit verification. Candidates remaining: Money (Price + Currency), DateRange |
 | Specifications | Not started | Could replace ad-hoc query logic in handlers |
 
 **Next steps:**
-- Add an `Author.Books` navigation property (already noted as TODO)
-- Promote ISBN to a proper value object with self-validation
 - Consider a `Money` value object if multi-currency ever becomes relevant
-- Introduce domain events (e.g., `BookCreatedEvent`, `AuthorDeletedEvent`) for decoupled side effects
 - Evaluate the Specification pattern for reusable query predicates
 
 ---
@@ -71,12 +68,11 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | Response type annotations | Partial | Endpoints have `.Produces<>()` but could be more detailed |
 | Schema descriptions | Not started | Request/response properties lack descriptions |
 | API versioning in docs | Not started | No versioning yet |
-| Authentication docs | Not started | JWT bearer not documented in OpenAPI spec |
+| Authentication docs | Done | `BearerSecuritySchemeTransformer` registers JWT bearer in the OpenAPI spec |
 
 **Next steps:**
-- Add XML comment descriptions to request/response records so they flow into OpenAPI schemas
-- Document the JWT bearer security scheme in OpenAPI
-- Add example values to request models (ISBN format, date format)
+- Add XML comment descriptions to request/response records so they flow into OpenAPI schemas (#98)
+- Add example values to request models (ISBN format, date format) (#98)
 - Add API versioning (URL-based `/api/v1/` or header-based) and reflect it in OpenAPI
 - Consider generating a typed API client (via NSwag or Kiota) for the future React UI
 
@@ -133,13 +129,12 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | 400 Bad Request for validation | Done | With per-field errors in Problem Details |
 | 404 Not Found | Done | |
 | 409 Conflict | Done | ISBN uniqueness, author with books |
-| 401/403 for auth | Partial | JWT required on write endpoints; no 403 differentiation |
-| 429 Too Many Requests | Not started | Rate limiting not implemented |
+| 401/403 for auth | Partial | JWT required on write endpoints; `AdminOnly` policy on deletes; no `User` role differentiation (#100) |
+| 429 Too Many Requests | Done | Fixed-window rate limiting with `Retry-After` header |
 | 500 Internal Server Error | Done | Global exception handler |
 
 **Next steps:**
-- Implement rate limiting middleware and return 429 with `Retry-After` header
-- Return proper 403 when authenticated but unauthorized (role-based)
+- Return proper 403 when authenticated but unauthorized (role-based) (#100)
 - Consider 422 Unprocessable Entity as an alternative to 400 for domain validation failures
 - Add `ETag` / `304 Not Modified` support for GET endpoints (caching)
 
@@ -150,16 +145,14 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | Offset-based pagination | Done | `page` + `pageSize` query params, skip/take |
-| Pagination metadata in response | Not started | No total count, page count, or next/prev links |
+| Pagination metadata in response | Not started | No total count, page count, or next/prev links (#96) |
 | Cursor-based pagination | Not started | Better for large datasets |
-| Rate limiting | Not started | TODO in code |
+| Rate limiting | Done | Fixed-window rate limiter, partitioned by IP, separate limits for anonymous (10/min) and authenticated (100/min) users, returns 429 with `Retry-After` header |
 
 **Next steps:**
-- Return pagination metadata (total count, page count, has next/previous) — either in response body as a wrapper or via `Link` / custom headers
-- Add `Microsoft.AspNetCore.RateLimiting` middleware with fixed-window or token-bucket policy
-- Apply rate limiting globally with higher limits for authenticated users
+- Return pagination metadata (total count, page count, has next/previous) — either in response body as a wrapper or via `Link` / custom headers (#96)
+- Extract a reusable `PagedResult<T>` type in SharedKernel (#96)
 - Consider cursor-based pagination for the books endpoint (keyset pagination using `BookId`)
-- Extract a reusable `PagedResult<T>` type in SharedKernel
 
 ---
 
@@ -170,8 +163,8 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | JWT Bearer (HS256) | Done | Token validation configured |
 | Token generation endpoint | Not started | No login/register endpoints |
 | Refresh tokens | Not started | |
-| Role-based authorization | Not started | TODO: Admin role for delete |
-| Policy-based authorization | Not started | |
+| Role-based authorization | Partial | `AdminOnly` policy enforced on delete endpoints; no `User` role yet (#100) |
+| Policy-based authorization | Partial | Infrastructure in place; needs `User` role and full role management (#100, #104) |
 | OAuth 2.0 | Not started | Goal requirement |
 
 **Next steps:**
@@ -219,7 +212,7 @@ The project is a Clean Architecture bookstore API built with .NET 10, CQRS (Medi
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | Message broker | Not started | |
-| Event-driven communication | Not started | No domain events yet |
+| Event-driven communication | Partial | Domain events exist and are dispatched in-process via Mediator; no cross-service messaging yet |
 
 **Meaningful use cases in the bookstore domain:**
 
@@ -424,23 +417,24 @@ The AI agent layer abstracts the LLM behind a provider interface, allowing runti
 ### Phase 1 — Harden the Foundation
 Complete existing TODOs and close gaps in the current monolith.
 
-- [ ] Add `Author.Books` navigation property
-- [ ] Promote ISBN to a value object
-- [ ] Add pagination metadata to list responses (`PagedResult<T>`)
-- [ ] Implement rate limiting
-- [ ] Add health check endpoints
-- [ ] Complete OpenAPI documentation (security scheme, descriptions, examples)
-- [ ] Add role-based authorization with policies
-- [ ] Optimize DeleteAuthor to single query
+- [x] Add `Author.Books` navigation property
+- [x] Promote ISBN to a value object
+- [ ] Add pagination metadata to list responses (`PagedResult<T>`) (#96)
+- [x] Implement rate limiting
+- [ ] Add health check endpoints (#97)
+- [ ] Complete OpenAPI documentation (descriptions, examples) (#98) — security scheme already done
+- [x] Add role-based authorization with policies — `AdminOnly` in place; `User` role tracked in #100
+- [ ] Optimize DeleteAuthor to single query (#99)
 
 ### Phase 2 — Authentication & Identity
 Build out the full auth story.
 
-- [ ] Add User entity and Identity Service (can start as module in the monolith)
-- [ ] Register + login endpoints with JWT issuance
-- [ ] Refresh token rotation
-- [ ] Role management (Admin, User)
-- [ ] OAuth 2.0 support via Keycloak (Docker) or ASP.NET Identity
+- [ ] Add User entity and Identity Service (#101)
+- [ ] Register + login endpoints with JWT issuance (#102)
+- [ ] Refresh token rotation (#103)
+- [ ] Enhance role-based authorization with User role (#100)
+- [ ] Role management — Admin, User (#104)
+- [ ] OAuth 2.0 support via Keycloak or ASP.NET Identity (#105)
 
 ### Phase 3 — Database Portability & Caching
 - [ ] Add PostgreSQL provider support (configurable)
@@ -449,7 +443,7 @@ Build out the full auth story.
 - [ ] Add EF Core compiled queries for hot paths
 
 ### Phase 4 — Messaging & Events
-- [ ] Add domain events to entities
+- [x] Add domain events to entities — Author and Book have full lifecycle events (#91, #92)
 - [ ] Add RabbitMQ to Docker Compose
 - [ ] Integrate MassTransit
 - [ ] Implement first event flow (BookCreated → Notification)
