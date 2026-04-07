@@ -37,7 +37,7 @@ public class BookDomainEventsTests
     public void Update_ShouldRaiseBookUpdatedEvent()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
+        var book = CreateTestBook();
         book.ClearDomainEvents();
 
         // Act
@@ -54,7 +54,7 @@ public class BookDomainEventsTests
     public void Update_ShouldNotRaiseEvent_WhenValidationFails()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
+        var book = CreateTestBook();
         book.ClearDomainEvents();
 
         // Act
@@ -69,7 +69,7 @@ public class BookDomainEventsTests
     public void Delete_ShouldRaiseBookDeletedEvent()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
+        var book = CreateTestBook();
         book.ClearDomainEvents();
 
         // Act
@@ -85,7 +85,7 @@ public class BookDomainEventsTests
     public void ClearDomainEvents_ShouldRemoveAllEvents()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
+        var book = CreateTestBook();
         book.DomainEvents.ShouldNotBeEmpty();
 
         // Act
@@ -94,4 +94,10 @@ public class BookDomainEventsTests
         // Assert
         book.DomainEvents.ShouldBeEmpty();
     }
+
+    /// <summary>
+    /// Creates a valid <see cref="Book"/> instance with default test values.
+    /// </summary>
+    private static Book CreateTestBook()
+        => Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
 }

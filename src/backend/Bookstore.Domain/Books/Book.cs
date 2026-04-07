@@ -107,7 +107,7 @@ public sealed class Book : AuditableEntity<BookId>
     }
 
     /// <summary>
-    /// Marks this book for deletion and raises the <see cref="BookDeletedEvent"/>.
+    /// Signals that this book is being deleted by raising the <see cref="BookDeletedEvent"/>.
     /// </summary>
     public void Delete() => AddDomainEvent(new BookDeletedEvent(Id));
 
