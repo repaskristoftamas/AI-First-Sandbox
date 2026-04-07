@@ -1,3 +1,4 @@
+using Bookstore.Domain.Authors.Events;
 using Bookstore.Domain.Books;
 using Bookstore.SharedKernel.Abstractions;
 using Bookstore.SharedKernel.Results;
@@ -53,13 +54,17 @@ public sealed class Author : AuditableEntity<AuthorId>
         if (validation.IsFailure)
             return Result.Failure<Author>(validation.Error);
 
-        return Result.Success(new Author
+        var author = new Author
         {
             Id = AuthorId.New(),
             FirstName = firstName,
             LastName = lastName,
             DateOfBirth = dateOfBirth
-        });
+        };
+
+        author.AddDomainEvent(new AuthorCreatedEvent(author.Id));
+
+        return Result.Success(author);
     }
 
     /// <summary>
@@ -80,8 +85,15 @@ public sealed class Author : AuditableEntity<AuthorId>
         LastName = lastName;
         DateOfBirth = dateOfBirth;
 
+        AddDomainEvent(new AuthorUpdatedEvent(Id));
+
         return Result.Success();
     }
+
+    /// <summary>
+    /// Marks this author for deletion and raises the <see cref="AuthorDeletedEvent"/>.
+    /// </summary>
+    public void Delete() => AddDomainEvent(new AuthorDeletedEvent(Id));
 
     /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.

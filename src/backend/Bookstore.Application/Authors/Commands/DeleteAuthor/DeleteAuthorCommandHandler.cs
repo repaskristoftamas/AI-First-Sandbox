@@ -39,6 +39,8 @@ internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context) 
         if (hasBooks)
             return Result.Failure(new ConflictError(AuthorErrorCodes.HasAssociatedBooks, "Cannot delete the author because they have associated books."));
 
+        author.Delete();
+
         _context.Authors.Remove(author);
         await _context.SaveChangesAsync(cancellationToken);
 
