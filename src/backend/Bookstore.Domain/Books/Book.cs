@@ -101,8 +101,15 @@ public sealed class Book : AuditableEntity<BookId>
         Price = price;
         PublicationYear = publicationYear;
 
+        AddDomainEvent(new BookUpdatedEvent(Id));
+
         return Result.Success();
     }
+
+    /// <summary>
+    /// Signals that this book is being deleted by raising the <see cref="BookDeletedEvent"/>.
+    /// </summary>
+    public void Delete() => AddDomainEvent(new BookDeletedEvent(Id));
 
     /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.

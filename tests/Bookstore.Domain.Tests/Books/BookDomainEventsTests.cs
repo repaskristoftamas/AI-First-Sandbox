@@ -34,10 +34,58 @@ public class BookDomainEventsTests
     }
 
     [Fact]
+    public void Update_ShouldRaiseBookUpdatedEvent()
+    {
+        // Arrange
+        var book = CreateTestBook();
+        book.ClearDomainEvents();
+
+        // Act
+        var result = book.Update("Clean Code", AuthorId.New(), Isbn.Create("9780132350884").Value, 44.99m, 2008, TimeProvider.System);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        book.DomainEvents.ShouldHaveSingleItem()
+            .ShouldBeOfType<BookUpdatedEvent>()
+            .BookId.ShouldBe(book.Id);
+    }
+
+    [Fact]
+    public void Update_ShouldNotRaiseEvent_WhenValidationFails()
+    {
+        // Arrange
+        var book = CreateTestBook();
+        book.ClearDomainEvents();
+
+        // Act
+        var result = book.Update("", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        book.DomainEvents.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Delete_ShouldRaiseBookDeletedEvent()
+    {
+        // Arrange
+        var book = CreateTestBook();
+        book.ClearDomainEvents();
+
+        // Act
+        book.Delete();
+
+        // Assert
+        book.DomainEvents.ShouldHaveSingleItem()
+            .ShouldBeOfType<BookDeletedEvent>()
+            .BookId.ShouldBe(book.Id);
+    }
+
+    [Fact]
     public void ClearDomainEvents_ShouldRemoveAllEvents()
     {
         // Arrange
-        var book = Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
+        var book = CreateTestBook();
         book.DomainEvents.ShouldNotBeEmpty();
 
         // Act
@@ -46,4 +94,10 @@ public class BookDomainEventsTests
         // Assert
         book.DomainEvents.ShouldBeEmpty();
     }
+
+    /// <summary>
+    /// Creates a valid <see cref="Book"/> instance with default test values.
+    /// </summary>
+    private static Book CreateTestBook()
+        => Book.Create("Clean Architecture", AuthorId.New(), Isbn.Create("9780134494166").Value, 39.99m, 2017, TimeProvider.System).Value;
 }
