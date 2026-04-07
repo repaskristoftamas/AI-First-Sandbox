@@ -1,0 +1,11 @@
+wing: bookstore_api
+rooms:
+- name: guides
+  description: Files from guides/
+- name: backend
+  description: Files from src/backend
+- name: testing
+  description: Files from tests/
+- name: general
+  description: Files that don't fit other rooms
+  
