@@ -23,11 +23,11 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options, TimeProvider.System, new Mock<IPublisher>().Object);
-        _handler = new DeleteAuthorCommandHandler(_context);
+        _handler = new DeleteAuthorCommandHandler(_context, TimeProvider.System);
     }
 
     [Fact]
-    public async Task Handle_ShouldDeleteAuthor_WhenAuthorExists()
+    public async Task Handle_ShouldSoftDeleteAuthor_WhenAuthorExists()
     {
         // Arrange
         var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
@@ -41,8 +41,14 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        var deleted = await _context.Authors.FindAsync(author.Id);
-        deleted.ShouldBeNull();
+        var excludedByFilter = await _context.Authors.FirstOrDefaultAsync(a => a.Id == author.Id);
+        excludedByFilter.ShouldBeNull();
+
+        var softDeleted = await _context.Authors
+            .IgnoreQueryFilters()
+            .FirstAsync(a => a.Id == author.Id);
+        softDeleted.IsDeleted.ShouldBeTrue();
+        softDeleted.DeletedAt.ShouldNotBeNull();
     }
 
     [Fact]
@@ -83,6 +89,32 @@ public class DeleteAuthorCommandHandlerTests : IAsyncDisposable
 
         var authorStillExists = await _context.Authors.AnyAsync(a => a.Id == author.Id);
         authorStillExists.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldDeleteAuthor_WhenAllAssociatedBooksAreSoftDeleted()
+    {
+        // Arrange
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), TimeProvider.System).Value;
+        _context.Authors.Add(author);
+
+        var book = Book.Create("Clean Code", author.Id, Isbn.Create("9780132350884").Value, 29.99m, 2008, TimeProvider.System).Value;
+        book.Delete(TimeProvider.System);
+        _context.Books.Add(book);
+
+        await _context.SaveChangesAsync();
+
+        var command = new DeleteAuthorCommand(author.Id);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        var softDeletedAuthor = await _context.Authors
+            .IgnoreQueryFilters()
+            .FirstAsync(a => a.Id == author.Id);
+        softDeletedAuthor.IsDeleted.ShouldBeTrue();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();

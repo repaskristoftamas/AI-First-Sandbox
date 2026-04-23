@@ -42,7 +42,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(256);
 
         builder.HasIndex(u => u.Email)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
 
         builder.Property(u => u.PasswordHash)
             .IsRequired()
@@ -65,5 +66,13 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(u => u.UpdatedAt);
+
+        builder.Property(u => u.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(u => u.DeletedAt);
+
+        builder.HasQueryFilter(u => !u.IsDeleted);
     }
 }

@@ -70,7 +70,8 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .HasMaxLength(13);
 
         builder.HasIndex(b => b.ISBN)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
 
         builder.Property(b => b.Price)
             .HasPrecision(10, 2);
@@ -79,5 +80,13 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .IsRequired();
 
         builder.Property(b => b.UpdatedAt);
+
+        builder.Property(b => b.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(b => b.DeletedAt);
+
+        builder.HasQueryFilter(b => !b.IsDeleted);
     }
 }

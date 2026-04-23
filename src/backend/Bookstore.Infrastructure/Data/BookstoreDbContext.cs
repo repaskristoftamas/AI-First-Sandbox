@@ -53,6 +53,8 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     /// <returns>The number of state entries written to the data store.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        EnforceSoftDelete();
+
         var utcNow = timeProvider.GetUtcNow();
 
         foreach (var entry in ChangeTracker.Entries<IAuditable>())
@@ -86,5 +88,25 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Prevents hard deletion of soft-deletable entities by inspecting the change tracker.
+    /// </summary>
+    /// <remarks>
+    /// Soft-deletable entities must be removed via their <c>Delete</c> domain method, which
+    /// sets <see cref="ISoftDeletable.IsDeleted"/>. Calling <c>DbSet.Remove</c> bypasses
+    /// domain events and tombstone state, so it is blocked here.
+    /// </remarks>
+    private void EnforceSoftDelete()
+    {
+        var hardDeleted = ChangeTracker.Entries<ISoftDeletable>()
+            .FirstOrDefault(e => e.State == EntityState.Deleted);
+
+        if (hardDeleted is not null)
+        {
+            throw new InvalidOperationException(
+                $"Hard delete of soft-deletable entity '{hardDeleted.Entity.GetType().Name}' is not allowed. Use the entity's Delete method to perform a soft delete.");
+        }
     }
 }

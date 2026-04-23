@@ -20,6 +20,8 @@ internal static partial class BookMapper
     /// <param name="book">The domain entity to convert.</param>
     /// <returns>A <see cref="BookDto"/> containing the mapped values.</returns>
     [MapperIgnoreSource(nameof(Book.DomainEvents))]
+    [MapperIgnoreSource(nameof(Book.IsDeleted))]
+    [MapperIgnoreSource(nameof(Book.DeletedAt))]
     public static partial BookDto ToDto(this Book book);
 
     /// <summary>

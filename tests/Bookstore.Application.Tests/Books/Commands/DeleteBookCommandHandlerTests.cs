@@ -23,11 +23,11 @@ public sealed class DeleteBookCommandHandlerTests : IAsyncDisposable
             .Options;
 
         _context = new BookstoreDbContext(options, TimeProvider.System, new Mock<IPublisher>().Object);
-        _handler = new DeleteBookCommandHandler(_context);
+        _handler = new DeleteBookCommandHandler(_context, TimeProvider.System);
     }
 
     [Fact]
-    public async Task Handle_ShouldDeleteBook_WhenBookExists()
+    public async Task Handle_ShouldSoftDeleteBook_WhenBookExists()
     {
         // Arrange
         var author = await TestDataSeeder.SeedAuthorAsync(_context);
@@ -42,8 +42,14 @@ public sealed class DeleteBookCommandHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        var deleted = await _context.Books.FindAsync(book.Id);
-        deleted.ShouldBeNull();
+        var excludedByFilter = await _context.Books.FirstOrDefaultAsync(b => b.Id == book.Id);
+        excludedByFilter.ShouldBeNull();
+
+        var softDeleted = await _context.Books
+            .IgnoreQueryFilters()
+            .FirstAsync(b => b.Id == book.Id);
+        softDeleted.IsDeleted.ShouldBeTrue();
+        softDeleted.DeletedAt.ShouldNotBeNull();
     }
 
     [Fact]

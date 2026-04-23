@@ -1,5 +1,6 @@
 using Bookstore.Domain.Users;
 using Bookstore.Domain.Users.Events;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -7,6 +8,8 @@ namespace Bookstore.Domain.Tests.Users;
 
 public class UserDomainEventsTests
 {
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
+
     [Fact]
     public void Create_ShouldRaiseUserCreatedEvent()
     {
@@ -101,11 +104,38 @@ public class UserDomainEventsTests
         user.ClearDomainEvents();
 
         // Act
-        user.Delete();
+        user.Delete(_timeProvider);
 
         // Assert
+        user.IsDeleted.ShouldBeTrue();
         user.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<UserDeletedEvent>()
             .UserId.ShouldBe(user.Id);
+    }
+
+    [Fact]
+    public void Delete_ShouldSetIsDeletedToTrue()
+    {
+        // Arrange
+        var user = User.Create("john@example.com", "hashed", [Role.User]).Value;
+
+        // Act
+        user.Delete(_timeProvider);
+
+        // Assert
+        user.IsDeleted.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Delete_ShouldSetDeletedAt()
+    {
+        // Arrange
+        var user = User.Create("john@example.com", "hashed", [Role.User]).Value;
+
+        // Act
+        user.Delete(_timeProvider);
+
+        // Assert
+        user.DeletedAt.ShouldBe(_timeProvider.GetUtcNow());
     }
 }
