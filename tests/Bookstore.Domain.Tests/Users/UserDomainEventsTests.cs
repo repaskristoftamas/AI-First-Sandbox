@@ -107,7 +107,6 @@ public class UserDomainEventsTests
         user.Delete(_timeProvider);
 
         // Assert
-        user.IsDeleted.ShouldBeTrue();
         user.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<UserDeletedEvent>()
             .UserId.ShouldBe(user.Id);

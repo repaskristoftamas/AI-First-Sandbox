@@ -35,10 +35,10 @@ public sealed class User : AuditableEntity<UserId>, ISoftDeletable
     public IReadOnlyCollection<Role> Roles => _roles;
 
     /// <inheritdoc />
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; private set; }
 
     /// <inheritdoc />
-    public DateTimeOffset? DeletedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     /// <summary>
     /// Factory method that creates a new user with a generated identifier.

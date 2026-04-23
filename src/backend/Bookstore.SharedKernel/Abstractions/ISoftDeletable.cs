@@ -8,10 +8,10 @@ public interface ISoftDeletable
     /// <summary>
     /// Indicates whether the entity has been soft-deleted.
     /// </summary>
-    bool IsDeleted { get; set; }
+    bool IsDeleted { get; }
 
     /// <summary>
     /// Timestamp indicating when the entity was soft-deleted, or null if it has not been deleted.
     /// </summary>
-    DateTimeOffset? DeletedAt { get; set; }
+    DateTimeOffset? DeletedAt { get; }
 }

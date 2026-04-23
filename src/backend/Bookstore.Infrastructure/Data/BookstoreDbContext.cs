@@ -101,12 +101,14 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     private void EnforceSoftDelete()
     {
         var hardDeleted = ChangeTracker.Entries<ISoftDeletable>()
-            .FirstOrDefault(e => e.State == EntityState.Deleted);
+            .Where(e => e.State == EntityState.Deleted)
+            .ToList();
 
-        if (hardDeleted is not null)
+        if (hardDeleted.Count > 0)
         {
+            var entityNames = string.Join(", ", hardDeleted.Select(e => e.Entity.GetType().Name));
             throw new InvalidOperationException(
-                $"Hard delete of soft-deletable entity '{hardDeleted.Entity.GetType().Name}' is not allowed. Use the entity's Delete method to perform a soft delete.");
+                $"Hard delete of soft-deletable entities is not allowed: [{entityNames}]. Use the entity's Delete method to perform a soft delete.");
         }
     }
 }

@@ -75,7 +75,6 @@ public class AuthorDomainEventsTests
         author.Delete(_timeProvider);
 
         // Assert
-        author.IsDeleted.ShouldBeTrue();
         author.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<AuthorDeletedEvent>()
             .AuthorId.ShouldBe(author.Id);

@@ -41,10 +41,10 @@ public sealed class Author : AuditableEntity<AuthorId>, ISoftDeletable
     public IReadOnlyCollection<Book> Books => _books;
 
     /// <inheritdoc />
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; private set; }
 
     /// <inheritdoc />
-    public DateTimeOffset? DeletedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     /// <summary>
     /// Factory method that creates a new author with a generated identifier.

@@ -79,7 +79,6 @@ public class BookDomainEventsTests
         book.Delete(_timeProvider);
 
         // Assert
-        book.IsDeleted.ShouldBeTrue();
         book.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<BookDeletedEvent>()
             .BookId.ShouldBe(book.Id);

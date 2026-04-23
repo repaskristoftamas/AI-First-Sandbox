@@ -69,6 +69,7 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .IsRequired()
             .HasMaxLength(13);
 
+        // SQL Server-specific filter syntax; must be updated if the provider changes.
         builder.HasIndex(b => b.ISBN)
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");

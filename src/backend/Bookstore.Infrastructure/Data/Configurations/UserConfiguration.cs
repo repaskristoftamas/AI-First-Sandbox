@@ -41,6 +41,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(256);
 
+        // SQL Server-specific filter syntax; must be updated if the provider changes.
         builder.HasIndex(u => u.Email)
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");

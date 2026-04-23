@@ -44,10 +44,10 @@ public sealed class Book : AuditableEntity<BookId>, ISoftDeletable
     public int PublicationYear { get; private set; }
 
     /// <inheritdoc />
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; private set; }
 
     /// <inheritdoc />
-    public DateTimeOffset? DeletedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     /// <summary>
     /// Factory method that creates a new book with a generated identifier.
