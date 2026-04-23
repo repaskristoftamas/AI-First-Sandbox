@@ -13,12 +13,13 @@ namespace Bookstore.Application.Authors.Commands.DeleteAuthor;
 /// Returns a not-found error if the author does not exist,
 /// or a conflict error if the author still has associated books.
 /// </remarks>
-internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context) : ICommandHandler<DeleteAuthorCommand, Result>
+internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context, TimeProvider timeProvider) : ICommandHandler<DeleteAuthorCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
-    /// Locates the author by identifier and removes them from the catalog.
+    /// Locates the author by identifier and soft-deletes them.
     /// </summary>
     /// <param name="command">The command containing the identifier of the author to delete.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
@@ -39,9 +40,7 @@ internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context) 
         if (hasBooks)
             return Result.Failure(new ConflictError(AuthorErrorCodes.HasAssociatedBooks, "Cannot delete the author because they have associated books."));
 
-        author.Delete();
-
-        _context.Authors.Remove(author);
+        author.Delete(_timeProvider);
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -20,6 +20,8 @@ internal static partial class AuthorMapper
     /// <returns>An <see cref="AuthorDto"/> containing the mapped values.</returns>
     [MapperIgnoreSource(nameof(Author.Books))]
     [MapperIgnoreSource(nameof(Author.DomainEvents))]
+    [MapperIgnoreSource(nameof(Author.IsDeleted))]
+    [MapperIgnoreSource(nameof(Author.DeletedAt))]
     public static partial AuthorDto ToDto(this Author author);
 
     /// <summary>

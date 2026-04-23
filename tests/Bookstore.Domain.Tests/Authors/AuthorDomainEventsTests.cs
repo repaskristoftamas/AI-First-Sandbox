@@ -72,11 +72,37 @@ public class AuthorDomainEventsTests
         author.ClearDomainEvents();
 
         // Act
-        author.Delete();
+        author.Delete(_timeProvider);
 
         // Assert
         author.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<AuthorDeletedEvent>()
             .AuthorId.ShouldBe(author.Id);
+    }
+
+    [Fact]
+    public void Delete_ShouldSetIsDeletedToTrue()
+    {
+        // Arrange
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider).Value;
+
+        // Act
+        author.Delete(_timeProvider);
+
+        // Assert
+        author.IsDeleted.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Delete_ShouldSetDeletedAt()
+    {
+        // Arrange
+        var author = Author.Create("Robert C.", "Martin", new DateOnly(1952, 12, 5), _timeProvider).Value;
+
+        // Act
+        author.Delete(_timeProvider);
+
+        // Assert
+        author.DeletedAt.ShouldBe(_timeProvider.GetUtcNow());
     }
 }

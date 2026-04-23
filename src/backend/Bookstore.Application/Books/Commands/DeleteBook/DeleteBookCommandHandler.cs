@@ -12,12 +12,13 @@ namespace Bookstore.Application.Books.Commands.DeleteBook;
 /// <remarks>
 /// Returns a not-found error if the book does not exist.
 /// </remarks>
-internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : ICommandHandler<DeleteBookCommand, Result>
+internal sealed class DeleteBookCommandHandler(IApplicationDbContext context, TimeProvider timeProvider) : ICommandHandler<DeleteBookCommand, Result>
 {
     private readonly IApplicationDbContext _context = context;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     /// <summary>
-    /// Locates the book by identifier and removes it from the catalog.
+    /// Locates the book by identifier and soft-deletes it.
     /// </summary>
     /// <param name="command">The command containing the identifier of the book to delete.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
@@ -30,8 +31,7 @@ internal sealed class DeleteBookCommandHandler(IApplicationDbContext context) : 
         if (book is null)
             return Result.Failure(new NotFoundError(BookErrorCodes.NotFound, "The book with the specified identifier was not found."));
 
-        book.Delete();
-        _context.Books.Remove(book);
+        book.Delete(_timeProvider);
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

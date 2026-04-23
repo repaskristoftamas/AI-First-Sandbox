@@ -7,7 +7,7 @@ namespace Bookstore.Domain.Users;
 /// <summary>
 /// Domain entity representing a user in the system.
 /// </summary>
-public sealed class User : AuditableEntity<UserId>
+public sealed class User : AuditableEntity<UserId>, ISoftDeletable
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="User"/> class.
@@ -33,6 +33,12 @@ public sealed class User : AuditableEntity<UserId>
     /// Roles assigned to this user.
     /// </summary>
     public IReadOnlyCollection<Role> Roles => _roles;
+
+    /// <inheritdoc />
+    public bool IsDeleted { get; private set; }
+
+    /// <inheritdoc />
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     /// <summary>
     /// Factory method that creates a new user with a generated identifier.
@@ -100,9 +106,15 @@ public sealed class User : AuditableEntity<UserId>
     }
 
     /// <summary>
-    /// Marks this user for deletion and raises the <see cref="UserDeletedEvent"/>.
+    /// Marks this user as soft-deleted and raises the <see cref="UserDeletedEvent"/>.
     /// </summary>
-    public void Delete() => AddDomainEvent(new UserDeletedEvent(Id));
+    /// <param name="timeProvider">Provides the current time used to stamp <see cref="DeletedAt"/>.</param>
+    public void Delete(TimeProvider timeProvider)
+    {
+        IsDeleted = true;
+        DeletedAt = timeProvider.GetUtcNow();
+        AddDomainEvent(new UserDeletedEvent(Id));
+    }
 
     /// <summary>
     /// Normalizes an email address to lowercase for case-insensitive storage and comparison.

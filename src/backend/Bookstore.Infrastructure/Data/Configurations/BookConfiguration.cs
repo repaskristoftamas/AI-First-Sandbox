@@ -69,8 +69,10 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .IsRequired()
             .HasMaxLength(13);
 
+        // SQL Server-specific filter syntax; must be updated if the provider changes.
         builder.HasIndex(b => b.ISBN)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
 
         builder.Property(b => b.Price)
             .HasPrecision(10, 2);
@@ -79,5 +81,13 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
             .IsRequired();
 
         builder.Property(b => b.UpdatedAt);
+
+        builder.Property(b => b.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(b => b.DeletedAt);
+
+        builder.HasQueryFilter(b => !b.IsDeleted);
     }
 }

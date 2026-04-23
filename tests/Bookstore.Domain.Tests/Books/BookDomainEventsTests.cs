@@ -1,6 +1,7 @@
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Domain.Books.Events;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -8,6 +9,8 @@ namespace Bookstore.Domain.Tests.Books;
 
 public class BookDomainEventsTests
 {
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
+
     [Fact]
     public void Create_ShouldRaiseBookCreatedEvent()
     {
@@ -73,12 +76,38 @@ public class BookDomainEventsTests
         book.ClearDomainEvents();
 
         // Act
-        book.Delete();
+        book.Delete(_timeProvider);
 
         // Assert
         book.DomainEvents.ShouldHaveSingleItem()
             .ShouldBeOfType<BookDeletedEvent>()
             .BookId.ShouldBe(book.Id);
+    }
+
+    [Fact]
+    public void Delete_ShouldSetIsDeletedToTrue()
+    {
+        // Arrange
+        var book = CreateTestBook();
+
+        // Act
+        book.Delete(_timeProvider);
+
+        // Assert
+        book.IsDeleted.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Delete_ShouldSetDeletedAt()
+    {
+        // Arrange
+        var book = CreateTestBook();
+
+        // Act
+        book.Delete(_timeProvider);
+
+        // Assert
+        book.DeletedAt.ShouldBe(_timeProvider.GetUtcNow());
     }
 
     [Fact]

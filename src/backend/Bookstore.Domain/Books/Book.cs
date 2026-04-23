@@ -8,7 +8,7 @@ namespace Bookstore.Domain.Books;
 /// <summary>
 /// Domain entity representing a book in the bookstore catalog.
 /// </summary>
-public sealed class Book : AuditableEntity<BookId>
+public sealed class Book : AuditableEntity<BookId>, ISoftDeletable
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Book"/> class.
@@ -42,6 +42,12 @@ public sealed class Book : AuditableEntity<BookId>
     /// Year the book was published.
     /// </summary>
     public int PublicationYear { get; private set; }
+
+    /// <inheritdoc />
+    public bool IsDeleted { get; private set; }
+
+    /// <inheritdoc />
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     /// <summary>
     /// Factory method that creates a new book with a generated identifier.
@@ -107,9 +113,15 @@ public sealed class Book : AuditableEntity<BookId>
     }
 
     /// <summary>
-    /// Signals that this book is being deleted by raising the <see cref="BookDeletedEvent"/>.
+    /// Marks this book as soft-deleted and raises the <see cref="BookDeletedEvent"/>.
     /// </summary>
-    public void Delete() => AddDomainEvent(new BookDeletedEvent(Id));
+    /// <param name="timeProvider">Provides the current time used to stamp <see cref="DeletedAt"/>.</param>
+    public void Delete(TimeProvider timeProvider)
+    {
+        IsDeleted = true;
+        DeletedAt = timeProvider.GetUtcNow();
+        AddDomainEvent(new BookDeletedEvent(Id));
+    }
 
     /// <summary>
     /// Last-resort invariant guard that protects structural integrity regardless of entry point.

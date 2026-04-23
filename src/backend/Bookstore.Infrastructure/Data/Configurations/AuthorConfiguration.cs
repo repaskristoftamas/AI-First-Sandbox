@@ -49,5 +49,13 @@ internal sealed class AuthorConfiguration : IEntityTypeConfiguration<Author>
             .IsRequired();
 
         builder.Property(a => a.UpdatedAt);
+
+        builder.Property(a => a.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(a => a.DeletedAt);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
     }
 }
