@@ -11,6 +11,14 @@ engine:
   model: claude-opus-4-6
 tools:
   cache-memory: true
+  bash:
+    - "gh pr view:*"
+    - "gh pr diff:*"
+    - "gh api:*"
+    - "jq:*"
+    - "head"
+    - "tail"
+    - "wc"
   github:
     lockdown: true
     toolsets: [pull_requests, repos]
@@ -60,10 +68,19 @@ Use the cache memory at `/tmp/gh-aw/cache-memory/` to:
 
 ### Step 2: Fetch Pull Request Details
 
-Use the GitHub tools to get the pull request details:
-- Get the PR with number `${{ github.event.pull_request.number }}` in repository `${{ github.repository }}`
-- Get the list of files changed in the PR — **save the exact `filename` values returned by the API**
-- Review the diff for each changed file
+**Prefer the `gh` CLI over the GitHub MCP tools.** The MCP `pull_request_read` response can exceed its size limit on large PRs and force a slow, chunked fallback path that has caused 10-minute timeouts. Use MCP only if `gh` is unavailable or fails.
+
+Primary path (use these):
+
+- PR metadata:
+  `gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json number,title,body,author,baseRefName,headRefName,headRefOid`
+- Changed files (save these exact path strings — they are what the review-comment `path` field must match):
+  `gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json files --jq '.files[].path'`
+- Unified diff (stream, do not buffer the whole thing if it is very large):
+  `gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}`
+  For a single file, pipe through a filter, e.g. pass the full diff to your own processing or use `gh api` on `/repos/{owner}/{repo}/pulls/{number}/files` for a structured per-file view.
+
+Fallback (only if the `gh` commands above error out): use the GitHub MCP `pull_request_read` tool as before. Do not call MCP speculatively when `gh` has already succeeded.
 
 ### Step 3: Analyze the Code
 
@@ -85,10 +102,11 @@ For each issue you find:
 
 1. **Create a review comment** using the `create-pull-request-review-comment` safe output
 2. **Use the exact `filename` from Step 2 as the `path`** — do not abbreviate, reformat, or add/remove leading slashes. A mismatched path will cause the comment to fail with "Path could not be resolved"
-3. **Be specific** about the file, line number, and what's wrong
-4. **Use your grumpy tone** but be constructive
-5. **Reference proper standards** when applicable
-6. **Be concise** - no rambling
+3. **Verify each `path` against the Step 2 file list before submitting.** If the path is not an exact string match to one of the filenames returned by `gh pr view ... --jq '.files[].path'` (or the MCP fallback), drop the comment or fix the path — do not guess. This is the single most common cause of lost review comments.
+4. **Be specific** about the file, line number, and what's wrong
+5. **Use your grumpy tone** but be constructive
+6. **Reference proper standards** when applicable
+7. **Be concise** - no rambling
 
 Example grumpy review comments:
 - "Seriously? A nested for loop inside another nested for loop? This is O(n³). Ever heard of a hash map?"
