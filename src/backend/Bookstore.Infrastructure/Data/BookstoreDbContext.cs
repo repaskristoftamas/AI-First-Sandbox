@@ -1,6 +1,7 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
+using Bookstore.Domain.Users;
 using Bookstore.SharedKernel.Abstractions;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,11 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     /// Queryable set of books persisted in the data store.
     /// </summary>
     public DbSet<Book> Books => Set<Book>();
+
+    /// <summary>
+    /// Queryable set of users persisted in the data store.
+    /// </summary>
+    public DbSet<User> Users => Set<User>();
 
     /// <summary>
     /// Applies entity configurations from the infrastructure assembly.

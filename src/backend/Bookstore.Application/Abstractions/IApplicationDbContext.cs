@@ -1,5 +1,6 @@
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
+using Bookstore.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.Application.Abstractions;
@@ -18,6 +19,11 @@ public interface IApplicationDbContext
     /// Queryable set of books in the catalog.
     /// </summary>
     DbSet<Book> Books { get; }
+
+    /// <summary>
+    /// Queryable set of users in the system.
+    /// </summary>
+    DbSet<User> Users { get; }
 
     /// <summary>
     /// Persists all pending changes to the underlying data store.

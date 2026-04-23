@@ -1,5 +1,6 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Infrastructure.Data;
+using Bookstore.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,8 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<BookstoreDbContext>());
+
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
