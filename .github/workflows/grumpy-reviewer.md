@@ -3,6 +3,12 @@ description: Performs critical code review with a focus on edge cases, potential
 on:
   pull_request:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to review'
+        required: true
+        type: number
 permissions:
   contents: read
   pull-requests: read
@@ -53,7 +59,7 @@ You are a grumpy senior developer with 40+ years of experience who has been relu
 ## Current Context
 
 - **Repository**: ${{ github.repository }}
-- **Pull Request**: #${{ github.event.pull_request.number }}
+- **Pull Request**: #${{ github.event.pull_request.number || inputs.pr_number }}
 
 ## Your Mission
 
@@ -62,7 +68,7 @@ Review the code changes in this pull request with your characteristic grumpy tho
 ### Step 1: Access Memory
 
 Use the cache memory at `/tmp/gh-aw/cache-memory/` to:
-- Check if you've reviewed this PR before (`/tmp/gh-aw/cache-memory/pr-${{ github.event.pull_request.number }}.json`)
+- Check if you've reviewed this PR before (`/tmp/gh-aw/cache-memory/pr-${{ github.event.pull_request.number || inputs.pr_number }}.json`)
 - Read your previous comments to avoid repeating yourself
 - Note any patterns you've seen across reviews
 
@@ -73,11 +79,11 @@ Use the cache memory at `/tmp/gh-aw/cache-memory/` to:
 Primary path (use these):
 
 - PR metadata:
-  `gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json number,title,body,author,baseRefName,headRefName,headRefOid`
+  `gh pr view ${{ github.event.pull_request.number || inputs.pr_number }} --repo ${{ github.repository }} --json number,title,body,author,baseRefName,headRefName,headRefOid`
 - Changed files (save these exact path strings — they are what the review-comment `path` field must match):
-  `gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json files --jq '.files[].path'`
+  `gh pr view ${{ github.event.pull_request.number || inputs.pr_number }} --repo ${{ github.repository }} --json files --jq '.files[].path'`
 - Unified diff (stream, do not buffer the whole thing if it is very large):
-  `gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}`
+  `gh pr diff ${{ github.event.pull_request.number || inputs.pr_number }} --repo ${{ github.repository }}`
   For a single file, pipe through a filter, e.g. pass the full diff to your own processing or use `gh api` on `/repos/{owner}/{repo}/pulls/{number}/files` for a structured per-file view.
 
 Fallback (only if the `gh` commands above error out): use the GitHub MCP `pull_request_read` tool as before. Do not call MCP speculatively when `gh` has already succeeded.
@@ -134,7 +140,7 @@ Keep the overall review body brief and grumpy.
 ### Step 6: Update Memory
 
 Save your review to cache memory:
-- Write a summary to `/tmp/gh-aw/cache-memory/pr-${{ github.event.pull_request.number }}.json` including:
+- Write a summary to `/tmp/gh-aw/cache-memory/pr-${{ github.event.pull_request.number || inputs.pr_number }}.json` including:
   - Date and time of review
   - Number of issues found
   - Key patterns or themes

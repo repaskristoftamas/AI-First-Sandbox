@@ -25,13 +25,19 @@
 #
 # Source: githubnext/agentics/workflows/grumpy-reviewer.md@828ac109efb43990f59475cbfce90ede5546586c
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"68b3409ca1c72f2b09ff2b5dd7bedef9199122d470e4d980c267064bbc2fe65b","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"3edf74be99c3aae1a587eba1b2066d987c9a06fff5ef2bcc960cdd492e0f47d4","compiler_version":"v0.50.4"}
 
 name: "Grumpy Code Reviewer 🔥"
 "on":
   pull_request:
     types:
     - opened
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: number
 
 permissions: {}
 
@@ -99,6 +105,7 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
+          GH_AW_EXPR_A0E5D436: ${{ github.event.pull_request.number || inputs.pr_number }}
           GH_AW_GITHUB_ACTOR: ${{ github.actor }}
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
@@ -162,7 +169,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
-          GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          GH_AW_EXPR_A0E5D436: ${{ github.event.pull_request.number || inputs.pr_number }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
         with:
           script: |
@@ -177,6 +184,7 @@ jobs:
           GH_AW_ALLOWED_EXTENSIONS: ''
           GH_AW_CACHE_DESCRIPTION: ''
           GH_AW_CACHE_DIR: '/tmp/gh-aw/cache-memory/'
+          GH_AW_EXPR_A0E5D436: ${{ github.event.pull_request.number || inputs.pr_number }}
           GH_AW_GITHUB_ACTOR: ${{ github.actor }}
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
@@ -200,6 +208,7 @@ jobs:
                 GH_AW_ALLOWED_EXTENSIONS: process.env.GH_AW_ALLOWED_EXTENSIONS,
                 GH_AW_CACHE_DESCRIPTION: process.env.GH_AW_CACHE_DESCRIPTION,
                 GH_AW_CACHE_DIR: process.env.GH_AW_CACHE_DIR,
+                GH_AW_EXPR_A0E5D436: process.env.GH_AW_EXPR_A0E5D436,
                 GH_AW_GITHUB_ACTOR: process.env.GH_AW_GITHUB_ACTOR,
                 GH_AW_GITHUB_EVENT_COMMENT_ID: process.env.GH_AW_GITHUB_EVENT_COMMENT_ID,
                 GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: process.env.GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER,
