@@ -39,7 +39,7 @@ public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(3);
+        result.Value.Items.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -56,11 +56,11 @@ public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(2);
+        result.Value.Items.Count.ShouldBe(2);
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnEmptyList_WhenPageExceedsTotalBooks()
+    public async Task Handle_ShouldReturnEmptyItems_WhenPageExceedsTotalBooks()
     {
         // Arrange
         var author = await SeedAuthor();
@@ -73,11 +73,11 @@ public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeEmpty();
+        result.Value.Items.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnEmptyList_WhenNoBooksExist()
+    public async Task Handle_ShouldReturnEmptyItems_WhenNoBooksExist()
     {
         // Arrange
         var query = new GetAllBooksQuery(Page: 1, PageSize: 20);
@@ -87,7 +87,66 @@ public sealed class GetAllBooksQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeEmpty();
+        result.Value.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnPaginationMetadata_WhenMiddlePageIsRequested()
+    {
+        // Arrange
+        var author = await SeedAuthor();
+        await SeedBooks(author, count: 7);
+
+        var query = new GetAllBooksQuery(Page: 2, PageSize: 3);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(7);
+        result.Value.Page.ShouldBe(2);
+        result.Value.PageSize.ShouldBe(3);
+        result.Value.TotalPages.ShouldBe(3);
+        result.Value.HasPreviousPage.ShouldBeTrue();
+        result.Value.HasNextPage.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReportNoNeighbouringPages_WhenSinglePageFitsAllBooks()
+    {
+        // Arrange
+        var author = await SeedAuthor();
+        await SeedBooks(author, count: 2);
+
+        var query = new GetAllBooksQuery(Page: 1, PageSize: 20);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(2);
+        result.Value.TotalPages.ShouldBe(1);
+        result.Value.HasPreviousPage.ShouldBeFalse();
+        result.Value.HasNextPage.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReportZeroTotalPages_WhenNoBooksExist()
+    {
+        // Arrange
+        var query = new GetAllBooksQuery(Page: 1, PageSize: 20);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(0);
+        result.Value.TotalPages.ShouldBe(0);
+        result.Value.HasPreviousPage.ShouldBeFalse();
+        result.Value.HasNextPage.ShouldBeFalse();
     }
 
     /// <summary>

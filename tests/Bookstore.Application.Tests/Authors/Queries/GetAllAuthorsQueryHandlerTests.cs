@@ -37,7 +37,7 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(3);
+        result.Value.Items.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -53,11 +53,11 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.Count.ShouldBe(2);
+        result.Value.Items.Count.ShouldBe(2);
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnEmptyList_WhenPageExceedsTotalAuthors()
+    public async Task Handle_ShouldReturnEmptyItems_WhenPageExceedsTotalAuthors()
     {
         // Arrange
         await SeedAuthors(count: 2);
@@ -69,11 +69,11 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeEmpty();
+        result.Value.Items.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnEmptyList_WhenNoAuthorsExist()
+    public async Task Handle_ShouldReturnEmptyItems_WhenNoAuthorsExist()
     {
         // Arrange
         var query = new GetAllAuthorsQuery(Page: 1, PageSize: 20);
@@ -83,7 +83,64 @@ public sealed class GetAllAuthorsQueryHandlerTests : IAsyncDisposable
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeEmpty();
+        result.Value.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnPaginationMetadata_WhenMiddlePageIsRequested()
+    {
+        // Arrange
+        await SeedAuthors(count: 7);
+
+        var query = new GetAllAuthorsQuery(Page: 2, PageSize: 3);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(7);
+        result.Value.Page.ShouldBe(2);
+        result.Value.PageSize.ShouldBe(3);
+        result.Value.TotalPages.ShouldBe(3);
+        result.Value.HasPreviousPage.ShouldBeTrue();
+        result.Value.HasNextPage.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReportNoNeighbouringPages_WhenSinglePageFitsAllAuthors()
+    {
+        // Arrange
+        await SeedAuthors(count: 2);
+
+        var query = new GetAllAuthorsQuery(Page: 1, PageSize: 20);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(2);
+        result.Value.TotalPages.ShouldBe(1);
+        result.Value.HasPreviousPage.ShouldBeFalse();
+        result.Value.HasNextPage.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReportZeroTotalPages_WhenNoAuthorsExist()
+    {
+        // Arrange
+        var query = new GetAllAuthorsQuery(Page: 1, PageSize: 20);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.TotalCount.ShouldBe(0);
+        result.Value.TotalPages.ShouldBe(0);
+        result.Value.HasPreviousPage.ShouldBeFalse();
+        result.Value.HasNextPage.ShouldBeFalse();
     }
 
     /// <summary>

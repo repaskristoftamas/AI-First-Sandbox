@@ -7,6 +7,7 @@ using Bookstore.Domain.Books;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Bookstore.WebApi.Filters;
+using Bookstore.WebApi.Pagination;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -66,7 +67,7 @@ public sealed class BookEndpoints : IEndpointDefinition
     /// <param name="sender">Mediator sender for dispatching the query.</param>
     /// <param name="cancellationToken">Token to cancel the request.</param>
     /// <returns>An OK result with the book page, or a problem response on failure.</returns>
-    private static async Task<Results<Ok<List<BookResponse>>, ProblemHttpResult>> GetAllBooks(
+    private static async Task<Results<Ok<PagedResponse<BookResponse>>, ProblemHttpResult>> GetAllBooks(
         ISender sender,
         CancellationToken cancellationToken,
         [FromQuery] int page = 1,
@@ -81,9 +82,19 @@ public sealed class BookEndpoints : IEndpointDefinition
                     : "'pageSize' must be between 1 and 100.");
 
         var result = await sender.Send(new GetAllBooksQuery(page, pageSize), cancellationToken);
-        return result.IsSuccess
-            ? TypedResults.Ok(result.Value.Select(d => d.ToResponse()).ToList())
-            : result.Error.ToProblemHttpResult();
+        if (!result.IsSuccess)
+            return result.Error.ToProblemHttpResult();
+
+        var paged = result.Value;
+        var items = (IReadOnlyList<BookResponse>)[.. paged.Items.Select(d => d.ToResponse())];
+        return TypedResults.Ok(new PagedResponse<BookResponse>(
+            items,
+            paged.TotalCount,
+            paged.Page,
+            paged.PageSize,
+            paged.TotalPages,
+            paged.HasNextPage,
+            paged.HasPreviousPage));
     }
 
     /// <summary>
