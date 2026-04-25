@@ -69,7 +69,7 @@ public sealed class RetentionPurgeWorker(
     {
         try
         {
-            using var scope = scopeFactory.CreateScope();
+            await using var scope = scopeFactory.CreateAsyncScope();
             var service = scope.ServiceProvider.GetRequiredService<IRetentionPurgeService>();
             await service.PurgeAsync(stoppingToken);
         }

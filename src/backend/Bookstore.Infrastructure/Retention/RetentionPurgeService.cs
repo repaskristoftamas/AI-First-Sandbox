@@ -20,6 +20,8 @@ public sealed class RetentionPurgeService(
         var retentionPeriod = options.Value.RetentionPeriod;
         var cutoff = timeProvider.GetUtcNow() - retentionPeriod;
 
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+
         // Books are purged before Authors to respect the Book→Author FK with DeleteBehavior.Restrict.
         var booksPurged = await context.Books
             .IgnoreQueryFilters()
@@ -35,6 +37,8 @@ public sealed class RetentionPurgeService(
             .IgnoreQueryFilters()
             .Where(u => u.DeletedAt != null && u.DeletedAt < cutoff)
             .ExecuteDeleteAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         logger.LogInformation(
             "Retention purge completed. Cutoff: {Cutoff}. Books: {Books}, Authors: {Authors}, Users: {Users}.",

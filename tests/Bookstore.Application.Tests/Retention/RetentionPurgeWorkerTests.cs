@@ -42,8 +42,11 @@ public sealed class RetentionPurgeWorkerTests
     public async Task ExecuteAsync_ShouldInvokePurge_WhenOptionsAreValid()
     {
         // Arrange
+        var purgeInvoked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         var purgeService = new Mock<IRetentionPurgeService>();
         purgeService.Setup(s => s.PurgeAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => purgeInvoked.TrySetResult())
             .ReturnsAsync(new RetentionPurgeResult(0, 0, 0));
 
         var services = new ServiceCollection();
@@ -61,12 +64,9 @@ public sealed class RetentionPurgeWorkerTests
             NullLogger<RetentionPurgeWorker>.Instance);
 
         // Act
-        using var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await worker.StartAsync(cts.Token);
-
-        await WaitForAsync(
-            () => purgeService.Invocations.Count >= 1,
-            TimeSpan.FromSeconds(5));
+        await purgeInvoked.Task;
 
         await cts.CancelAsync();
         await worker.ExecuteTask!;
@@ -79,8 +79,16 @@ public sealed class RetentionPurgeWorkerTests
     public async Task ExecuteAsync_ShouldContinueLooping_WhenSweepThrows()
     {
         // Arrange
+        var secondCallReached = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callCount = 0;
+
         var purgeService = new Mock<IRetentionPurgeService>();
         purgeService.Setup(s => s.PurgeAsync(It.IsAny<CancellationToken>()))
+            .Callback(() =>
+            {
+                if (Interlocked.Increment(ref callCount) >= 2)
+                    secondCallReached.TrySetResult();
+            })
             .ThrowsAsync(new InvalidOperationException("simulated failure"));
 
         var services = new ServiceCollection();
@@ -98,30 +106,14 @@ public sealed class RetentionPurgeWorkerTests
             NullLogger<RetentionPurgeWorker>.Instance);
 
         // Act
-        using var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await worker.StartAsync(cts.Token);
-
-        await WaitForAsync(
-            () => purgeService.Invocations.Count >= 2,
-            TimeSpan.FromSeconds(5));
+        await secondCallReached.Task;
 
         await cts.CancelAsync();
         await worker.ExecuteTask!;
 
         // Assert — worker kept running after a failure (called more than once) and stopped on cancellation.
         purgeService.Invocations.Count.ShouldBeGreaterThanOrEqualTo(2);
-    }
-
-    private static async Task WaitForAsync(Func<bool> predicate, TimeSpan timeout)
-    {
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
-        {
-            if (predicate())
-                return;
-            await Task.Delay(10);
-        }
-
-        predicate().ShouldBeTrue("condition was not met within the timeout");
     }
 }

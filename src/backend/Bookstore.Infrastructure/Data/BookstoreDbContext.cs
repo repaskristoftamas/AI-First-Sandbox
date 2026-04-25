@@ -5,8 +5,6 @@ using Bookstore.Domain.Users;
 using Bookstore.SharedKernel.Abstractions;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
 namespace Bookstore.Infrastructure.Data;
 
 /// <summary>
@@ -15,7 +13,7 @@ namespace Bookstore.Infrastructure.Data;
 /// <remarks>
 /// Implements automatic audit timestamp tracking for entities that implement <see cref="IAuditable"/>.
 /// </remarks>
-public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider, IPublisher publisher) : DbContext(options), IApplicationDbContext
+public class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider, IPublisher publisher) : DbContext(options), IApplicationDbContext
 {
     /// <summary>
     /// Queryable set of authors persisted in the data store.
@@ -40,28 +38,6 @@ public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> opti
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BookstoreDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
-    }
-
-    /// <summary>
-    /// Applies model-wide conventions before individual entity configurations run.
-    /// </summary>
-    /// <remarks>
-    /// SQLite has no native <see cref="DateTimeOffset"/> type and the default string converter
-    /// prevents range comparisons from being translated to SQL. Using the binary (ticks)
-    /// converter makes comparisons work in tests while leaving SQL Server's native
-    /// <c>datetimeoffset</c> storage untouched in production.
-    /// </remarks>
-    /// <param name="configurationBuilder">Builder used to configure conventions applied to the model.</param>
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        base.ConfigureConventions(configurationBuilder);
-
-        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
-        {
-            configurationBuilder
-                .Properties<DateTimeOffset>()
-                .HaveConversion<DateTimeOffsetToBinaryConverter>();
-        }
     }
 
     /// <summary>

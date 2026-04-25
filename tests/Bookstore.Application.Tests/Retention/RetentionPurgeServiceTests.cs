@@ -1,3 +1,4 @@
+using Bookstore.Application.Tests.Helpers;
 using Bookstore.Domain.Authors;
 using Bookstore.Domain.Books;
 using Bookstore.Domain.Users;
@@ -42,7 +43,7 @@ public sealed class RetentionPurgeServiceTests : IAsyncDisposable
             .Options;
 
         _timeProvider = new FakeTimeProvider(startDateTime: new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        _context = new BookstoreDbContext(dbOptions, _timeProvider, new Mock<IPublisher>().Object);
+        _context = new SqliteBookstoreDbContext(dbOptions, _timeProvider, new Mock<IPublisher>().Object);
         _context.Database.EnsureCreated();
 
         _options = new RetentionOptions
