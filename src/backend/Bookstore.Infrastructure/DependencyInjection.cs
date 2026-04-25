@@ -1,6 +1,7 @@
 using Bookstore.Application.Abstractions;
 using Bookstore.Infrastructure.Data;
 using Bookstore.Infrastructure.Identity;
+using Bookstore.Infrastructure.Retention;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,12 @@ public static class DependencyInjection
             sp.GetRequiredService<BookstoreDbContext>());
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+        services.AddOptions<RetentionOptions>()
+            .Bind(configuration.GetSection(RetentionOptions.SectionName));
+
+        services.AddScoped<IRetentionPurgeService, RetentionPurgeService>();
+        services.AddHostedService<RetentionPurgeWorker>();
 
         return services;
     }
