@@ -5,7 +5,6 @@ using Bookstore.Domain.Users;
 using Bookstore.SharedKernel.Abstractions;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
-
 namespace Bookstore.Infrastructure.Data;
 
 /// <summary>
@@ -14,7 +13,7 @@ namespace Bookstore.Infrastructure.Data;
 /// <remarks>
 /// Implements automatic audit timestamp tracking for entities that implement <see cref="IAuditable"/>.
 /// </remarks>
-public sealed class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider, IPublisher publisher) : DbContext(options), IApplicationDbContext
+public class BookstoreDbContext(DbContextOptions<BookstoreDbContext> options, TimeProvider timeProvider, IPublisher publisher) : DbContext(options), IApplicationDbContext
 {
     /// <summary>
     /// Queryable set of authors persisted in the data store.
