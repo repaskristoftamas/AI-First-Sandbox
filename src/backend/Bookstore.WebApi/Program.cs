@@ -11,7 +11,9 @@ using Bookstore.WebApi.Endpoints.Books;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Bookstore.WebApi.OpenApi;
+using Bookstore.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,6 +24,9 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddTransient<IEndpointDefinition, AuthorEndpoints>();
 builder.Services.AddTransient<IEndpointDefinition, BookEndpoints>();
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<BookstoreDbContext>(tags: ["ready"]);
+
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = false;
@@ -183,6 +188,17 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false
+}).AllowAnonymous().DisableRateLimiting().ExcludeFromDescription();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+}).AllowAnonymous().DisableRateLimiting().ExcludeFromDescription();
+
 app.RegisterEndpointDefinitions();
 //TODO: Logger, Serilog or ILogger
 
