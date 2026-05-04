@@ -27,10 +27,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     outputs:
       number: ${{ steps.pr.outputs.number }}
       branch: ${{ steps.pr.outputs.branch }}
       author: ${{ steps.pr.outputs.author }}
+      issue: ${{ steps.issue.outputs.number }}
 
     steps:
       - name: Resolve PR metadata
@@ -50,6 +52,23 @@ jobs:
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+
+      - name: Extract linked issue number
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(gh pr view "${{ steps.pr.outputs.number }}" --repo "$GITHUB_REPOSITORY" --json body --jq '.body')
+          ISSUE=$(echo "$BODY" | grep -ioP '(?:closes|fixes|resolves)\s+#\K\d+' | head -1)
+          echo "number=${ISSUE:-}" >> "$GITHUB_OUTPUT"
+
+      - name: Remove AI feedback resolved label
+        if: steps.issue.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ steps.issue.outputs.number }}" --repo "$GITHUB_REPOSITORY" \
+            --remove-label "AI feedback resolved" || true
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -135,3 +154,11 @@ jobs:
         run: |
           gh pr edit ${{ needs.address.outputs.number }} \
             --add-reviewer ${{ needs.address.outputs.author }}
+
+      - name: Add AI feedback resolved label
+        if: needs.address.outputs.issue != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ needs.address.outputs.issue }}" --repo "$GITHUB_REPOSITORY" \
+            --add-label "AI feedback resolved"
