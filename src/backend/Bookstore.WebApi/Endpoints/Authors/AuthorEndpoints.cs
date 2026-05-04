@@ -7,6 +7,7 @@ using Bookstore.Domain.Authors;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Bookstore.WebApi.Filters;
+using Bookstore.WebApi.Pagination;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -63,16 +64,21 @@ public sealed class AuthorEndpoints : IEndpointDefinition
     /// <param name="sender">Mediator sender for dispatching the query.</param>
     /// <param name="cancellationToken">Token to cancel the request.</param>
     /// <returns>An OK result with the author page, or a problem response on failure.</returns>
-    private static async Task<Results<Ok<List<AuthorResponse>>, ProblemHttpResult>> GetAllAuthors(
+    private static async Task<Results<Ok<PagedResponse<AuthorResponse>>, ProblemHttpResult>> GetAllAuthors(
         ISender sender,
         CancellationToken cancellationToken,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        var validationProblem = PaginationValidator.Validate(page, pageSize);
+        if (validationProblem is not null)
+            return validationProblem;
+
         var result = await sender.Send(new GetAllAuthorsQuery(page, pageSize), cancellationToken);
-        return result.IsSuccess
-            ? TypedResults.Ok(result.Value.Select(d => d.ToResponse()).ToList())
-            : result.Error.ToProblemHttpResult();
+        if (!result.IsSuccess)
+            return result.Error.ToProblemHttpResult();
+
+        return TypedResults.Ok(PagedResponse<AuthorResponse>.FromPagedResult(result.Value, d => d.ToResponse()));
     }
 
     /// <summary>
