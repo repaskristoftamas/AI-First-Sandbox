@@ -49,12 +49,12 @@ Migrations are provider-specific. Set the `DatabaseProvider` environment variabl
 
 ```bash
 # SQL Server migrations (default)
-export ConnectionStrings__DefaultConnection="Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=passWORD123;TrustServerCertificate=True"
+export ConnectionStrings__DefaultConnection="Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=******;TrustServerCertificate=True"
 dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
 
 # PostgreSQL migrations
 export DatabaseProvider=PostgreSQL
-export ConnectionStrings__PostgreSQL="Host=localhost;Port=5433;Database=BookstoreDb;Username=bookstore;Password=passWORD123"
+export ConnectionStrings__PostgreSQL="Host=localhost;Port=5433;Database=BookstoreDb;Username=bookstore;Password=******"
 dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
 ```
 
