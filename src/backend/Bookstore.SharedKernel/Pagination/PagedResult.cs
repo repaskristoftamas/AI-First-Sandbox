@@ -19,7 +19,7 @@ public sealed record PagedResult<T>(
     /// The total number of pages, derived from <see cref="TotalCount"/> and <see cref="PageSize"/>.
     /// Returns zero when there are no items.
     /// </summary>
-    public int TotalPages => TotalCount == 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public int TotalPages => TotalCount == 0 || PageSize <= 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
 
     /// <summary>
     /// True when at least one additional page follows the current one.
