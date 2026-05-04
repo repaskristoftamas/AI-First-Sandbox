@@ -1,3 +1,9 @@
+# AI-First Sandbox Repository
+
+This repository is an experimental environment focused on AI-driven development rather than the creation of an actual product. It demonstrates an end-to-end agentic CI/CD pipeline where AI agents autonomously implement features, review code, address review feedback, and manage the project board — with human involvement limited to idea input and final approval.
+
+The development workflow is built on [Claude Code](https://claude.ai/claude-code) with custom agents, skills, and commands, combined with [GitHub Agentic Workflows](https://github.github.com/gh-aw/) running as GitHub Actions. Project conventions (architecture, coding standards, testing, security, git workflow) are codified as structured agent instructions, enabling AI agents to produce standards-compliant code that follows Clean Architecture, CQRS, and DDD patterns out of the box.
+
 # Bookstore-API
 
 ## Database Provider
