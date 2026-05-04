@@ -4,6 +4,8 @@ This repository is an experimental environment focused on AI-driven development 
 
 The development workflow is built on [Claude Code](https://claude.ai/claude-code) with custom agents, skills, and commands, combined with [GitHub Agentic Workflows](https://github.github.com/gh-aw/) running as GitHub Actions. Project conventions (architecture, coding standards, testing, security, git workflow) are codified as structured agent instructions, enabling AI agents to produce standards-compliant code that follows Clean Architecture, CQRS, and DDD patterns out of the box.
 
+For further details, see [this article](https://kristofrepas.medium.com/how-i-automated-my-entire-sdlc-with-ai-agents-e32cf6dc8c97).
+
 # Bookstore-API
 
 ## Database Provider
