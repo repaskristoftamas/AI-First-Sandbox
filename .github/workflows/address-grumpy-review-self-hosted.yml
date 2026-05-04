@@ -92,11 +92,11 @@ jobs:
           if [ -n "$FOCUS_COMMENT" ]; then
             FOCUS_ARG=$(echo "$FOCUS_COMMENT" | sed 's|^/address ||')
             claude --print --permission-mode bypassPermissions \
-              --model claude-opus-4-6 \
+              --model claude-sonnet-4-6 \
               "/address-review-ci ${{ steps.pr.outputs.number }} --focus $FOCUS_ARG"
           else
             claude --print --permission-mode bypassPermissions \
-              --model claude-opus-4-6 \
+              --model claude-sonnet-4-6 \
               "/address-review-ci ${{ steps.pr.outputs.number }}"
           fi
 
@@ -111,11 +111,11 @@ jobs:
           if [ -n "$FOCUS_COMMENT" ]; then
             FOCUS_ARG=$(echo "$FOCUS_COMMENT" | sed 's|^/address ||')
             claude --print --permission-mode bypassPermissions \
-              --model claude-opus-4-6 \
+              --model claude-sonnet-4-6 \
               "/address-respond-ci ${{ steps.pr.outputs.number }} --focus $FOCUS_ARG"
           else
             claude --print --permission-mode bypassPermissions \
-              --model claude-opus-4-6 \
+              --model claude-sonnet-4-6 \
               "/address-respond-ci ${{ steps.pr.outputs.number }}"
           fi
 
@@ -145,7 +145,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           claude --print --permission-mode bypassPermissions \
-            --model claude-opus-4-6 \
+            --model claude-sonnet-4-6 \
             "/review-back-ci ${{ needs.address.outputs.number }} ${{ needs.address.outputs.author }}"
 
       - name: Request human review

@@ -14,7 +14,7 @@ permissions:
   pull-requests: read
 engine:
   id: copilot
-  model: claude-opus-4-6
+  model: claude-sonnet-4-6
 tools:
   cache-memory: true
   bash:
