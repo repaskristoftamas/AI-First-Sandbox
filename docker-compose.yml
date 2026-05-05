@@ -12,7 +12,7 @@ services:
       - DatabaseProvider=SqlServer
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=BookstoreDb;User Id=sa;Password=passWORD123;TrustServerCertificate=True
     healthcheck:
-      test: curl --fail http://localhost:8080/health || exit 1
+      test: wget -qO- http://localhost:8080/health
       interval: 10s
       timeout: 5s
       retries: 3

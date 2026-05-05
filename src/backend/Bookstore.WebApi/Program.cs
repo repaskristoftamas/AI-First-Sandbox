@@ -11,7 +11,6 @@ using Bookstore.WebApi.Endpoints.Books;
 using Bookstore.WebApi.Authorization;
 using Bookstore.WebApi.Extensions;
 using Bookstore.WebApi.OpenApi;
-using Bookstore.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
@@ -24,9 +23,6 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddTransient<IEndpointDefinition, AuthorEndpoints>();
 builder.Services.AddTransient<IEndpointDefinition, BookEndpoints>();
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<BookstoreDbContext>(tags: ["ready"]);
-
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = false;

@@ -40,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<IRetentionPurgeService, RetentionPurgeService>();
         services.AddHostedService<RetentionPurgeWorker>();
 
+        services.AddHealthChecks()
+            .AddDbContextCheck<BookstoreDbContext>(tags: ["ready"]);
+
         return services;
     }
 
