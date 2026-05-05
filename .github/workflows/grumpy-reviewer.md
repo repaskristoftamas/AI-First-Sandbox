@@ -14,7 +14,7 @@ permissions:
   pull-requests: read
 engine:
   id: copilot
-  model: gpt-5-4
+  model: gpt-5
 tools:
   cache-memory: true
   bash:
