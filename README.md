@@ -4,6 +4,8 @@ This repository is an experimental environment focused on AI-driven development 
 
 The development workflow is built on [Claude Code](https://claude.ai/claude-code) with custom agents, skills, and commands, combined with [GitHub Agentic Workflows](https://github.github.com/gh-aw/) running as GitHub Actions. Project conventions (architecture, coding standards, testing, security, git workflow) are codified as structured agent instructions, enabling AI agents to produce standards-compliant code that follows Clean Architecture, CQRS, and DDD patterns out of the box.
 
+For further details, see [this article](https://kristofrepas.medium.com/how-i-automated-my-entire-sdlc-with-ai-agents-e32cf6dc8c97).
+
 # Bookstore-API
 
 ## Database Provider
@@ -47,12 +49,12 @@ Migrations are provider-specific. Set the `DatabaseProvider` environment variabl
 
 ```bash
 # SQL Server migrations (default)
-export ConnectionStrings__DefaultConnection="Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=passWORD123;TrustServerCertificate=True"
+export ConnectionStrings__DefaultConnection="Server=localhost,1435;Database=BookstoreDb;User Id=sa;Password=******;TrustServerCertificate=True"
 dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
 
 # PostgreSQL migrations
 export DatabaseProvider=PostgreSQL
-export ConnectionStrings__PostgreSQL="Host=localhost;Port=5433;Database=BookstoreDb;Username=bookstore;Password=passWORD123"
+export ConnectionStrings__PostgreSQL="Host=localhost;Port=5433;Database=BookstoreDb;Username=bookstore;Password=******"
 dotnet ef migrations add <MigrationName> --project src/backend/Bookstore.Infrastructure --startup-project src/backend/Bookstore.WebApi
 ```
 
