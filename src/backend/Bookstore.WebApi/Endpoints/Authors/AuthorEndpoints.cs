@@ -29,6 +29,7 @@ public sealed class AuthorEndpoints : IEndpointDefinition
 
         group.MapGet("/", GetAllAuthors)
             .WithName("GetAllAuthors")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .AllowAnonymous();
 
         group.MapGet("/{id:guid}", GetAuthorById)

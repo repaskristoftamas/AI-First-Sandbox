@@ -77,6 +77,7 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<AuthorizationSecurityTransformer>();
     options.AddOperationTransformer<RateLimitResponseTransformer>();
+    options.AddSchemaTransformer<ExampleSchemaTransformer>();
 });
 
 var rateLimitingConfig = builder.Configuration.GetSection("RateLimiting");
