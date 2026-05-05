@@ -24,13 +24,13 @@ internal sealed class ExampleSchemaTransformer : IOpenApiSchemaTransformer
         else if (type == typeof(CreateAuthorRequest))
             schema.Example = CreateAuthorRequestExample();
         else if (type == typeof(UpdateAuthorRequest))
-            schema.Example = UpdateAuthorRequestExample();
+            schema.Example = CreateAuthorRequestExample();
         else if (type == typeof(BookResponse))
             schema.Example = BookResponseExample();
         else if (type == typeof(CreateBookRequest))
             schema.Example = CreateBookRequestExample();
         else if (type == typeof(UpdateBookRequest))
-            schema.Example = UpdateBookRequestExample();
+            schema.Example = CreateBookRequestExample();
 
         return Task.CompletedTask;
     }
@@ -46,13 +46,6 @@ internal sealed class ExampleSchemaTransformer : IOpenApiSchemaTransformer
     };
 
     private static JsonObject CreateAuthorRequestExample() => new()
-    {
-        ["firstName"] = "Harper",
-        ["lastName"] = "Lee",
-        ["dateOfBirth"] = "1926-04-28"
-    };
-
-    private static JsonObject UpdateAuthorRequestExample() => new()
     {
         ["firstName"] = "Harper",
         ["lastName"] = "Lee",
@@ -80,12 +73,4 @@ internal sealed class ExampleSchemaTransformer : IOpenApiSchemaTransformer
         ["publicationYear"] = 1960
     };
 
-    private static JsonObject UpdateBookRequestExample() => new()
-    {
-        ["title"] = "To Kill a Mockingbird",
-        ["authorId"] = "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        ["isbn"] = "9780061120084",
-        ["price"] = 19.99,
-        ["publicationYear"] = 1960
-    };
 }
