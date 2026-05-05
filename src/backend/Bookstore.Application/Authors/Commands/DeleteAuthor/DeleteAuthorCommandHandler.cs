@@ -29,18 +29,18 @@ internal sealed class DeleteAuthorCommandHandler(IApplicationDbContext context, 
     /// </returns>
     public async ValueTask<Result> Handle(DeleteAuthorCommand command, CancellationToken cancellationToken)
     {
-        var data = await _context.Authors
+        var authorWithBookCheck = await _context.Authors
             .Where(a => a.Id == command.Id)
             .Select(a => new { Author = a, HasBooks = a.Books.Any() })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (data is null)
+        if (authorWithBookCheck is null)
             return Result.Failure(new NotFoundError(AuthorErrorCodes.NotFound, "The author with the specified identifier was not found."));
 
-        if (data.HasBooks)
+        if (authorWithBookCheck.HasBooks)
             return Result.Failure(new ConflictError(AuthorErrorCodes.HasAssociatedBooks, "Cannot delete the author because they have associated books."));
 
-        data.Author.Delete(_timeProvider);
+        authorWithBookCheck.Author.Delete(_timeProvider);
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
