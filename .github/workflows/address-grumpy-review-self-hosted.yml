@@ -60,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BODY=$(gh pr view "${{ steps.pr.outputs.number }}" --repo "$GITHUB_REPOSITORY" --json body --jq '.body')
-          ISSUE=$(echo "$BODY" | grep -ioP '(?:closes|fixes|resolves)\s+#\K\d+' | head -1)
+          ISSUE=$(echo "$BODY" | grep -ioE '(closes|fixes|resolves)\s+#[0-9]+' | head -1 | sed 's/.*#//' || true)
           echo "number=${ISSUE:-}" >> "$GITHUB_OUTPUT"
 
       - name: Remove AI feedback resolved label
