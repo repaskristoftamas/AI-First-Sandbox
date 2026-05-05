@@ -21,6 +21,7 @@ jobs:
       contains(github.event.review.body, 'gh-aw-agentic-workflow: Grumpy Code Reviewer') ||
       (github.event.issue.pull_request && startsWith(github.event.comment.body, '/address'))
     runs-on: self-hosted
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
