@@ -28,6 +28,11 @@ internal sealed class AuthorizationSecurityTransformer : IOpenApiOperationTransf
             {
                 [new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme)] = []
             });
+
+            operation.Responses?.TryAdd("401", new OpenApiResponse
+            {
+                Description = "Unauthorized — a valid JWT Bearer token is required."
+            });
         }
 
         return Task.CompletedTask;
