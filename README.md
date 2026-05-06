@@ -104,9 +104,9 @@ The PR is left open for human review -- Claude never merges it.
 
 **Trigger:** Automatic — fires when a PR is opened.
 
-[`.github/workflows/auto-grumpy.yml`](.github/workflows/auto-grumpy.yml) posts a `/grumpy` comment on the PR automatically, which triggers the reviewer workflow ([`.github/workflows/grumpy-reviewer.lock.yml`](.github/workflows/grumpy-reviewer.lock.yml)):
+[`.github/workflows/grumpy-reviewer.lock.yml`](.github/workflows/grumpy-reviewer.lock.yml) runs directly on the `pull_request` `opened` event:
 
-1. **Activation** -- Validates the commenter has write access and the comment is on a PR
+1. **Activation** -- Validates the event context and PR access before the workflow proceeds
 2. **Agent** -- Spins up a sandboxed Claude Code instance in CI with read-only access to the repo and PR diff
 3. **Analysis** -- The agent reviews changed files for code smells, performance issues, security concerns, naming, error handling, over/under-engineering
 4. **Review comments** -- Posts up to 5 inline review comments in a grumpy-but-constructive tone
@@ -120,7 +120,7 @@ The reviewer persona is a sarcastic senior developer with 40+ years of experienc
 
 **Trigger:** Automatic — fires when the Grumpy Reviewer submits its review.
 
-[`.github/workflows/address-grumpy-review.yml`](.github/workflows/address-grumpy-review.yml) detects the review via the `pull_request_review` event, filtering on the unique signature the reviewer embeds in every review body. A Claude Code instance runs on the CI runner with full project context (coding standards, architecture rules, testing conventions, agent definitions) and executes the `/address-review-ci` command:
+[`.github/workflows/address-grumpy-review-self-hosted.yml`](.github/workflows/address-grumpy-review-self-hosted.yml) detects the review via the `pull_request_review` event, filtering on the unique signature the reviewer embeds in every review body. The same workflow also supports manual follow-up via `/address ...` PR comments and `workflow_dispatch`. A Claude Code instance runs on the self-hosted runner with full project context (coding standards, architecture rules, testing conventions, agent definitions) and executes the `/address-review-ci` command:
 
 1. Fetches all inline review comments and the overall review summary
 2. Reads the diff and each affected file for full context
@@ -157,13 +157,11 @@ Claude branches, implements, builds, tests, commits, opens PR
         v [PR opened — automatic from here]
         |
         v
-auto-grumpy.yml posts /grumpy comment
+grumpy-reviewer.lock.yml runs on PR opened,
+analyzes diff, posts inline comments, submits review
         |
         v
-Grumpy Reviewer analyzes diff, posts inline comments, submits review
-        |
-        v
-address-grumpy-review.yml detects the review signature
+address-grumpy-review-self-hosted.yml detects the review signature
         |
         v
 Claude evaluates each comment (fix / discuss / skip),
